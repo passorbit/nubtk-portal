@@ -478,12 +478,12 @@ function renderFieldsEditor() {
   adminFields.forEach((f, i) => {
     html += `
     <div class="field-item" style="margin-bottom:15px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:15px; border-radius:10px;">
-      <div style="display:flex; gap:12px; margin-bottom:10px; flex-wrap:wrap;">
+      <div style="display:flex; gap:12px; margin-bottom:10px; flex-wrap:wrap; align-items:flex-end;">
         <div style="flex:1; min-width:150px;">
           <label style="font-size:0.8rem; color:var(--muted); display:block; margin-bottom:4px;">Field Name (Label)</label>
           <input type="text" class="form-input" value="${f.label}" onchange="updateField(${i}, 'label', this.value)" style="padding:8px; font-size:0.9rem;"/>
         </div>
-        <div style="width:150px;">
+        <div style="width:130px;">
           <label style="font-size:0.8rem; color:var(--muted); display:block; margin-bottom:4px;">Field Type</label>
           <select class="form-input" onchange="updateField(${i}, 'type', this.value)" style="padding:8px; font-size:0.9rem;">
             <option value="text" ${f.type==='text'?'selected':''}>Text Input</option>
@@ -491,13 +491,17 @@ function renderFieldsEditor() {
             <option value="date" ${f.type==='date'?'selected':''}>Date Picker</option>
           </select>
         </div>
-        <div style="display:flex; align-items:flex-end;">
+        <div style="width:90px; padding-bottom:8px;">
+          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.85rem; color:var(--gold);">
+            <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateField(${i}, 'required', this.checked)"> Required
+          </label>
+        </div>
+        <div style="display:flex; align-items:flex-end; padding-bottom:1px;">
           <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding:7px 12px;" onclick="removeField(${i})">🗑️ Delete</button>
         </div>
       </div>
     `;
 
-    // অপশন বেসড (Dropdown) হলে অপশন এডিট করার সেকশন দেখাবে
     if (f.type === 'select') {
       html += `<div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:8px; border:1px dashed #555; margin-top:10px;">
         <label style="font-size:0.85rem; color:var(--gold); display:block; margin-bottom:8px;">Dropdown Options:</label>
