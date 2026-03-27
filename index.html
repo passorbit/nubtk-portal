@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NUBTK Student Portal</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="brand-short">NUBTK</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-full">Student Portal</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">Home</a>
+      <a href="pages/cover.html" class="nav-link">Cover Page</a>
+      <a href="pages/routine.html" class="nav-link">Routine</a>
+      <a href="pages/admin.html" class="nav-link nav-admin">Admin</a>
+    </div>
+    <button class="nav-hamburger" onclick="toggleNav()">&#9776;</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Northern University of Business & Technology, Khulna</div>
+    <h1 class="hero-title">Student<br/><em>Portal</em></h1>
+    <p class="hero-sub">CSE Department · Spring 2025</p>
+    <div class="hero-cards">
+      <a href="pages/cover.html" class="hcard">
+        <div class="hcard-icon">📄</div>
+        <div class="hcard-body">
+          <h3>Cover Page Generator</h3>
+          <p>Assignment & Lab front page — edit, preview, download as PDF or JPG</p>
+        </div>
+        <span class="hcard-arrow">→</span>
+      </a>
+      <a href="pages/routine.html" class="hcard">
+        <div class="hcard-icon">🗓️</div>
+        <div class="hcard-body">
+          <h3>Class Routine</h3>
+          <p>Enter your section, get your personalized class schedule instantly</p>
+        </div>
+        <span class="hcard-arrow">→</span>
+      </a>
+      <div class="hcard hcard-soon">
+        <div class="hcard-icon">🔜</div>
+        <div class="hcard-body">
+          <h3>More Coming Soon</h3>
+          <p>More tools will be added for students of NUBTK CSE</p>
+        </div>
+        <span class="hcard-badge">Soon</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>© 2025 NUBTK Student Portal · CSE Department · Developed for students</p>
+</footer>
+
+<script>
+function toggleNav() {
+  document.querySelector('.nav-links').classList.toggle('open');
+}
+</script>
+</body>
+</html>

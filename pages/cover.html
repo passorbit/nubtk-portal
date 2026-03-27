@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cover Page Generator — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* COVER PAGE PRINT STYLES */
+    .cover-preview {
+      background: white; color: #111;
+      width: 794px; height: 1123px;
+      padding: 60px 70px; font-family: 'Times New Roman', serif;
+      position: relative; box-sizing: border-box;
+      overflow: hidden;
+    }
+    .cover-header { text-align: center; margin-bottom: 36px; }
+    .cover-logo-row { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 14px; }
+    .cover-logo-img { width: 80px; height: 80px; object-fit: contain; }
+    .cover-uni-name { font-size: 18pt; font-weight: 900; line-height: 1.25; color: #000; }
+    .cover-dept { font-size: 13pt; font-weight: 700; margin-top: 8px; color: #111; }
+    .cover-divider { border: none; border-top: 2px solid #000; margin: 16px 0; }
+    .cover-meta { text-align: center; margin-bottom: 28px; }
+    .cover-meta-row { font-size: 11.5pt; margin: 4px 0; color: #111; }
+    .cover-meta-row strong { font-weight: 700; }
+    .cover-type-badge {
+      display: inline-block; font-size: 14pt; font-weight: 900;
+      border: 2.5px solid #000; padding: 6px 32px; letter-spacing: 2px;
+      text-transform: uppercase; margin: 12px 0;
+    }
+    .cover-title { text-align: center; font-size: 12pt; font-style: italic; margin-bottom: 32px; color: #333; }
+    .cover-table {
+      width: 100%; border-collapse: collapse; margin-top: 16px;
+      font-size: 11pt;
+    }
+    .cover-table th {
+      background: #f0f0f0; text-align: center; padding: 10px 14px;
+      border: 1.5px solid #555; font-weight: 700; font-size: 12pt;
+    }
+    .cover-table td {
+      padding: 13px 16px; border: 1.5px solid #555;
+      vertical-align: top; line-height: 1.7;
+    }
+    .cover-table td strong { display: block; }
+    .cover-date { text-align: center; margin-top: 40px; font-size: 12pt; font-weight: 700; }
+
+    /* PREVIEW WRAPPER */
+    .preview-scale-outer {
+      overflow-x: auto; background: #e5e5e5; padding: 28px; border-radius: 12px;
+      display: flex; justify-content: center;
+    }
+    .preview-shadow { box-shadow: 0 8px 40px rgba(0,0,0,0.35); }
+
+    /* SAVED LIST */
+    .saved-item {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 18px; display: flex; align-items: center; gap: 14px; margin-bottom: 10px;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+    .saved-item:hover { border-color: var(--gold); }
+    .saved-item-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
+    .saved-item-meta { font-size: 0.78rem; color: var(--muted); }
+
+    /* logo admin upload preview */
+    .admin-logo-preview {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;
+    }
+    .admin-logo-thumb {
+      width: 60px; height: 60px; object-fit: contain;
+      border: 2px solid var(--border); border-radius: 8px; background: white; padding: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="brand-short">NUBTK</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-full">Student Portal</span>
+    </div>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link">Home</a>
+      <a href="cover.html" class="nav-link active">Cover Page</a>
+      <a href="routine.html" class="nav-link">Routine</a>
+      <a href="admin.html" class="nav-link nav-admin">Admin</a>
+    </div>
+    <button class="nav-hamburger" onclick="toggleNav()">&#9776;</button>
+  </div>
+</nav>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › Cover Page Generator</div>
+    <h1>Cover Page Generator</h1>
+    <p>Create Assignment or Lab front pages for your section — edit, preview, and download.</p>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('edit')">✏️ Edit</button>
+    <button class="tab-btn" onclick="switchTab('preview')">👁️ Preview</button>
+    <button class="tab-btn" onclick="switchTab('saved')">📁 Saved</button>
+  </div>
+
+  <!-- EDIT PANEL -->
+  <div class="panel active" id="panel-edit">
+    <div class="section-card">
+      <h2>Cover Page Details</h2>
+      <div class="form-grid" id="fields-container">
+        <!-- Fields rendered by JS based on admin config -->
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="saveAndPreview()">👁️ Save & Preview</button>
+        <button class="btn btn-outline" onclick="saveDraft()">💾 Save Draft</button>
+        <button class="btn btn-outline" onclick="saveDraftNamed()">🏷️ Save As...</button>
+        <button class="btn btn-outline" onclick="resetForm()">↺ Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW PANEL -->
+  <div class="panel" id="panel-preview">
+    <div class="btn-row" style="margin-top:0; margin-bottom:20px;">
+      <button class="btn btn-gold" onclick="downloadPDF()">⬇️ Download PDF</button>
+      <button class="btn btn-outline" onclick="downloadJPG()">🖼️ Download JPG</button>
+      <button class="btn btn-outline" onclick="switchTab('edit')">✏️ Back to Edit</button>
+    </div>
+    <div class="preview-scale-outer">
+      <div class="preview-shadow" id="cover-output">
+        <!-- rendered cover page -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVED PANEL -->
+  <div class="panel" id="panel-saved">
+    <div class="section-card">
+      <h2>Saved Cover Pages</h2>
+      <div id="saved-list">
+        <p style="color:var(--muted); font-size:0.9rem;">No saved cover pages yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ─── HELPERS ────────────────────────────────
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+function toggleNav() { document.querySelector('.nav-links').classList.toggle('open'); }
+function switchTab(tab) {
+  const tabs = ['edit','preview','saved'];
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  tabs.forEach(t => {
+    const panel = document.getElementById('panel-' + t);
+    if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
+  });
+  if (tab === 'preview') renderPreview();
+  if (tab === 'saved') renderSavedList();
+}
+
+// ─── ADMIN CONFIG (default fields, overridden by localStorage admin settings) ──
+function getAdminConfig() {
+  const saved = localStorage.getItem('nubtk_cover_config');
+  if (saved) return JSON.parse(saved);
+  return {
+    logoOptions: [],
+    fields: [
+      { id:'dept', label:'Department', type:'select', required:true,
+        options:['Computer Science and Engineering','Civil Engineering','Electrical and Electronic Engineering','Architecture','Business Administration','Law','English Language & Literature'] },
+      { id:'courseTitle', label:'Course Title', type:'text', required:true, placeholder:'e.g. Data Structures' },
+      { id:'courseCode', label:'Course Code', type:'text', required:true, placeholder:'e.g. CSE 2101' },
+      { id:'coverType', label:'Type', type:'select', required:true, options:['ASSIGNMENT','LAB REPORT','TERM PAPER','PROJECT REPORT','PRESENTATION'] },
+      { id:'coverTitle', label:'Title (Optional)', type:'text', required:false, placeholder:'Assignment/Lab topic' },
+      { id:'teacherName', label:"Teacher's Name", type:'text', required:true, placeholder:'e.g. Md. Hasibul Islam' },
+      { id:'teacherDesig', label:"Teacher's Designation", type:'select', required:false,
+        options:['Lecturer','Senior Lecturer','Assistant Professor','Associate Professor','Professor','Head of Department'] },
+      { id:'studentName', label:'Your Name', type:'text', required:true, placeholder:'Your full name' },
+      { id:'studentId', label:'Student ID', type:'text', required:true, placeholder:'e.g. 11240321910' },
+      { id:'section', label:'Section', type:'text', required:true, placeholder:'e.g. 2D' },
+      { id:'submissionDate', label:'Date of Submission', type:'date', required:true },
+    ]
+  };
+}
+
+// ─── RENDER EDIT FIELDS ──────────────────────
+function renderFields() {
+  const cfg = getAdminConfig();
+  const container = document.getElementById('fields-container');
+  const saved = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
+  let html = '';
+
+  // Logo picker (always first)
+  const logos = cfg.logoOptions && cfg.logoOptions.length > 0 ? cfg.logoOptions : getDefaultLogos();
+  html += `<div class="form-group full">
+    <label class="form-label">Select Logo</label>
+    <div class="logo-grid" id="logo-grid">`;
+  logos.forEach((src, i) => {
+    const sel = (saved.logoIdx == i) ? 'selected' : '';
+    html += `<div class="logo-opt ${sel}" onclick="selectLogo(${i})" data-idx="${i}"><img src="${src}" alt="Logo ${i+1}"/></div>`;
+  });
+  html += `</div></div>`;
+
+  // Dynamic fields
+  cfg.fields.forEach(f => {
+    const val = saved[f.id] || '';
+    const req = f.required ? '*' : '';
+    html += `<div class="form-group">
+      <label class="form-label">${f.label}${req ? ' <span style="color:var(--gold)">*</span>' : ''}</label>`;
+    if (f.type === 'select') {
+      html += `<select class="form-select" id="field_${f.id}">
+        <option value="">-- Select --</option>`;
+      (f.options||[]).forEach(o => html += `<option value="${o}" ${val===o?'selected':''}>${o}</option>`);
+      html += `</select>`;
+    } else if (f.type === 'date') {
+      html += `<input type="date" class="form-input" id="field_${f.id}" value="${val}"/>`;
+    } else {
+      html += `<input type="text" class="form-input" id="field_${f.id}" placeholder="${f.placeholder||''}" value="${val}"/>`;
+    }
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+  // restore logo selection visual
+  if (saved.logoIdx !== undefined) selectLogo(saved.logoIdx, false);
+}
+
+function getDefaultLogos() {
+  // SVG placeholder logos — no external dependency
+  const makeLogoSVG = (text, color) =>
+    'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="${color}" stroke="#ccc" stroke-width="1.5"/><text x="32" y="38" font-size="11" font-family="serif" font-weight="bold" text-anchor="middle" fill="white">${text}</text></svg>`);
+  return [
+    makeLogoSVG('NUBTK', '#0B1D3A'),
+    makeLogoSVG('CSE', '#1a3a6e'),
+    makeLogoSVG('NUBTK', '#2a5298'),
+    makeLogoSVG('KHU', '#0d2b4e'),
+  ];
+}
+
+let selectedLogoIdx = null;
+function selectLogo(idx, save=true) {
+  selectedLogoIdx = idx;
+  document.querySelectorAll('.logo-opt').forEach((el, i) => el.classList.toggle('selected', i == idx));
+}
+
+// ─── COLLECT FORM DATA ───────────────────────
+function collectData() {
+  const cfg = getAdminConfig();
+  const data = { logoIdx: selectedLogoIdx };
+  cfg.fields.forEach(f => {
+    const el = document.getElementById('field_' + f.id);
+    if (el) data[f.id] = el.value;
+  });
+  return data;
+}
+
+function saveDraft() {
+  const data = collectData();
+  localStorage.setItem('nubtk_cover_draft', JSON.stringify(data));
+  notify('✅ Draft saved!');
+}
+
+function saveAndPreview() {
+  saveDraft();
+  switchTab('preview');
+}
+
+function resetForm() {
+  localStorage.removeItem('nubtk_cover_draft');
+  selectedLogoIdx = null;
+  renderFields();
+  notify('↺ Form reset');
+}
+
+// ─── RENDER PREVIEW ──────────────────────────
+function renderPreview() {
+  const cfg = getAdminConfig();
+  const data = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
+  const logos = cfg.logoOptions && cfg.logoOptions.length > 0 ? cfg.logoOptions : getDefaultLogos();
+  const logoSrc = (data.logoIdx !== null && data.logoIdx !== undefined) ? logos[data.logoIdx] : logos[0];
+
+  const dept = data.dept || '';
+  const courseTitle = data.courseTitle || '';
+  const courseCode = data.courseCode || '';
+  const coverType = data.coverType || 'ASSIGNMENT';
+  const coverTitle = data.coverTitle || '';
+  const teacherName = data.teacherName || '';
+  const teacherDesig = data.teacherDesig || 'Lecturer';
+  const studentName = data.studentName || '';
+  const studentId = data.studentId || '';
+  const section = data.section || '';
+  const submissionDate = data.submissionDate ? new Date(data.submissionDate).toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+
+  document.getElementById('cover-output').innerHTML = `
+  <div class="cover-preview" id="cover-page">
+    <div class="cover-header">
+      <div class="cover-logo-row">
+        <img class="cover-logo-img" src="${logoSrc}" alt="NUBTK Logo" crossorigin="anonymous"/>
+        <div>
+          <div class="cover-uni-name">Northern University of Business<br/>&amp; Technology Khulna</div>
+        </div>
+      </div>
+      <div class="cover-dept">Department of ${dept || 'Computer Science and Engineering'}</div>
+      <hr class="cover-divider"/>
+    </div>
+
+    <div class="cover-meta">
+      ${courseCode ? `<div class="cover-meta-row"><strong>Course Code:</strong> ${courseCode}</div>` : ''}
+      ${courseTitle ? `<div class="cover-meta-row"><strong>Course Title:</strong> ${courseTitle}</div>` : ''}
+      <div style="margin-top:16px;">
+        <span class="cover-type-badge">${coverType}</span>
+      </div>
+    </div>
+
+    ${coverTitle ? `<div class="cover-title">"${coverTitle}"</div>` : ''}
+
+    <table class="cover-table">
+      <tr>
+        <th>Submitted To</th>
+        <th>Submitted By</th>
+      </tr>
+      <tr>
+        <td>
+          <strong>${teacherName}</strong>
+          ${teacherDesig}<br/>
+          Department of ${dept || 'Computer Science and Engineering'}<br/>
+          Northern University of Business &amp; Technology Khulna.
+        </td>
+        <td>
+          <strong>Name:</strong> ${studentName}<br/>
+          <strong>Student ID:</strong> ${studentId}<br/>
+          <strong>Section:</strong> ${section}<br/>
+          Northern University of Business &amp; Technology Khulna.
+        </td>
+      </tr>
+    </table>
+
+    <div class="cover-date">Date of Submission: ${submissionDate}</div>
+  </div>`;
+}
+
+// ─── DOWNLOAD ───────────────────────────────
+function downloadPDF() {
+  const el = document.getElementById('cover-page');
+  // Force exact A4 size before capture so html2pdf never overflows to page 2
+  const originalWidth  = el.style.width;
+  const originalMinH   = el.style.minHeight;
+  const originalHeight = el.style.height;
+
+  // A4 at 96dpi = 794 × 1123px. Lock to exact height so nothing spills.
+  el.style.width     = '794px';
+  el.style.minHeight = 'unset';
+  el.style.height    = '1123px';
+  el.style.overflow  = 'hidden';
+
+  html2pdf().set({
+    margin: 0,
+    filename: 'NUBTK_Cover_Page.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, width: 794, height: 1123, windowWidth: 794 },
+    jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' }
+  }).from(el).save().then(() => {
+    // Restore original styles after save
+    el.style.width     = originalWidth;
+    el.style.minHeight = originalMinH;
+    el.style.height    = originalHeight;
+    el.style.overflow  = '';
+  });
+  notify('⬇️ Downloading PDF...');
+}
+
+function downloadJPG() {
+  const el = document.getElementById('cover-page');
+  html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff' }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'NUBTK_Cover_Page.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  });
+  notify('🖼️ Downloading JPG...');
+}
+
+// ─── SAVED DRAFTS ────────────────────────────
+function saveDraftNamed() {
+  const data = collectData();
+  const name = prompt('Name this cover page:');
+  if (!name) return;
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  list.push({ name, data, ts: Date.now() });
+  localStorage.setItem('nubtk_saved_covers', JSON.stringify(list));
+  notify('✅ Saved: ' + name);
+}
+
+function renderSavedList() {
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  const container = document.getElementById('saved-list');
+  if (!list.length) { container.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">No saved cover pages yet. Fill the form and click Save Draft.</p>'; return; }
+  container.innerHTML = list.map((item, i) => `
+    <div class="saved-item" onclick="loadSaved(${i})">
+      <div>
+        <div class="saved-item-name">📄 ${item.name}</div>
+        <div class="saved-item-meta">${new Date(item.ts).toLocaleDateString()} · ${item.data.coverType||'Assignment'} · Section ${item.data.section||'—'}</div>
+      </div>
+      <button class="btn btn-danger" style="padding:6px 12px;font-size:0.78rem;" onclick="event.stopPropagation();deleteSaved(${i})">✕</button>
+    </div>`).join('');
+}
+
+function loadSaved(i) {
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  localStorage.setItem('nubtk_cover_draft', JSON.stringify(list[i].data));
+  switchTab('edit');
+  renderFields();
+  notify('📄 Loaded: ' + list[i].name);
+}
+
+function deleteSaved(i) {
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  list.splice(i, 1);
+  localStorage.setItem('nubtk_saved_covers', JSON.stringify(list));
+  renderSavedList();
+  notify('🗑️ Deleted');
+}
+
+// ─── INIT ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  ['edit','preview','saved'].forEach(t => {
+    const panel = document.getElementById('panel-' + t);
+    if (panel) panel.style.display = (t === 'edit') ? 'block' : 'none';
+  });
+  renderFields();
+});
+</script>
+</body>
+</html>
