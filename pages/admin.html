@@ -136,6 +136,20 @@
         <h2>Routine Data by Section</h2>
         <p style="color:var(--muted);font-size:0.85rem;margin-bottom:20px;">Enter class schedule for each section. Students will see their routine when they enter their section code.</p>
 
+        <!-- ROUTINE UPLOAD CODE -->
+        <div class="section-card" style="margin-bottom: 24px; border-color: var(--gold); background: rgba(201,168,76,0.05);">
+          <h3 style="color:var(--gold); font-size:1rem; margin-bottom:10px;">⚡ Bulk Upload (CSV)</h3>
+          <p style="font-size:0.85rem; color:var(--muted); margin-bottom:14px;">
+            Upload an Excel <b>.csv</b> file to auto-generate routine for all sections. <br>
+            Columns must be exactly: <strong>Section, Day, Time, Course, Room, Type</strong>.
+          </p>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="file" id="csv-upload-input" accept=".csv" class="form-input" style="max-width: 300px; padding: 6px 10px;" />
+            <button class="btn btn-gold" onclick="handleCSVUpload()">📄 Upload & Process</button>
+            <a href="data:text/csv;charset=utf-8,Section,Day,Time,Course,Room,Type%0A2D,Saturday,10:30 AM,CSE 1201,306,theory%0A2D,Saturday,12:10 PM,CSE 1206,LAB 1,lab" download="Routine_Template.csv" class="btn btn-outline" style="font-size: 0.8rem; padding: 8px 12px;">⬇️ Download Demo Template</a>
+          </div>
+        </div>
+
         <div class="form-grid" style="margin-bottom:18px;">
           <div class="form-group">
             <label class="form-label">Section to Edit</label>
@@ -492,6 +506,69 @@ function quickLoad(sec) {
   loadRoutineEditor();
   adminTab('routine');
 }
+
+  // ─── CSV UPLOAD & PARSER ─────────────────────
+function handleCSVUpload() {
+  const fileInput = document.getElementById('csv-upload-input');
+  if (!fileInput.files.length) {
+    notify('⚠️ Please select a CSV file first!');
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const text = e.target.result;
+    processCSVData(text);
+  };
+
+  reader.readAsText(file);
+}
+
+function processCSVData(csvText) {
+  // Separate line by line
+  const lines = csvText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  if (lines.length < 2) {
+    notify('⚠️ CSV file is empty or missing data!');
+    return;
+  }
+
+  const allData = JSON.parse(localStorage.getItem('nubtk_routine_data') || '{}');
+  let count = 0;
+
+  // Loop from the 2nd line, excluding the first line (heading).ো
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map(c => c.trim());
+    
+    // Only take data if there are 6 columns.ে
+    if (cols.length >= 6) {
+      const sec = cols[0].toUpperCase();
+      const day = cols[1]; // e.g. Saturday
+      const time = cols[2]; // e.g. 10:30 AM
+      const course = cols[3];
+      const room = cols[4];
+      const type = cols[5].toLowerCase(); // theory, lab, phy-lab
+
+      if (!sec || !day || !time || !course) continue; // Skip blank data.ে
+
+      if (!allData[sec]) allData[sec] = {};
+      const key = `${day}|${time}`;
+
+      allData[sec][key] = { course, room, type };
+      count++;
+    }
+  }
+
+  localStorage.setItem('nubtk_routine_data', JSON.stringify(allData));
+  notify(`✅ Success! Uploaded ${count} classes.`);
+  
+  // UI Update
+  renderExistingSections();
+  document.getElementById('csv-upload-input').value = ''; // ইনপুট বক্স ফাঁকা করা
+}
+  
 </script>
 </body>
 </html>
