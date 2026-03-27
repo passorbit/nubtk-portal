@@ -162,6 +162,29 @@ function notify(msg, dur=2800) {
   setTimeout(() => n.classList.remove('show'), dur);
 }
 function toggleNav() { document.querySelector('.nav-links').classList.toggle('open'); }
+
+  function adjustPreviewScale() {
+  const outer = document.querySelector('.preview-scale-outer');
+  const shadow = document.querySelector('.preview-shadow');
+  if (!outer || !shadow) return;
+  
+  const availableWidth = outer.clientWidth - 20; // 20px to leave some space on both sides
+  const originalWidth = 794; // Original size of A4 page
+  
+  if (availableWidth < originalWidth) {
+    const scale = availableWidth / originalWidth;
+    shadow.style.transform = `scale(${scale})`;
+    outer.style.height = `${(1120 * scale) + 60}px`; // Original size of A4 page
+  } else {
+    shadow.style.transform = 'scale(1)';
+    outer.style.height = 'auto';
+  }
+}
+
+// Automatically scales when the screen is rotated or resized
+window.addEventListener('resize', adjustPreviewScale);
+
+  
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b,i) => {
     b.classList.toggle('active', ['edit','preview','saved'][i] === tab);
@@ -169,7 +192,10 @@ function switchTab(tab) {
   document.querySelectorAll('.panel').forEach((p,i) => {
     p.classList.toggle('active', ['panel-edit','panel-preview','panel-saved'][i] === `panel-${tab}`);
   });
-  if (tab === 'preview') renderPreview();
+  if (tab === 'preview') {
+    renderPreview();
+    setTimeout(adjustPreviewScale, 10); // Automatically scales when you go to the preview tab.ে
+  }
   if (tab === 'saved') renderSavedList();
 }
 
@@ -350,22 +376,31 @@ function renderPreview() {
 // ─── DOWNLOAD ───────────────────────────────
 function downloadPDF() {
   const el = document.getElementById('cover-page');
+  const shadow = document.querySelector('.preview-shadow');
+  if(shadow) shadow.style.transform = 'scale(1)'; // ডাউনলোডের ঠিক আগে অরিজিনাল সাইজে আনা
+  
   html2pdf().set({
     margin: 0, filename: 'NUBTK_Cover_Page.pdf',
     image: { type: 'jpeg', quality: 1 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, // বাগ ১ ফিক্স
-    jsPDF: { unit: 'px', format: [794, 1120], orientation: 'portrait' } // বাগ ১ ফিক্স
-  }).from(el).save();
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    jsPDF: { unit: 'px', format: [794, 1120], orientation: 'portrait' } 
+  }).from(el).save().then(() => {
+    adjustPreviewScale(); // ডাউনলোড শুরু হলে আবার আগের মতো ছোট করে দেওয়া
+  });
   notify('⬇️ Downloading PDF...');
 }
 
 function downloadJPG() {
   const el = document.getElementById('cover-page');
+  const shadow = document.querySelector('.preview-shadow');
+  if(shadow) shadow.style.transform = 'scale(1)'; 
+
   html2canvas(el, { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#fff' }).then(canvas => {
     const link = document.createElement('a');
     link.download = 'NUBTK_Cover_Page.jpg';
     link.href = canvas.toDataURL('image/jpeg', 0.95);
     link.click();
+    adjustPreviewScale(); 
   });
   notify('🖼️ Downloading JPG...');
 }
