@@ -285,32 +285,66 @@ function selectLogo(idx, save=true) {
 }
 
 // ─── COLLECT FORM DATA ───────────────────────
+// ─── COLLECT FORM DATA ───────────────────────
 function collectData() {
   const cfg = getAdminConfig();
   const data = { logoIdx: selectedLogoIdx };
+  let missingRequired = false;
+
   cfg.fields.forEach(f => {
     const el = document.getElementById('field_' + f.id);
-    if (el) data[f.id] = el.value;
+    if (el) {
+      data[f.id] = el.value;
+      // IF field required but field is empty
+      if (f.required && el.value.trim() === '') {
+        missingRequired = true;
+      }
+    }
   });
-  return data;
+  return { data, missingRequired };
 }
 
 function saveDraft() {
-  const data = collectData();
+  const { data, missingRequired } = collectData();
+  
+  if (missingRequired) {
+    notify('⚠️ Fill the Fields');
+    return false; // Stop Save
+  }
+  
   localStorage.setItem('nubtk_cover_draft', JSON.stringify(data));
   notify('✅ Draft saved!');
+  return true;
 }
 
 function saveAndPreview() {
-  saveDraft();
-  switchTab('preview');
+  if (saveDraft()) {
+    switchTab('preview');
+  }
 }
 
 function resetForm() {
   localStorage.removeItem('nubtk_cover_draft');
   selectedLogoIdx = null;
-  renderFields();
+  renderFieldsEditor();
   notify('↺ Form reset');
+}
+
+// ─── SAVED DRAFTS ────────────────────────────
+function saveDraftNamed() {
+  const { data, missingRequired } = collectData();
+  
+  if (missingRequired) {
+    notify('⚠️ Fill the Fields');
+    return; // Stop saved
+  }
+  
+  const name = prompt('Name this cover page:');
+  if (!name) return;
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  list.push({ name, data, ts: Date.now() });
+  localStorage.setItem('nubtk_saved_covers', JSON.stringify(list));
+  notify('✅ Saved: ' + name);
 }
 
 // ─── RENDER PREVIEW ──────────────────────────
