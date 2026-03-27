@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Class Routine — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    .routine-output-wrap {
+      background: white; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4); padding: 32px;
+    }
+    .routine-header-block { text-align: center; margin-bottom: 24px; }
+    .routine-header-block .uni { font-size: 13pt; font-weight: 800; color: #0B1D3A; font-family: 'Times New Roman', serif; }
+    .routine-header-block .dept { font-size: 10.5pt; font-weight: 600; color: #333; margin-top: 2px; }
+    .routine-header-block .title { font-size: 12pt; font-weight: 700; margin: 10px 0 4px; color: #0B1D3A; letter-spacing: 1px; text-transform: uppercase; }
+    .routine-header-block .section-badge {
+      display: inline-block; background: #0B1D3A; color: #C9A84C;
+      font-size: 11pt; font-weight: 800; padding: 5px 28px; border-radius: 6px;
+      letter-spacing: 2px; margin-top: 8px;
+    }
+    .routine-table { width: 100%; border-collapse: collapse; font-family: var(--ff-body); font-size: 0.78rem; }
+    .routine-table th {
+      background: #0B1D3A; color: #C9A84C; text-align: center;
+      padding: 10px 8px; font-weight: 700; letter-spacing: 0.5px;
+      border: 1.5px solid #0B1D3A;
+    }
+    .routine-table td {
+      border: 1px solid #ccc; padding: 10px 6px; text-align: center;
+      vertical-align: middle; color: #222; background: white; min-height: 50px;
+    }
+    .routine-table td.empty { background: #fafafa; color: #ccc; font-size: 0.75rem; }
+    .cell-course { font-weight: 700; font-size: 0.82rem; color: #0B1D3A; }
+    .cell-room { font-size: 0.7rem; color: #666; margin-top: 2px; }
+    .cell-badge {
+      font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+      display: inline-block; margin-top: 3px; letter-spacing: 0.5px;
+    }
+    .badge-theory { background: #EBF4FF; color: #1D4ED8; }
+    .badge-lab { background: #FEF3C7; color: #B45309; }
+    .badge-phy-lab { background: #FCE7F3; color: #9D174D; }
+
+    .section-search-box {
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 28px;
+    }
+    .section-search-box input {
+      text-transform: uppercase; font-size: 1.2rem; font-weight: 700;
+      letter-spacing: 3px; text-align: center; width: 140px;
+    }
+    .no-routine {
+      text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .no-routine .big { font-size: 3rem; margin-bottom: 12px; }
+    .no-routine p { font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <span class="brand-short">NUBTK</span>
+      <span class="brand-sep">·</span>
+      <span class="brand-full">Student Portal</span>
+    </div>
+    <div class="nav-links">
+      <a href="../index.html" class="nav-link">Home</a>
+      <a href="cover.html" class="nav-link">Cover Page</a>
+      <a href="routine.html" class="nav-link active">Routine</a>
+      <a href="admin.html" class="nav-link nav-admin">Admin</a>
+    </div>
+    <button class="nav-hamburger" onclick="toggleNav()">&#9776;</button>
+  </div>
+</nav>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › Class Routine</div>
+    <h1>Class Routine</h1>
+    <p>Enter your section code to generate your personalized class schedule.</p>
+  </div>
+
+  <div class="section-card">
+    <h2>Find Your Routine</h2>
+    <div class="section-search-box">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Section (e.g. 2D, 1A, 3B)</label>
+        <input type="text" class="form-input" id="section-input" maxlength="3" placeholder="2D"
+          style="text-transform:uppercase;font-size:1.2rem;font-weight:700;letter-spacing:3px;text-align:center;width:120px;"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter') generateRoutine()"/>
+      </div>
+      <div style="align-self:flex-end;">
+        <button class="btn btn-gold" onclick="generateRoutine()">🗓️ Generate Routine</button>
+      </div>
+    </div>
+    <p class="form-hint">Type your section code (like 1A, 2D, 3A etc.) and click Generate.</p>
+  </div>
+
+  <div id="routine-result"></div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+function toggleNav() { document.querySelector('.nav-links').classList.toggle('open'); }
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+// ─── TIME SLOTS ─────────────────────────────
+const TIME_SLOTS = [
+  '10:30 AM', '11:20 AM', '12:10 PM', '01:50 PM', '02:40 PM', '03:30 PM'
+];
+const DAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday'];
+
+// ─── LOAD ROUTINE DATA ───────────────────────
+function getRoutineData() {
+  const stored = localStorage.getItem('nubtk_routine_data');
+  if (stored) return JSON.parse(stored);
+  // Built-in default data for Section 2D from the uploaded schedule image
+  return getBuiltinRoutine();
+}
+
+function getBuiltinRoutine() {
+  // Routine data manually entered from the class schedule PDF
+  // Format: { "SECTION": { "DAY|TIME": { course, room, type } } }
+  return {
+    "2D": {
+      "Tuesday|10:30 AM": { course: "GED 1201", room: "303", type: "theory" },
+      "Saturday|11:20 AM": { course: "PHY 1201", room: "306", type: "theory" },
+      "Tuesday|11:20 AM": { course: "CSE 1205", room: "303", type: "theory" },
+      "Saturday|12:10 PM": { course: "CSE 1206", room: "LAB 1", type: "lab" },
+      "Tuesday|12:10 PM": { course: "MATH 1203", room: "303", type: "theory" },
+      "Saturday|01:50 PM": { course: "CSE 1201", room: "306", type: "theory" },
+      "Sunday|01:50 PM":   { course: "PHY 1202", room: "PHY LAB", type: "lab" },
+      "Wednesday|01:50 PM":{ course: "PHY 1201", room: "304", type: "theory" },
+      "Saturday|02:40 PM": { course: "CSE 1205", room: "306", type: "theory" },
+      "Sunday|02:40 PM":   { course: "CSE 1202", room: "DLD LAB", type: "lab" },
+      "Wednesday|02:40 PM":{ course: "ENG 1205", room: "304", type: "theory" },
+      "Saturday|03:30 PM": { course: "MATH 1203", room: "306", type: "theory" },
+      "Sunday|03:30 PM":   { course: "ENG 1205", room: "305", type: "theory" },
+      "Wednesday|03:30 PM":{ course: "CSE 1201", room: "304", type: "theory" },
+    }
+  };
+}
+
+// ─── GENERATE ROUTINE ────────────────────────
+function generateRoutine() {
+  const section = document.getElementById('section-input').value.trim().toUpperCase();
+  if (!section) { notify('⚠️ Please enter your section!'); return; }
+
+  const allData = getRoutineData();
+  const secData = allData[section];
+  const result = document.getElementById('routine-result');
+
+  if (!secData) {
+    result.innerHTML = `<div class="no-routine">
+      <div class="big">🔍</div>
+      <p>No routine found for section <strong>${section}</strong>.<br/>
+      Please ask your admin to add routine data, or check your section code.</p>
+    </div>`;
+    return;
+  }
+
+  // Build table
+  let rows = '';
+  TIME_SLOTS.forEach(time => {
+    let row = `<tr><td style="font-weight:700;color:#0B1D3A;white-space:nowrap;background:#f8f8ff;padding:10px 14px;">${time}</td>`;
+    DAYS.forEach(day => {
+      const key = `${day}|${time}`;
+      const cell = secData[key];
+      if (cell) {
+        const badgeClass = cell.type === 'lab' ? 'badge-lab' : cell.type === 'phy-lab' ? 'badge-phy-lab' : 'badge-theory';
+        const badgeLabel = cell.type === 'lab' ? 'LAB' : cell.type === 'phy-lab' ? 'PHY LAB' : 'THEORY';
+        row += `<td>
+          <div class="cell-course">${cell.course}</div>
+          <div class="cell-room">${cell.room}</div>
+          <span class="cell-badge ${badgeClass}">${badgeLabel}</span>
+        </td>`;
+      } else {
+        row += `<td class="empty">—</td>`;
+      }
+    });
+    row += '</tr>';
+    rows += row;
+  });
+
+  result.innerHTML = `
+    <div class="section-card" style="padding:0;overflow:hidden;" id="routine-card">
+      <div style="padding:24px 28px 0;">
+        <div class="btn-row" style="margin-top:0;margin-bottom:20px;">
+          <button class="btn btn-gold" onclick="downloadRoutinePDF()">⬇️ PDF</button>
+          <button class="btn btn-outline" onclick="downloadRoutineJPG()">🖼️ JPG</button>
+        </div>
+      </div>
+      <div style="padding:0 28px 28px;">
+        <div class="routine-output-wrap" id="routine-printable">
+          <div class="routine-header-block">
+            <div class="uni">Northern University of Business &amp; Technology Khulna</div>
+            <div class="dept">Department of Computer Science &amp; Engineering</div>
+            <div class="title">Class Schedule · Spring 2025</div>
+            <div class="section-badge">SECTION — ${section}</div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="routine-table">
+              <thead>
+                <tr>
+                  <th>TIME</th>
+                  ${DAYS.map(d => `<th>${d.toUpperCase()}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  notify(`✅ Routine generated for Section ${section}`);
+}
+
+function downloadRoutinePDF() {
+  const el = document.getElementById('routine-printable');
+  html2pdf().set({
+    margin: 8, filename: `NUBTK_Routine_Section_${document.getElementById('section-input').value}.pdf`,
+    image: { type: 'jpeg', quality: 0.97 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+  }).from(el).save();
+  notify('⬇️ Downloading PDF...');
+}
+
+function downloadRoutineJPG() {
+  const el = document.getElementById('routine-printable');
+  html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff' }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `NUBTK_Routine_Section_${document.getElementById('section-input').value}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  });
+  notify('🖼️ Downloading JPG...');
+}
+</script>
+</body>
+</html>
