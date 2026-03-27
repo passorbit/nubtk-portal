@@ -51,15 +51,20 @@
     }
     .cover-table td strong { display: block; }
     
-    /* নতুন ডিজাইন: ডেট একদম নিচে */
+    /* New design: Date at the bottom */
     .cover-date { position: absolute; bottom: 60px; left: 0; right: 0; text-align: center; font-size: 12pt; font-weight: 700; }
 
-    /* PREVIEW WRAPPER */
+    /* PREVIEW WRAPPER (Updated for Mobile Auto-Scale) */
     .preview-scale-outer {
-      overflow-x: auto; background: #e5e5e5; padding: 28px; border-radius: 12px;
-      display: flex; justify-content: center;
+      overflow: hidden; /* Left-right scrolling is disabled. */
+      background: #e5e5e5; padding: 28px 0; border-radius: 12px;
+      display: flex; justify-content: center; align-items: flex-start;
+      transition: height 0.3s ease;
     }
-    .preview-shadow { box-shadow: 0 8px 40px rgba(0,0,0,0.35); }
+    .preview-shadow { 
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35); 
+      transform-origin: top center; /* To shrink the page right from the middleয */
+    }
 
     /* SAVED LIST */
     .saved-item {
