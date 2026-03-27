@@ -200,7 +200,7 @@
 <div class="notif" id="notif"></div>
 
 <script>
-// ─── HELPERS ─────────────────────────────────
+// ─── HELPERS ────────────────────────────────
 function notify(msg, dur=2800) {
   const n = document.getElementById('notif');
   n.textContent = msg; n.classList.add('show');
@@ -208,365 +208,314 @@ function notify(msg, dur=2800) {
 }
 function toggleNav() { document.querySelector('.nav-links').classList.toggle('open'); }
 
-// ─── FIREBASE SETUP ──────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyCF9BoDxWa-0XTwbCBxjHrrBdQrKioJua8",
-  authDomain: "nubtk-portal.firebaseapp.com",
-  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nubtk-portal",
-  storageBucket: "nubtk-portal.firebasestorage.app",
-  messagingSenderId: "45891604739",
-  appId: "1:45891604739:web:33251f784080f09816d936"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-let liveRoutineData = {}; // Stores the latest fetched data
-
-// ─── AUTH (Updated with Firebase & Easter Egg 😜) ──────────────────
-function tryLogin() {
-  const pw = document.getElementById('admin-pw').value;
-  if (!pw) { notify('⚠️ Please enter the password'); return; }
-
-  // Checking passwords from Firebase databaseছে
-  notify('⏳ Checking password...');
-  db.ref('settings/adminPassword').once('value').then((snapshot) => {
-    const storedPw = snapshot.val() || 'nubtk2025'; 
-    
-    if (pw === storedPw) {
-      // If the password matches
-      document.getElementById('admin-login').style.display = 'none';
-      document.getElementById('admin-main').style.display = 'block';
-      renderLogos(); renderFieldsEditor(); renderExistingSections();
-      notify('✅ Welcome, Admin!');
-    } else if (pw === 'nubtk2025') {
-      // Funny Easter Egg! (If the original password has been changed but someone gives the default one)
-      notify('এত সোজা না চান্দু 😜');
-    } else {
-      // Another incorrect password was entered.
-      notify('❌ Wrong password!');
-    }
-  }).catch(e => {
-    notify('❌ Database error! Check connection.');
-    console.error(e);
-  });
-}
-
+function adjustPreviewScale() {
+  const outer = document.querySelector('.preview-scale-outer');
+  const shadow = document.querySelector('.preview-shadow');
+  if (!outer || !shadow) return;
   
-function logout() { location.reload(); }
-function changePassword() {
-  const np = document.getElementById('new-pw').value;
-  const cp = document.getElementById('confirm-pw').value;
-  if (!np) { notify('⚠️ Enter a new password'); return; }
-  if (np !== cp) { notify('❌ Passwords do not match'); return; }
+  const availableWidth = outer.clientWidth - 20; 
+  const originalWidth = 794; 
   
-  // Saving new password in Firebase database
-  db.ref('settings/adminPassword').set(np).then(() => {
-    notify('✅ Password changed in Live Database!');
-    document.getElementById('new-pw').value = '';
-    document.getElementById('confirm-pw').value = '';
-  }).catch(e => {
-    notify('❌ Failed to change password!');
-    console.error(e);
-  });
-}
-
-function adminTab(tab) {
-  const tabs = ['logos','fields','routine','settings'];
-  document.querySelectorAll('.admin-tab-bar .tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i]===tab));
-  tabs.forEach(t => {
-    const el = document.getElementById('atab-'+t);
-    if (el) el.classList.toggle('active', t===tab);
-    if (el) el.style.display = (t===tab) ? 'block' : 'none';
-  });
-}
-document.addEventListener('DOMContentLoaded', () => { adminTab('logos'); });
-
-// ─── FIREBASE ROUTINE SYNC (REPLACES LOCALSTORAGE) ───
-const DAYS = ['Saturday','Sunday','Monday','Tuesday','Wednesday'];
-const TIME_SLOTS = ['08:50 AM','09:40 AM','10:30 AM','11:20 AM','12:10 PM','01:50 PM','02:40 PM','03:30 PM'];
-let editingSection = '';
-
-// ১. রিয়েল-টাইম ডাটাবেস থেকে ডেটা পড়া
-function listenToFirebase() {
-  db.ref('routines').on('value', (snapshot) => {
-    liveRoutineData = snapshot.val() || {};
-    renderExistingSections();
-  });
-}
-
-// ২. সেকশন লিস্ট দেখানো
-function renderExistingSections() {
-  const sections = Object.keys(liveRoutineData);
-  const wrap = document.getElementById('existing-sections');
-  if (!sections.length) {
-    wrap.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">Database is empty. Upload CSV or add data manually.</p>';
-    return;
+  if (availableWidth < originalWidth) {
+    const scale = availableWidth / originalWidth;
+    shadow.style.transform = `scale(${scale})`;
+    outer.style.height = `${(1120 * scale) + 60}px`; 
+  } else {
+    shadow.style.transform = 'scale(1)';
+    outer.style.height = 'auto';
   }
-  wrap.innerHTML = sections.map(s => {
-    const count = Object.keys(liveRoutineData[s]).length;
-    return `<div class="routine-section-item">
-      <span class="rs-section">${s}</span>
-      <span class="rs-count">${count} classes in live db</span>
-      <div class="rs-actions">
-        <button class="btn btn-outline" style="padding:6px 14px;font-size:0.78rem;" onclick="quickLoad('${s}')">Edit</button>
-      </div>
-    </div>`;
-  }).join('');
+}
+window.addEventListener('resize', adjustPreviewScale);
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['edit','preview','saved'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach((p,i) => {
+    p.classList.toggle('active', ['panel-edit','panel-preview','panel-saved'][i] === `panel-${tab}`);
+  });
+  if (tab === 'preview') {
+    renderPreview();
+    setTimeout(adjustPreviewScale, 10);
+  }
+  if (tab === 'saved') renderSavedList();
 }
 
-// ৩. ম্যানুয়াল এডিটর লোড করা
-function loadRoutineEditor() {
-  const sec = document.getElementById('routine-section-select').value.trim().toUpperCase();
-  if (!sec) { notify('⚠️ Enter a section code'); return; }
-  editingSection = sec;
-  const secData = liveRoutineData[sec] || {};
-  
-  const wrap = document.getElementById('routine-editor-wrap');
-  const editor = document.getElementById('routine-editor');
-  wrap.style.display = 'block';
+// ─── ADMIN CONFIG ───────────────────────────
+function getAdminConfig() {
+  const saved = localStorage.getItem('nubtk_cover_config');
+  if (saved) return JSON.parse(saved);
+  return {
+    logoOptions: [],
+    fields: [
+      { id:'dept', label:'Department', type:'select', required:true,
+        options:['Computer Science and Engineering','Civil Engineering','Electrical and Electronic Engineering','Architecture','Business Administration','Law','English Language & Literature'] },
+      { id:'courseTitle', label:'Course Title', type:'text', required:true, placeholder:'e.g. Data Structures' },
+      { id:'courseCode', label:'Course Code', type:'text', required:true, placeholder:'e.g. CSE 2101' },
+      { id:'coverType', label:'Type', type:'select', required:true, options:['ASSIGNMENT','LAB REPORT','TERM PAPER','PROJECT REPORT','PRESENTATION'] },
+      { id:'coverTitle', label:'Title (Optional)', type:'text', required:false, placeholder:'Assignment/Lab topic' },
+      { id:'teacherName', label:"Teacher's Name", type:'text', required:true, placeholder:'e.g. Md. Hasibul Islam' },
+      { id:'teacherDesig', label:"Teacher's Designation", type:'select', required:false,
+        options:['Lecturer','Senior Lecturer','Assistant Professor','Associate Professor','Professor','Head of Department'] },
+      { id:'studentName', label:'Your Name', type:'text', required:true, placeholder:'Your full name' },
+      { id:'studentId', label:'Student ID', type:'text', required:true, placeholder:'e.g. 11240321910' },
+      { id:'section', label:'Section', type:'text', required:true, placeholder:'e.g. 2D' },
+      { id:'submissionDate', label:'Date of Submission', type:'date', required:true },
+    ]
+  };
+}
 
-  let html = `<h3 style="color:var(--gold);margin-bottom:16px;">Editing Section: ${sec}</h3>`;
-  DAYS.forEach(day => {
-    html += `<div class="routine-day-block"><h4>${day}</h4>`;
-    TIME_SLOTS.forEach(time => {
-      const key = `${day}|${time}`;
-      const cell = secData[key] || {};
-      html += `<div class="routine-slot-row">
-        <span class="slot-time">${time}</span>
-        <input type="text" class="slot-input course-input" placeholder="Course" data-key="${key}" data-field="course" value="${cell.course||''}"/>
-        <input type="text" class="slot-input room-input" placeholder="Room" data-key="${key}" data-field="room" value="${cell.room||''}"/>
-        <select class="slot-input slot-type-sel" data-key="${key}" data-field="type">
-          <option value="theory" ${cell.type==='theory'?'selected':''}>Theory</option>
-          <option value="lab" ${cell.type==='lab'?'selected':''}>Lab</option>
-          <option value="phy-lab" ${cell.type==='phy-lab'?'selected':''}>Phy Lab</option>
-        </select>
-      </div>`;
-    });
+// ─── RENDER EDIT FIELDS ──────────────────────
+function renderFields() {
+  const cfg = getAdminConfig();
+  const container = document.getElementById('fields-container');
+  const saved = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
+  let html = '';
+
+  const logos = cfg.logoOptions && cfg.logoOptions.length > 0 ? cfg.logoOptions : getDefaultLogos();
+  html += `<div class="form-group full">
+    <label class="form-label">Select Logo</label>
+    <div class="logo-grid" id="logo-grid">`;
+  logos.forEach((src, i) => {
+    const sel = (saved.logoIdx == i) ? 'selected' : '';
+    html += `<div class="logo-opt ${sel}" onclick="selectLogo(${i})" data-idx="${i}"><img src="${src}" alt="Logo ${i+1}"/></div>`;
+  });
+  html += `</div></div>`;
+
+  cfg.fields.forEach(f => {
+    const val = saved[f.id] || '';
+    const req = f.required ? '*' : '';
+    html += `<div class="form-group">
+      <label class="form-label">${f.label}${req ? ' <span style="color:var(--gold)">*</span>' : ''}</label>`;
+    if (f.type === 'select') {
+      html += `<select class="form-select" id="field_${f.id}">
+        <option value="">-- Select --</option>`;
+      (f.options||[]).forEach(o => html += `<option value="${o}" ${val===o?'selected':''}>${o}</option>`);
+      html += `</select>`;
+    } else if (f.type === 'date') {
+      html += `<input type="date" class="form-input" id="field_${f.id}" value="${val}"/>`;
+    } else {
+      html += `<input type="text" class="form-input" id="field_${f.id}" placeholder="${f.placeholder||''}" value="${val}"/>`;
+    }
     html += `</div>`;
   });
-  editor.innerHTML = html;
+
+  container.innerHTML = html;
+  if (saved.logoIdx !== undefined) selectLogo(saved.logoIdx, false);
 }
 
-// ৪. ফায়ারবেসে একটি সেকশন সেভ করা
-function saveRoutineSection() {
-  if (!editingSection) return;
-  const secData = {};
-  document.querySelectorAll('.slot-input[data-key]').forEach(el => {
-    const key = el.dataset.key;
-    const field = el.dataset.field;
-    if (!secData[key]) secData[key] = {};
-    secData[key][field] = el.value;
-  });
-  Object.keys(secData).forEach(k => { if (!secData[k].course) delete secData[k]; });
-  
-  // Save to Firebase
-  db.ref('routines/' + editingSection).set(secData).then(() => {
-    notify(`☁️ Live Sync Successful for ${editingSection}`);
-  }).catch(e => notify('❌ Sync failed: ' + e.message));
-}
-
-// ৫. ফায়ারবেস থেকে সেকশন ডিলিট করা
-function deleteRoutineSection() {
-  if (!editingSection) return;
-  if (!confirm(`Delete routine for Section ${editingSection} from LIVE database?`)) return;
-  
-  db.ref('routines/' + editingSection).remove().then(() => {
-    document.getElementById('routine-editor-wrap').style.display = 'none';
-    notify(`🗑️ Deleted Section ${editingSection} from Live DB`);
-    editingSection = '';
-  });
-}
-
-function quickLoad(sec) {
-  document.getElementById('routine-section-select').value = sec;
-  loadRoutineEditor();
-  adminTab('routine');
-}
-
-// ─── CSV BULK UPLOAD TO FIREBASE ─────────────
-function handleCSVUpload() {
-  const fileInput = document.getElementById('csv-upload-input');
-  if (!fileInput.files.length) { notify('⚠️ Select a CSV file first!'); return; }
-
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) { processCSVData(e.target.result); };
-  reader.readAsText(file);
-}
-
-function processCSVData(csvText) {
-  const lines = csvText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-  if (lines.length < 2) { notify('⚠️ CSV file is empty!'); return; }
-
-  const allData = { ...liveRoutineData }; // Start with existing live data
-  let count = 0;
-
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
-    if (cols.length >= 6) {
-      const sec = cols[0].toUpperCase();
-      const day = cols[1]; 
-      const time = cols[2]; 
-      const course = cols[3];
-      const room = cols[4];
-      const type = cols[5].toLowerCase(); 
-
-      if (!sec || !day || !time || !course) continue;
-
-      if (!allData[sec]) allData[sec] = {};
-      const key = `${day}|${time}`;
-      allData[sec][key] = { course, room, type };
-      count++;
-    }
-  }
-
-  // Update whole node in Firebase
-  db.ref('routines').set(allData).then(() => {
-    notify(`☁️ Success! Synced ${count} classes to Live Database.`);
-    document.getElementById('csv-upload-input').value = ''; 
-  }).catch(e => notify('❌ Upload failed: ' + e.message));
-}
-
-
-// ─── LOGOS & FIELDS (Kept in LocalStorage for Admin only) ───
-let uploadedLogos = [];
-function renderLogos() {
-  uploadedLogos = JSON.parse(localStorage.getItem('nubtk_admin_logos') || '[]');
-  redrawLogos();
-}
-function redrawLogos() {
-  document.getElementById('uploaded-logos-display').innerHTML = uploadedLogos.map((src,i) => `
-    <div class="uploaded-logo-item"><img src="${src}"/><button class="del-logo" onclick="removeLogo(${i})">✕</button></div>`).join('');
-}
-function handleLogoUpload(input) {
-  Array.from(input.files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => { uploadedLogos.push(e.target.result); redrawLogos(); };
-    reader.readAsDataURL(file);
-  });
-}
-function removeLogo(i) { uploadedLogos.splice(i,1); redrawLogos(); }
-function saveLogos() {
-  const cfg = JSON.parse(localStorage.getItem('nubtk_cover_config') || '{}');
-  cfg.logoOptions = uploadedLogos;
-  localStorage.setItem('nubtk_cover_config', JSON.stringify(cfg));
-  localStorage.setItem('nubtk_admin_logos', JSON.stringify(uploadedLogos));
-  notify('✅ Logos saved globally!');
-}
-
-function getDefaultFields() {
+function getDefaultLogos() {
+  const makeLogoSVG = (text, color) =>
+    'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="${color}" stroke="#ccc" stroke-width="1.5"/><text x="32" y="38" font-size="11" font-family="serif" font-weight="bold" text-anchor="middle" fill="white">${text}</text></svg>`);
   return [
-    { id:'dept', label:'Department', type:'select', required:true, options:['Computer Science and Engineering','Civil Engineering','Electrical and Electronic Engineering','Architecture','Business Administration','Law'] },
-    { id:'courseTitle', label:'Course Title', type:'text', required:true, placeholder:'e.g. Data Structures' },
-    { id:'courseCode', label:'Course Code', type:'text', required:true, placeholder:'e.g. CSE 2101' },
-    { id:'coverType', label:'Type', type:'select', required:true, options:['ASSIGNMENT','LAB REPORT','TERM PAPER','PROJECT REPORT'] },
-    { id:'teacherName', label:"Teacher's Name", type:'text', required:true, placeholder:'Teacher name' },
-    { id:'studentName', label:'Student Name', type:'text', required:true, placeholder:'Full name' },
-    { id:'studentId', label:'Student ID', type:'text', required:true, placeholder:'e.g. 11240321910' },
-    { id:'section', label:'Section', type:'text', required:true, placeholder:'e.g. 2D' },
-    { id:'submissionDate', label:'Date of Submission', type:'date', required:true },
+    makeLogoSVG('NUBTK', '#0B1D3A'),
+    makeLogoSVG('CSE', '#1a3a6e'),
+    makeLogoSVG('NUBTK', '#2a5298'),
+    makeLogoSVG('KHU', '#0d2b4e'),
   ];
 }
 
-let adminFields = [];
+let selectedLogoIdx = null;
+function selectLogo(idx, save=true) {
+  selectedLogoIdx = idx;
+  document.querySelectorAll('.logo-opt').forEach((el, i) => el.classList.toggle('selected', i == idx));
+}
 
-function renderFieldsEditor() {
-  const cfg = JSON.parse(localStorage.getItem('nubtk_cover_config') || '{}');
-  if (adminFields.length === 0) adminFields = cfg.fields || getDefaultFields();
+// ─── COLLECT FORM DATA ───────────────────────
+function collectData() {
+  const cfg = getAdminConfig();
+  const data = { logoIdx: selectedLogoIdx };
+  let missingRequired = false;
 
-  let html = '';
-  adminFields.forEach((f, i) => {
-    html += `
-    <div class="field-item" style="margin-bottom:15px; background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:15px; border-radius:10px;">
-      <div style="display:flex; gap:12px; margin-bottom:10px; flex-wrap:wrap; align-items:flex-end;">
-        <div style="flex:1; min-width:150px;">
-          <label style="font-size:0.8rem; color:var(--muted); display:block; margin-bottom:4px;">Field Name (Label)</label>
-          <input type="text" class="form-input" value="${f.label}" onchange="updateField(${i}, 'label', this.value)" style="padding:8px; font-size:0.9rem;"/>
-        </div>
-        <div style="width:130px;">
-          <label style="font-size:0.8rem; color:var(--muted); display:block; margin-bottom:4px;">Field Type</label>
-          <select class="form-input" onchange="updateField(${i}, 'type', this.value)" style="padding:8px; font-size:0.9rem;">
-            <option value="text" ${f.type==='text'?'selected':''}>Text Input</option>
-            <option value="select" ${f.type==='select'?'selected':''}>Dropdown Options</option>
-            <option value="date" ${f.type==='date'?'selected':''}>Date Picker</option>
-          </select>
-        </div>
-        <div style="width:90px; padding-bottom:8px;">
-          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.85rem; color:var(--gold);">
-            <input type="checkbox" ${f.required ? 'checked' : ''} onchange="updateField(${i}, 'required', this.checked)"> Required
-          </label>
-        </div>
-        <div style="display:flex; align-items:flex-end; padding-bottom:1px;">
-          <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding:7px 12px;" onclick="removeField(${i})">🗑️ Delete</button>
-        </div>
-      </div>
-    `;
-
-    if (f.type === 'select') {
-      html += `<div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:8px; border:1px dashed #555; margin-top:10px;">
-        <label style="font-size:0.85rem; color:var(--gold); display:block; margin-bottom:8px;">Dropdown Options:</label>
-        <div style="display:flex; flex-wrap:wrap; gap:8px;">`;
-
-      (f.options || []).forEach((opt, optIdx) => {
-        html += `<div style="display:flex; align-items:center; background:var(--card-bg); border:1px solid var(--border); border-radius:6px; overflow:hidden;">
-          <input type="text" value="${opt}" onchange="updateOption(${i}, ${optIdx}, this.value)" style="background:transparent; border:none; color:white; padding:6px 10px; width:140px; outline:none; font-size:0.85rem;"/>
-          <button onclick="removeOption(${i}, ${optIdx})" style="background:#f87171; border:none; color:white; padding:6px 10px; cursor:pointer;">✕</button>
-        </div>`;
-      });
-
-      html += `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="addOption(${i})">+ Add Option</button>
-        </div></div>`;
+  cfg.fields.forEach(f => {
+    const el = document.getElementById('field_' + f.id);
+    if (el) {
+      data[f.id] = el.value;
+      // চেক করছি কোনো Required ফিল্ড ফাঁকা আছে কি না
+      if (f.required && el.value.trim() === '') {
+        missingRequired = true;
+      }
     }
-    html += `</div>`;
   });
-
-  html += `<button class="btn btn-outline" style="margin-top:10px; width:100%; border-style:dashed; border-color:var(--gold); color:var(--gold); padding:12px;" onclick="addField()">+ Add New Field</button>`;
-
-  document.getElementById('fields-editor').innerHTML = html;
+  return { data, missingRequired };
 }
 
-// ─── FIELD BUILDER LOGIC ───
-function updateField(i, key, val) {
-  adminFields[i][key] = val;
-  if (key === 'type' && val === 'select' && !adminFields[i].options) adminFields[i].options = ['New Option'];
-  renderFieldsEditor();
-}
-function removeField(i) {
-  if(!confirm('Are you sure you want to delete this field?')) return;
-  adminFields.splice(i, 1);
-  renderFieldsEditor();
-}
-function addField() {
-  adminFields.push({ id: 'custom_'+Date.now(), label: 'New Field', type: 'text', required: false });
-  renderFieldsEditor();
-}
-function updateOption(fIdx, optIdx, val) {
-  adminFields[fIdx].options[optIdx] = val;
-}
-function removeOption(fIdx, optIdx) {
-  adminFields[fIdx].options.splice(optIdx, 1);
-  renderFieldsEditor();
-}
-function addOption(fIdx) {
-  if(!adminFields[fIdx].options) adminFields[fIdx].options = [];
-  adminFields[fIdx].options.push('New Option');
-  renderFieldsEditor();
+function saveDraft() {
+  const { data } = collectData(); // সেভ করার সময় Required ফিল্ড চেক করবে না
+  localStorage.setItem('nubtk_cover_draft', JSON.stringify(data));
+  notify('✅ Draft saved!');
 }
 
-function saveFieldConfig() {
-  const cfg = JSON.parse(localStorage.getItem('nubtk_cover_config') || '{}');
-  cfg.fields = adminFields;
-  localStorage.setItem('nubtk_cover_config', JSON.stringify(cfg));
-  notify('✅ Cover Page Fields Saved Successfully!');
+function saveAndPreview() {
+  saveDraft();
+  switchTab('preview');
 }
 
-function resetFieldConfig() {
-  if (!confirm('Are you sure you want to reset all fields to default?')) return;
-  adminFields = getDefaultFields(); 
-  saveFieldConfig();
-  renderFieldsEditor(); 
+function resetForm() {
+  localStorage.removeItem('nubtk_cover_draft');
+  selectedLogoIdx = null;
+  renderFields();
+  notify('↺ Form reset');
 }
+
+// ─── RENDER PREVIEW ──────────────────────────
+function renderPreview() {
+  const cfg = getAdminConfig();
+  const data = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
+  const logos = cfg.logoOptions && cfg.logoOptions.length > 0 ? cfg.logoOptions : getDefaultLogos();
+  const logoSrc = (data.logoIdx !== null && data.logoIdx !== undefined) ? logos[data.logoIdx] : logos[0];
+
+  const dept = data.dept || '';
+  const courseTitle = data.courseTitle || '';
+  const courseCode = data.courseCode || '';
+  const coverType = data.coverType || 'ASSIGNMENT';
+  const coverTitle = data.coverTitle || '';
+  const teacherName = data.teacherName || '';
+  const teacherDesig = data.teacherDesig || 'Lecturer';
+  const studentName = data.studentName || '';
+  const studentId = data.studentId || '';
+  const section = data.section || '';
+  const submissionDate = data.submissionDate ? new Date(data.submissionDate).toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+
+  document.getElementById('cover-output').innerHTML = `
+  <div class="cover-preview" id="cover-page">
+    <div class="cover-header">
+      <div class="cover-logo-row">
+        <img class="cover-logo-img" src="${logoSrc}" alt="NUBTK Logo" crossorigin="anonymous"/>
+        <div class="cover-uni-name">Northern University of Business<br/>&amp; Technology Khulna</div>
+      </div>
+      <div class="cover-dept">Department of ${dept || 'Computer Science and Engineering'}</div>
+      <hr class="cover-divider"/>
+    </div>
+
+    <div class="cover-meta">
+      ${courseCode ? `<div class="cover-meta-row"><strong>Course Code:</strong> ${courseCode}</div>` : ''}
+      ${courseTitle ? `<div class="cover-meta-row"><strong>Course Title:</strong> ${courseTitle}</div>` : ''}
+      <div style="margin-top:16px;">
+        <span class="cover-type-badge">${coverType}</span>
+      </div>
+    </div>
+
+    ${coverTitle ? `<div class="cover-title">"${coverTitle}"</div>` : ''}
+
+    <table class="cover-table">
+      <tr>
+        <th>Submitted To</th>
+        <th>Submitted By</th>
+      </tr>
+      <tr>
+        <td>
+          <strong>${teacherName}</strong>
+          ${teacherDesig}<br/>
+          Department of ${dept || 'Computer Science and Engineering'}<br/>
+          Northern University of Business &amp; Technology Khulna.
+        </td>
+        <td>
+          <strong>Name:</strong> ${studentName}<br/>
+          <strong>Student ID:</strong> ${studentId}<br/>
+          <strong>Section:</strong> ${section}<br/>
+          Northern University of Business &amp; Technology Khulna.
+        </td>
+      </tr>
+    </table>
+
+    <div class="cover-date">Date of Submission: ${submissionDate}</div>
+  </div>`;
+}
+
+// ─── DOWNLOAD ───────────────────────────────
+function downloadPDF() {
+  const { missingRequired } = collectData();
   
+  // ডাউনলোড করার সময় চেক করবে ফিল্ড ফাঁকা আছে কি না
+  if (missingRequired) {
+    notify('⚠️ Fill the Required Fields first!');
+    switchTab('edit'); // এডিট ফর্মে ফেরত পাঠাবে
+    return;
+  }
+
+  const el = document.getElementById('cover-page');
+  const shadow = document.querySelector('.preview-shadow');
+  if(shadow) shadow.style.transform = 'scale(1)'; 
+  
+  html2pdf().set({
+    margin: 0, filename: 'NUBTK_Cover_Page.pdf',
+    image: { type: 'jpeg', quality: 1 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    jsPDF: { unit: 'px', format: [794, 1120], orientation: 'portrait' } 
+  }).from(el).save().then(() => {
+    adjustPreviewScale(); 
+  });
+  notify('⬇️ Downloading PDF...');
+}
+
+function downloadJPG() {
+  const { missingRequired } = collectData();
+  
+  // ডাউনলোড করার সময় চেক করবে ফিল্ড ফাঁকা আছে কি না
+  if (missingRequired) {
+    notify('⚠️ Fill the Required Fields first!');
+    switchTab('edit');
+    return;
+  }
+
+  const el = document.getElementById('cover-page');
+  const shadow = document.querySelector('.preview-shadow');
+  if(shadow) shadow.style.transform = 'scale(1)'; 
+
+  html2canvas(el, { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#fff' }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'NUBTK_Cover_Page.jpg';
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+    adjustPreviewScale(); 
+  });
+  notify('🖼️ Downloading JPG...');
+}
+
+// ─── SAVED DRAFTS ────────────────────────────
+function saveDraftNamed() {
+  const { data } = collectData(); // সেভ করার সময় Required ফিল্ড চেক করবে না
+  const name = prompt('Name this cover page:');
+  if (!name) return;
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  list.push({ name, data, ts: Date.now() });
+  localStorage.setItem('nubtk_saved_covers', JSON.stringify(list));
+  notify('✅ Saved: ' + name);
+}
+
+function renderSavedList() {
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  const container = document.getElementById('saved-list');
+  if (!list.length) { container.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">No saved cover pages yet. Fill the form and click Save Draft.</p>'; return; }
+  container.innerHTML = list.map((item, i) => `
+    <div class="saved-item" onclick="loadSaved(${i})">
+      <div>
+        <div class="saved-item-name">📄 ${item.name}</div>
+        <div class="saved-item-meta">${new Date(item.ts).toLocaleDateString()} · ${item.data.coverType||'Assignment'} · Section ${item.data.section||'—'}</div>
+      </div>
+      <button class="btn btn-danger" style="padding:6px 12px;font-size:0.78rem;" onclick="event.stopPropagation();deleteSaved(${i})">✕</button>
+    </div>`).join('');
+}
+
+function loadSaved(i) {
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  localStorage.setItem('nubtk_cover_draft', JSON.stringify(list[i].data));
+  switchTab('edit');
+  renderFields();
+  notify('📄 Loaded: ' + list[i].name);
+}
+
+function deleteSaved(i) {
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  list.splice(i, 1);
+  localStorage.setItem('nubtk_saved_covers', JSON.stringify(list));
+  renderSavedList();
+  notify('🗑️ Deleted');
+}
+
+// ─── INIT ────────────────────────────────────
+renderFields();
 </script>
 </body>
 </html>
