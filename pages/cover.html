@@ -12,8 +12,9 @@
     /* COVER PAGE PRINT STYLES */
     .cover-preview {
       background: white; color: #111;
-      width: 794px; height: 1123px; /* min-height instead fixed height */
-      overflow: hidden; /* content-only one page */
+      width: 794px; 
+      height: 1120px;
+      overflow: hidden; 
       padding: 60px 70px; font-family: 'Times New Roman', serif;
       position: relative; box-sizing: border-box;
     }
@@ -352,10 +353,11 @@ function renderPreview() {
 function downloadPDF() {
   const el = document.getElementById('cover-page');
   html2pdf().set({
-    margin: 0, filename: 'NUBTK_Cover_Page.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    margin: 0, 
+    filename: 'NUBTK_Cover_Page.pdf',
+    image: { type: 'jpeg', quality: 1 }, 
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, // scrollY: 0 দেওয়া হলো যাতে স্ক্রল পজিশনের কারণে এক্সট্রা পেজ না আসে
+    jsPDF: { unit: 'px', format: [794, 1120], orientation: 'portrait' } // mm এর বদলে সরাসরি HTML এর পিক্সেল সাইজ বলে দেওয়া হলো
   }).from(el).save();
   notify('⬇️ Downloading PDF...');
 }
