@@ -8,6 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
   <style>
     /* COVER PAGE PRINT STYLES */
     .cover-preview {
@@ -477,6 +479,31 @@ function deleteSaved(i) {
 
 // ─── INIT ────────────────────────────────────
 renderFields();
+
+  // ─── FIREBASE SYNC (LIVE UPDATES FROM ADMIN) ───
+const firebaseConfig = {
+  apiKey: "AIzaSyCF9BoDxWa-0XTwbCBxjHrrBdQrKioJua8",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// পেজ লোড হলেই ডাটাবেস থেকে লেটেস্ট লোগো ও ফিল্ড নিয়ে আসবে
+db.ref('settings').on('value', (snapshot) => {
+  const data = snapshot.val() || {};
+  const liveConfig = {
+    logoOptions: data.logos || [],
+    fields: data.fields || getAdminConfig().fields // ডাটাবেসে না থাকলে ডিফল্টটা দেখাবে
+  };
+  localStorage.setItem('nubtk_cover_config', JSON.stringify(liveConfig));
+  renderFields(); // UI আপডেট করবে
+});
+  
 </script>
 </body>
 </html>
