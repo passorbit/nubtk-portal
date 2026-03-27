@@ -222,24 +222,27 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let liveRoutineData = {}; // Stores the latest fetched data
 
-// ─── AUTH ─────────────────────────────────────
-// ─── AUTH (Updated with Firebase) ─────────────────────────────────────
+// ─── AUTH (Updated with Firebase & Easter Egg 😜) ──────────────────
 function tryLogin() {
   const pw = document.getElementById('admin-pw').value;
   if (!pw) { notify('⚠️ Please enter the password'); return; }
 
-  // Checking passwords from Firebase database
+  // Checking passwords from Firebase databaseছে
   notify('⏳ Checking password...');
   db.ref('settings/adminPassword').once('value').then((snapshot) => {
-    // If there is no password in the database, we will take the default 'nubtk2025'ে
     const storedPw = snapshot.val() || 'nubtk2025'; 
     
     if (pw === storedPw) {
+      // If the password matches
       document.getElementById('admin-login').style.display = 'none';
       document.getElementById('admin-main').style.display = 'block';
       renderLogos(); renderFieldsEditor(); renderExistingSections();
       notify('✅ Welcome, Admin!');
+    } else if (pw === 'nubtk2025') {
+      // Funny Easter Egg! (If the original password has been changed but someone gives the default one)
+      notify('এত সোজা না চান্দু 😜');
     } else {
+      // Another incorrect password was entered.
       notify('❌ Wrong password!');
     }
   }).catch(e => {
