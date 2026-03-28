@@ -43,6 +43,59 @@
     
     .cover-title { text-align: center; font-size: 12pt; font-style: italic; margin-bottom: 20px; color: #333; } /* Reduced from 32px to 20px */
 
+/* DESIGN 6: NUBTK Gold Arc (Light & Minimal) - INSPIRED BY NEW IMAGE 1000228421.jpg */
+    .template-6 { 
+      background: white; color: #111; font-family: 'DM Sans', sans-serif; position: relative; 
+      border: 3px solid #C9A84C; border-radius: 20px; /* সুন্দর রাডিয়াস যোগ করা হয়েছে */
+      padding: 30px 60px; /* বর্ডারের কারণে প্যাডিং এডজাস্ট করা হয়েছে */
+      overflow: hidden;
+    }
+    /* সূক্ষ্ম জিওমেট্রিক লাইনের কাজ */
+    .template-6::before {
+      content: ''; position: absolute; top: -50px; left: -50px; 
+      width: 150px; height: 150px; border-radius: 50%;
+      border: 2px solid rgba(201,168,76,0.3); z-index: 1;
+    }
+    .template-6::after {
+      content: ''; position: absolute; bottom: 100px; right: -80px; 
+      width: 250px; height: 250px; border-radius: 50%;
+      border: 3px solid rgba(201,168,76,0.2); z-index: 1;
+    }
+    .template-6 .cover-header { position: relative; z-index: 2; margin-bottom: 12px; }
+    .template-6 .cover-logo-img { width: 140px; height: 140px; }
+    .template-6 .cover-uni-name { color: #0B1D3A; font-size: 17pt; }
+    .template-6 .cover-dept { color: #555; margin-top: 0; font-size: 11.5pt; }
+    .template-6 .cover-divider { border-color: #C9A84C; border-width: 2.5px; }
+    .template-6 .cover-meta { position: relative; z-index: 2; margin-bottom: 24px; }
+    .template-6 .cover-meta-row strong { color: #0B1D3A; }
+    .template-6 .cover-type-badge { background: #0B1D3A; color: #C9A84C; border: none; font-size: 13pt; padding: 5px 30px; margin: 10px 0; border-radius: 8px; }
+    .template-6 .cover-title { color: #C9A84C; font-size: 14pt; font-weight: bold; font-style: normal; text-decoration: none; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 18px; }
+    .template-6 .cover-table { font-family: 'DM Sans', sans-serif; }
+    .template-6 .cover-table th { background: #0B1D3A; color: #fff; }
+    .template-6 .cover-table td { border-color: rgba(201,168,76,0.2); }
+    .template-6 .cover-table td strong { color: #0B1D3A; }
+    .template-6 .cover-date { color: #777; font-size: 11pt; border-top: 1px solid #eee; padding-top: 15px; }
+
+    /* DESIGN 7: Fine Line Minimal (Light & Modern) - INSPIRED BY NEW IMAGE 1000228421.jpg */
+    .template-7 { 
+      background: white; color: #111; font-family: 'DM Sans', sans-serif; position: relative; 
+      border: 1px solid #C9A84C; border-radius: 12px;
+      padding: 0; overflow: hidden;
+    }
+    .template-7 .cover-header { text-align: left; padding: 25px 50px 10px; border-bottom: 2px solid #C9A84C; margin-bottom: 20px; }
+    .template-7 .cover-logo-row { flex-direction: row; justify-content: flex-start; gap: 20px; }
+    .template-7 .cover-logo-img { width: 100px; height: 100px; object-fit: contain; }
+    .template-7 .cover-uni-name { font-size: 15pt; color: #0B1D3A; text-align: left;}
+    .template-7 .cover-dept { margin-top: 0; font-size: 11pt; color: #555; text-align: left; }
+    .template-7 .cover-divider { display: none; }
+    .template-7 .cover-meta { text-align: left; padding: 0 50px 0 70px; margin-bottom: 20px; }
+    .template-7 .cover-type-badge { background: transparent; color: #C9A84C; border: 2px solid #C9A84C; border-radius: 5px; font-size: 11.5pt; font-weight: 800;}
+    .template-7 .cover-title { border: 1px solid #ddd; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-style: normal; color: #111;}
+    .template-7 .cover-table, .template-7 .cover-table th, .template-7 .cover-table td { border: none; }
+    .template-7 .cover-table th { background: transparent; color: #0B1D3A; border-bottom: 2px solid #ddd; text-align: left; font-size: 13pt; }
+    .template-7 .cover-table td { border: none; padding-top: 12px; color: #333; }
+    .template-7 .cover-date { bottom: 0; padding: 15px 50px 10px; color: #C9A84C; background: #fafafa; border-top: 1px solid #ddd; font-weight: 700;}
+
     /* DESIGN 4: Modern Geometric (Charcoal Gold) - Inspired by User Image */
     .template-4 { 
       background: #0B1D3A; /* Deep Dark Blue base like the image theme */
