@@ -43,6 +43,39 @@
     
     .cover-title { text-align: center; font-size: 12pt; font-style: italic; margin-bottom: 20px; color: #333; } /* Reduced from 32px to 20px */
 
+/* DESIGN 8: Minimal Geometric Arcs - INSPIRED BY NEW IMAGE 1000228421.jpg */
+    .template-8 { 
+      background: white; color: #111; font-family: 'DM Sans', sans-serif; position: relative; 
+      border: 3px solid #C9A84C; border-radius: 20px;
+      padding: 30px 60px;
+      overflow: hidden;
+    }
+    /* সূক্ষ্ম জিওমেট্রিক লাইনের কাজ */
+    .template-8::before {
+      content: ''; position: absolute; top: -50px; left: -50px; 
+      width: 150px; height: 150px; border-radius: 50%;
+      border: 2px solid rgba(201,168,76,0.3); z-index: 1;
+    }
+    .template-8::after {
+      content: ''; position: absolute; bottom: 100px; right: -80px; 
+      width: 250px; height: 250px; border-radius: 50%;
+      border: 3px solid rgba(201,168,76,0.2); z-index: 1;
+    }
+    .template-8 .cover-header { position: relative; z-index: 2; margin-bottom: 12px; }
+    .template-8 .cover-logo-img { width: 140px; height: 140px; }
+    .template-8 .cover-uni-name { color: #0B1D3A; font-size: 17pt; }
+    .template-8 .cover-dept { color: #555; margin-top: 0; font-size: 11.5pt; }
+    .template-8 .cover-divider { border-color: #C9A84C; border-width: 2.5px; }
+    .template-8 .cover-meta { position: relative; z-index: 2; margin-bottom: 24px; }
+    .template-8 .cover-meta-row strong { color: #0B1D3A; }
+    .template-8 .cover-type-badge { background: #0B1D3A; color: #C9A84C; border: none; font-size: 13pt; padding: 5px 30px; margin: 10px 0; border-radius: 8px; }
+    .template-8 .cover-title { color: #C9A84C; font-size: 14pt; font-weight: bold; font-style: normal; text-decoration: none; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 18px; }
+    .template-8 .cover-table { font-family: 'DM Sans', sans-serif; }
+    .template-8 .cover-table th { background: #0B1D3A; color: #fff; }
+    .template-8 .cover-table td { border-color: rgba(201,168,76,0.2); }
+    .template-8 .cover-table td strong { color: #0B1D3A; }
+    .template-8 .cover-date { color: #777; font-size: 11pt; border-top: 1px solid #eee; padding-top: 15px; }
+
 /* DESIGN 6: NUBTK Gold Arc (Light & Minimal) - INSPIRED BY NEW IMAGE 1000228421.jpg */
     .template-6 { 
       background: white; color: #111; font-family: 'DM Sans', sans-serif; position: relative; 
@@ -372,7 +405,10 @@ function renderFields() {
       <option value="template-6" ${saved.template==='template-6'?'selected':''}>Design 6: NUBTK Gold Arc</option>
       
       <option value="template-7" ${saved.template==='template-7'?'selected':''}>Design 7: Fine Line Minimal</option> 
-    </select>
+
+      <option value="template-8" ${saved.template==='template-8'?'selected':''}>Design 8: Minimal Geometric Arcs</option>
+
+</select>
   </div>`;
   html += `<div class="form-group full">
     <label class="form-label">Select Logo</label>
