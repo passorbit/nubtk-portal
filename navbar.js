@@ -19,6 +19,7 @@ const navbarHTML = `
       <a href="${pagesPrefix}routine.html" class="nav-link">Routine</a>
       <a href="${pagesPrefix}teachers.html" class="nav-link">Teacher's Directory</a>
       <a href="${pagesPrefix}admin.html" class="nav-link nav-admin">Admin</a>
+      <a href="${pagesPrefix}index-maker.html" class="nav-link">Index Maker</a>
     </div>
     
     <button class="nav-hamburger" onclick="toggleNav()">&#9776;</button>
