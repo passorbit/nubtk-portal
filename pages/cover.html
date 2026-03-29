@@ -351,6 +351,19 @@
 <div class="notif" id="notif"></div>
 
 <script>
+    // ─── FIREBASE SYNC (LIVE UPDATES FROM ADMIN) ───
+const firebaseConfig = {
+  apiKey: "AIzaSyCF9BoDxWa-0XTwbCBxjHrrBdQrKioJua8",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+  
 // ─── HELPERS ────────────────────────────────
 function notify(msg, dur=2800) {
   const n = document.getElementById('notif');
@@ -564,24 +577,6 @@ function setupAutoDesignation() {
   document.addEventListener('click', function(e) {
     if (e.target !== nameInput && !suggestBox.contains(e.target)) {
       suggestBox.style.display = 'none';
-    }
-  });
-}
-
-  nameInput.addEventListener('input', function() {
-    const typedName = this.value.trim().toLowerCase();
-    if (typedName === '') return;
-
-    // টাইপ করা নামের সাথে আমাদের লিস্ট মেলানো হচ্ছে
-    for (const [name, designation] of Object.entries(teacherMap)) {
-      if (typedName.includes(name.toLowerCase()) || name.toLowerCase().includes(typedName)) {
-        // ড্রপডাউনে ওই পদবিটা থাকলে অটো সিলেক্ট হয়ে যাবে
-        const optionExists = Array.from(desigSelect.options).some(opt => opt.value === designation);
-        if (optionExists) {
-          desigSelect.value = designation;
-        }
-        break; 
-      }
     }
   });
 }
@@ -806,19 +801,6 @@ function deleteSaved(i) {
 
 // ─── INIT ────────────────────────────────────
 renderFields();
-
-  // ─── FIREBASE SYNC (LIVE UPDATES FROM ADMIN) ───
-const firebaseConfig = {
-  apiKey: "AIzaSyCF9BoDxWa-0XTwbCBxjHrrBdQrKioJua8",
-  authDomain: "nubtk-portal.firebaseapp.com",
-  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nubtk-portal",
-  storageBucket: "nubtk-portal.firebasestorage.app",
-  messagingSenderId: "45891604739",
-  appId: "1:45891604739:web:33251f784080f09816d936"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
 // পেজ লোড হলেই ডাটাবেস থেকে লেটেস্ট লোগো ও ফিল্ড নিয়ে আসবে
 db.ref('settings').on('value', (snapshot) => {
