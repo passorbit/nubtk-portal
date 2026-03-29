@@ -74,6 +74,12 @@
       <label class="form-label">Password</label>
       <input type="password" class="form-input" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') tryLogin()"/>
     </div>
+    <div style="text-align:left; margin: 12px 0 16px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--muted);">
+            <input type="checkbox" id="remember-me" style="accent-color:var(--gold); width:16px; height:16px;">
+            Remember Me
+          </label>
+     </div>
     <button class="btn btn-gold" onclick="tryLogin()">Login →</button>
     <p class="form-hint" style="margin-top:12px;">Default password: <code style="color:var(--gold)">nubtk2025</code></p>
   </div>
@@ -297,6 +303,68 @@ function tryLogin() {
   }).catch(e => {
     notify('❌ Database error! Check connection.');
   });
+}
+
+  // ─── AUTH & FIREBASE FETCH ──────────────────
+
+// পেজ লোড হলেই চেক করবে আগে থেকে লগিন করা আছে কি না
+document.addEventListener('DOMContentLoaded', () => {
+  checkAutoLogin();
+  adminTab('logos'); // ডিফল্ট ট্যাব
+});
+
+function checkAutoLogin() {
+  const savedSession = localStorage.getItem('nubtk_admin_session');
+  if (savedSession === 'true') {
+    // যদি সেশন সেভ থাকে, তাহলে সরাসরি প্যানেল ওপেন হবে
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-main').style.display = 'block';
+    
+    loadAdminSettings(); 
+    listenToFirebase();
+    listenToTeachers();
+    notify('✅ Restored session successfully!');
+  }
+}
+
+function tryLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  const remember = document.getElementById('remember-me').checked; // চেকবক্সের ভ্যালু চেক
+  
+  if (!pw) { notify('⚠️ Please enter the password'); return; }
+
+  notify('⏳ Checking password...');
+  db.ref('settings/adminPassword').once('value').then((snapshot) => {
+    const storedPw = snapshot.val() || 'nubtk2025'; 
+    
+    if (pw === storedPw) {
+      // লগিন সাকসেস হলে প্যানেল ওপেন হবে
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-main').style.display = 'block';
+      
+      // যদি Remember Me তে টিক দেওয়া থাকে, তাহলে সেশন সেভ করবে
+      if (remember) {
+        localStorage.setItem('nubtk_admin_session', 'true');
+      }
+
+      loadAdminSettings(); 
+      listenToFirebase();
+      listenToTeachers();
+      notify('✅ Welcome, Admin!');
+    } else if (pw === 'nubtk2025') {
+      notify('এত সোজা না চান্দু 😜');
+    } else {
+      notify('❌ Wrong password!');
+    }
+  }).catch(e => {
+    notify('❌ Database error! Check connection.');
+  });
+}
+
+// লগআউট ফাংশন আপডেট করা হলো (সেশন ক্লিয়ার করার জন্য)
+function logout() { 
+  localStorage.removeItem('nubtk_admin_session'); // লগআউট করলে সেশন ডিলিট হয়ে যাবে
+  location.reload(); 
 }
 
 function changePassword() {
