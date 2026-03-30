@@ -224,7 +224,9 @@
             <input type="file" id="t-image" class="form-input" accept="image/*" style="padding: 6px;">
           </div>
         </div>
-        <button class="btn btn-outline" style="margin-top:15px; width:100%; border-color:var(--gold); color:var(--gold);" onclick="saveNewTeacher()">+ Add Teacher</button>
+        <div id="teacher-form-btn-wrap" style="display:flex; gap:10px; margin-top:15px;">
+          <button class="btn btn-outline" style="width:100%; border-color:var(--gold); color:var(--gold);" onclick="saveNewTeacher()">+ Add Teacher</button>
+        </div>
       </div>
 
       <h3 style="margin-bottom:15px; font-size:1.1rem; color:#fff;">Existing Teachers</h3>
@@ -499,16 +501,68 @@ function renderAdminTeacherList() {
         <div style="font-weight:bold; color:var(--gold); font-size:1.05rem; display:flex; align-items:center;">${t.name} ${acroBadge}</div>
         <div style="font-size:0.85rem; color:#ccc; margin-top:2px;">${t.designation} • Dept. of ${t.dept}</div>
       </div>
-      <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding:6px 12px; font-size:0.8rem;" onclick="deleteTeacher('${key}')">🗑️ Delete</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline" style="color:#4ade80; border-color:#4ade80; padding:6px 12px; font-size:0.8rem;" onclick="editTeacher('${key}')">✏️ Edit</button>
+        <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding:6px 12px; font-size:0.8rem;" onclick="deleteTeacher('${key}')">🗑️ Delete</button>
+      </div>
+    </div>
     </div>
     `;
   }).join('');
 }
 
-// নতুন টিচার অ্যাড করা (Acronym সহ)
+let editingTeacherKey = null; // ট্র্যাক করবে আমরা নতুন অ্যাড করছি নাকি এডিট করছি
+
+// 🆕 টিচারের ইনফো এডিট ফর্মে নিয়ে আসার ফাংশন
+function editTeacher(key) {
+  const t = liveTeachers[key];
+  if(!t) return;
+
+  editingTeacherKey = key; // চাবিটা সেভ করে রাখলাম আপডেট করার জন্য
+  
+  // ফর্মের ফিল্ডগুলোতে ডাটা বসিয়ে দেওয়া হচ্ছে
+  document.getElementById('t-name').value = t.name || '';
+  document.getElementById('t-acro').value = t.acronym || '';
+  document.getElementById('t-desig').value = t.designation || 'Lecturer';
+  document.getElementById('t-dept').value = t.dept || '';
+  document.getElementById('t-email').value = t.email || '';
+  document.getElementById('t-phone').value = t.phone || '';
+  document.getElementById('t-gender').value = t.gender || 'male';
+  
+  tempTeacherImage = t.image || ''; // ছবি থাকলে সেটাও মেমোরিতে রাখলাম
+  
+  // ইউজারকে স্মুথলি একদম ওপরের ফর্মে স্ক্রল করে নিয়ে যাবে
+  document.getElementById('atab-teachers').scrollIntoView({behavior: 'smooth'});
+  
+  // বাটনের ডিজাইন পরিবর্তন করে "Update" ও "Cancel" করা হলো
+  const btnWrap = document.getElementById('teacher-form-btn-wrap');
+  btnWrap.innerHTML = `
+    <button class="btn btn-outline" style="flex:1; border-color:#4ade80; color:#4ade80;" onclick="saveNewTeacher()">💾 Update Teacher</button>
+    <button class="btn btn-outline" style="flex:1; border-color:#f87171; color:#f87171;" onclick="cancelEditTeacher()">❌ Cancel</button>
+  `;
+}
+
+// 🆕 এডিট ক্যানসেল বা ফর্ম রিসেট করার ফাংশন
+function cancelEditTeacher() {
+  editingTeacherKey = null; // আবার আগের অবস্থায় (Add mode) ফেরত
+  
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-acro').value = '';
+  document.getElementById('t-dept').value = '';
+  document.getElementById('t-email').value = '';
+  document.getElementById('t-phone').value = '';
+  document.getElementById('t-gender').value = 'male';
+  document.getElementById('t-image').value = '';
+  tempTeacherImage = '';
+  
+  const btnWrap = document.getElementById('teacher-form-btn-wrap');
+  btnWrap.innerHTML = `<button class="btn btn-outline" style="width:100%; border-color:var(--gold); color:var(--gold);" onclick="saveNewTeacher()">+ Add Teacher</button>`;
+}
+
+// 🔄 নতুন অ্যাড এবং আপডেট—দুটোই এই একটা ফাংশন হ্যান্ডেল করবে
 function saveNewTeacher() {
   const name = document.getElementById('t-name').value.trim();
-  const acro = document.getElementById('t-acro').value.trim().toUpperCase(); // Acronym সবসময় বড় হাতের অক্ষরে সেভ হবে
+  const acro = document.getElementById('t-acro') ? document.getElementById('t-acro').value.trim().toUpperCase() : '';
   const desig = document.getElementById('t-desig').value;
   const dept = document.getElementById('t-dept').value.trim();
   const email = document.getElementById('t-email').value.trim();
@@ -518,54 +572,24 @@ function saveNewTeacher() {
   if(!name || !dept) { notify('⚠️ Name and Department are required!'); return; }
 
   notify('⏳ Saving to Database...');
-  const newRef = db.ref('teachers').push();
-  newRef.set({
+  
+  const payload = {
     name, acronym: acro, designation: desig, dept, email, phone, gender, image: tempTeacherImage
-  }).then(() => {
-    notify('✅ Teacher added successfully!');
-    document.getElementById('t-name').value = '';
-    document.getElementById('t-acro').value = '';
-    document.getElementById('t-dept').value = '';
-    document.getElementById('t-email').value = '';
-    document.getElementById('t-phone').value = '';
-    document.getElementById('t-gender').value = 'male';
-    document.getElementById('t-image').value = '';
-    tempTeacherImage = '';
-  }).catch(e => notify('❌ Failed to save teacher.'));
-}
+  };
 
-// নতুন টিচার অ্যাড করা
-function saveNewTeacher() {
-  const name = document.getElementById('t-name').value.trim();
-  const desig = document.getElementById('t-desig').value;
-  const dept = document.getElementById('t-dept').value.trim();
-  const email = document.getElementById('t-email').value.trim();
-  const phone = document.getElementById('t-phone').value.trim();
-  const gender = document.getElementById('t-gender').value; // 🆕 জেন্ডার ভ্যালু নেওয়া হলো
-
-  if(!name || !dept) { notify('⚠️ Name and Department are required!'); return; }
-
-  notify('⏳ Saving to Database...');
-  const newRef = db.ref('teachers').push();
-  newRef.set({
-    name, designation: desig, dept, email, phone, gender, image: tempTeacherImage
-  }).then(() => {
-    notify('✅ Teacher added successfully!');
-    // ফর্ম ক্লিয়ার করা
-    document.getElementById('t-name').value = '';
-    document.getElementById('t-dept').value = '';
-    document.getElementById('t-email').value = '';
-    document.getElementById('t-phone').value = '';
-    document.getElementById('t-gender').value = 'male'; // রিসেট
-    document.getElementById('t-image').value = '';
-    tempTeacherImage = '';
-  }).catch(e => notify('❌ Failed to save teacher.'));
-}
-
-// টিচার ডিলিট করা
-function deleteTeacher(key) {
-  if(confirm('Are you sure you want to remove this teacher from the directory?')) {
-    db.ref('teachers/' + key).remove().then(() => notify('🗑️ Teacher removed successfully!'));
+  if (editingTeacherKey) {
+    // 🛠️ যদি আগে থেকেই থাকে, তবে Update করবে
+    db.ref('teachers/' + editingTeacherKey).update(payload).then(() => {
+      notify('✅ Teacher updated successfully!');
+      cancelEditTeacher(); // কাজ শেষ, ফর্ম রিসেট
+    }).catch(e => notify('❌ Failed to update teacher.'));
+  } else {
+    // ➕ যদি নতুন হয়, তবে Add করবে
+    const newRef = db.ref('teachers').push();
+    newRef.set(payload).then(() => {
+      notify('✅ Teacher added successfully!');
+      cancelEditTeacher(); // কাজ শেষ, ফর্ম রিসেট
+    }).catch(e => notify('❌ Failed to save teacher.'));
   }
 }
 
