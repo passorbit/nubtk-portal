@@ -469,7 +469,7 @@ function listenToTeachers() {
   });
 }
 
-// টিচার লিস্ট পেজে দেখানো (Acronym সহ)
+// টিচার লিস্ট পেজে দেখানো (Acronym, Edit এবং Delete বাটন সহ)
 function renderAdminTeacherList() {
   const list = document.getElementById('admin-teacher-list');
   if (!list) return;
@@ -489,7 +489,6 @@ function renderAdminTeacherList() {
       finalImage = (t.gender === 'female') ? femaleAvatar : maleAvatar;
     }
 
-    // Acronym থাকলে নামের পাশে ছোট ব্যাজ হিসেবে দেখাবে
     const acroBadge = t.acronym ? `<span style="background:rgba(201,168,76,0.2); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.8rem; margin-left:6px; border:1px solid var(--gold);">${t.acronym}</span>` : '';
 
     return `
@@ -501,16 +500,22 @@ function renderAdminTeacherList() {
         <div style="font-weight:bold; color:var(--gold); font-size:1.05rem; display:flex; align-items:center;">${t.name} ${acroBadge}</div>
         <div style="font-size:0.85rem; color:#ccc; margin-top:2px;">${t.designation} • Dept. of ${t.dept}</div>
       </div>
+      
       <div style="display:flex; gap:8px;">
         <button class="btn btn-outline" style="color:#4ade80; border-color:#4ade80; padding:6px 12px; font-size:0.8rem;" onclick="editTeacher('${key}')">✏️ Edit</button>
         <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding:6px 12px; font-size:0.8rem;" onclick="deleteTeacher('${key}')">🗑️ Delete</button>
       </div>
     </div>
-    </div>
     `;
   }).join('');
 }
 
+// টিচার ডিলিট করা
+function deleteTeacher(key) {
+  if(confirm('Are you sure you want to remove this teacher from the directory?')) {
+    db.ref('teachers/' + key).remove().then(() => notify('🗑️ Teacher removed successfully!'));
+  }
+}
 let editingTeacherKey = null; // ট্র্যাক করবে আমরা নতুন অ্যাড করছি নাকি এডিট করছি
 
 // 🆕 টিচারের ইনফো এডিট ফর্মে নিয়ে আসার ফাংশন
