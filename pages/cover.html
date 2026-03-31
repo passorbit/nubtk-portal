@@ -698,17 +698,47 @@ function renderPreview() {
   const logos = cfg.logoOptions && cfg.logoOptions.length > 0 ? cfg.logoOptions : getDefaultLogos();
   const logoSrc = (data.logoIdx !== null && data.logoIdx !== undefined) ? logos[data.logoIdx] : logos[0];
 
-  const dept = data.dept || '';
-  const courseTitle = data.courseTitle || '';
-  const courseCode = data.courseCode || '';
-  const coverType = data.coverType || 'ASSIGNMENT';
-  const coverTitle = data.coverTitle || '';
-  const teacherName = data.teacherName || '';
-  const teacherDesig = data.teacherDesig || 'Lecturer';
-  const studentName = data.studentName || '';
-  const studentId = data.studentId || '';
-  const section = data.section || '';
-  const submissionDate = data.submissionDate ? new Date(data.submissionDate).toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  // 🧠 BULLETPROOF AUTO-DETECT LOGIC
+  const findVal = (exactId, strictLabels, looseKeywords = [], excludeKeywords = []) => {
+    // ধাপ ১: সবচেয়ে নিরাপদ উপায়—অরিজিনাল ID চেক করা
+    if (data[exactId] !== undefined) return data[exactId];
+
+    // ধাপ ২: যদি অরিজিনাল ID না থাকে (অ্যাডমিন কাস্টম ফিল্ড বানালে), তবে লেবেল চেক করবে
+    const field = cfg.fields.find(f => {
+      const lbl = (f.label || '').toLowerCase().trim();
+      
+      // হুবহু মিলে গেলে (Exact Match)
+      if (strictLabels.includes(lbl)) return true;
+      
+      // আংশিক মিললে, তবে Exclude লিস্টের শব্দ থাকলে বাদ দেবে (Strict Partial Match)
+      const match = looseKeywords.some(k => lbl.includes(k));
+      const exclude = excludeKeywords.some(e => lbl.includes(e));
+      return match && !exclude;
+    });
+
+    if (field && data[field.id] !== undefined) return data[field.id];
+    return ''; // কিছুই না পেলে ফাঁকা রিটার্ন করবে
+  };
+
+  // 🛡️ অত্যন্ত সতর্কতার সাথে লেবেল ম্যাপিং (আপনার দেওয়া লজিক অনুযায়ী)
+  const dept = findVal('dept', ['department', 'dept'], ['department'], ['teacher']);
+  const courseTitle = findVal('courseTitle', ['course title', 'subject name'], ['course title', 'subject'], ['code', 'teacher']);
+  const courseCode = findVal('courseCode', ['course code', 'subject code'], ['code'], ['title', 'name']);
+  const coverType = findVal('coverType', ['type', 'assignment type', 'report type'], [], ['file', 'submission', 'document']);
+  const coverTitle = findVal('coverTitle', ['title', 'topic'], ['topic'], ['course', 'job', 'subject', 'assignment type']);
+  
+  const teacherName = findVal('teacherName', ['teacher name', "teacher's name", 'submitted to'], ['teacher', 'faculty'], ['designation']);
+  const teacherDesig = findVal('teacherDesig', ['designation', "teacher's designation", 'teacher designation'], ['designation'], ['student']);
+  
+  const studentName = findVal('studentName', ['student name', 'your name', 'submitted by', 'name'], ['student name', 'your name'], ['teacher', 'course', 'subject', 'university', 'father', 'mother']);
+  const studentId = findVal('studentId', ['student id', 'id', 'roll'], ['id', 'roll'], ['email', 'transaction', 'payment']);
+  const section = findVal('section', ['section', 'batch'], ['section'], ['cross']);
+  
+  let submissionDate = findVal('submissionDate', ['date of submission', 'submission date', 'date'], ['date'], ['birth']) || data.submissionDate || '';
+  if (submissionDate && !submissionDate.includes('/')) {
+    const d = new Date(submissionDate);
+    if (!isNaN(d)) submissionDate = d.toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric'});
+  }
 
   const selectedTemplate = data.template || 'template-1';
   document.getElementById('cover-output').innerHTML = `
@@ -726,7 +756,7 @@ function renderPreview() {
       ${courseCode ? `<div class="cover-meta-row"><strong>Course Code:</strong> ${courseCode}</div>` : ''}
       ${courseTitle ? `<div class="cover-meta-row"><strong>Course Title:</strong> ${courseTitle}</div>` : ''}
       <div style="margin-top:16px;">
-        <span class="cover-type-badge">${coverType}</span>
+        <span class="cover-type-badge">${coverType || 'ASSIGNMENT'}</span>
       </div>
     </div>
 
@@ -756,6 +786,7 @@ function renderPreview() {
     <div class="cover-date">Date of Submission: ${submissionDate}</div>
   </div>`;
 }
+
 
 // ─── DOWNLOAD ───────────────────────────────
 function downloadPDF() {
