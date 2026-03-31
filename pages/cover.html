@@ -700,7 +700,6 @@ function renderPreview() {
 
   const findVal = (exactId, strictLabels, looseKeywords = [], excludeKeywords = []) => {
     let targetField = cfg.fields.find(f => strictLabels.includes((f.label || '').toLowerCase().trim()));
-    // 🛠️ এখানে String() যোগ করা হয়েছে যাতে নাম্বার দিলেও ক্র্যাশ না করে
     if (targetField && data[targetField.id] !== undefined && data[targetField.id] !== '') return String(data[targetField.id]);
 
     targetField = cfg.fields.find(f => {
@@ -715,19 +714,19 @@ function renderPreview() {
     if (targetField) {
        const lbl = (f.label || '').toLowerCase().trim();
        const isExcluded = excludeKeywords.some(e => lbl.includes(e));
-       if (!isExcluded && data[targetField.id] !== undefined) return String(data[targetField.id]);
+       if (!isExcluded && data[targetField.id] !== undefined && data[targetField.id] !== '') return String(data[targetField.id]);
     }
     return '';
   };
 
-  const dept = findVal('dept', ['department', 'dept'], ['department', 'dept'], ['teacher', 'student', 'name', 'code', 'date']);
-  const courseTitle = findVal('courseTitle', ['course title', 'subject name', 'course name'], ['course title', 'subject', 'course'], ['code', 'teacher', 'student', 'date', 'id']);
-  const courseCode = findVal('courseCode', ['course code', 'subject code'], ['code'], ['title', 'name', 'teacher', 'student', 'date']);
-  const coverType = findVal('coverType', ['type', 'assignment type', 'report type'], ['type'], ['file', 'submission', 'name', 'title', 'date']);
-  const coverTitle = findVal('coverTitle', ['title', 'topic', 'assignment topic'], ['topic'], ['course', 'subject', 'job', 'name', 'teacher', 'student', 'date']);
+  let dept = findVal('dept', ['department', 'dept'], ['department', 'dept'], ['teacher', 'student', 'name', 'code', 'date']);
+  let courseTitle = findVal('courseTitle', ['course title', 'subject name', 'course name'], ['course title', 'subject', 'course'], ['code', 'teacher', 'student', 'date', 'id']);
+  let courseCode = findVal('courseCode', ['course code', 'subject code'], ['code'], ['title', 'name', 'teacher', 'student', 'date']);
+  let coverType = findVal('coverType', ['type', 'assignment type', 'report type'], ['type'], ['file', 'submission', 'name', 'title', 'date']);
+  let coverTitle = findVal('coverTitle', ['title', 'topic', 'assignment topic'], ['topic'], ['course', 'subject', 'job', 'name', 'teacher', 'student', 'date']);
 
   let teacherName = findVal('teacherName', ['teacher name', "teacher's name", 'submitted to', 'course teacher'], ['teacher', 'faculty', 'submitted to'], ['designation', 'student', 'code', 'date', 'id', 'section']);
-  const teacherDesig = findVal('teacherDesig', ['designation', "teacher's designation", 'teacher designation'], ['designation'], ['student', 'name', 'code', 'date', 'id', 'section']);
+  let teacherDesig = findVal('teacherDesig', ['designation', "teacher's designation", 'teacher designation'], ['designation'], ['student', 'name', 'code', 'date', 'id', 'section']);
 
   let studentName = findVal('studentName', ['student name', 'your name', 'submitted by', 'name'], ['student', 'name', 'submitted by'], ['teacher', 'course', 'subject', 'father', 'mother', 'designation', 'code', 'date', 'section']);
   let studentId = findVal('studentId', ['student id', 'id', 'roll', 'id no'], ['id', 'roll'], ['email', 'transaction', 'name', 'title', 'teacher', 'date', 'section']);
@@ -735,16 +734,28 @@ function renderPreview() {
 
   let submissionDate = findVal('submissionDate', ['date of submission', 'submission date', 'date'], ['date'], ['birth', 'name', 'teacher', 'student', 'title', 'code', 'id', 'section']);
   
-  // 🧹 AUTO-CLEANUP MAGIC (এখন আর ক্র্যাশ করবে না!)
-  studentName = studentName.replace(/^(Name|Student Name)\s*:\s*/i, '').trim();
-  studentId = studentId.replace(/^(Student ID|ID|Roll)\s*:\s*/i, '').trim();
-  section = section.replace(/^(Section|Batch)\s*:\s*/i, '').trim();
-  teacherName = teacherName.replace(/^(Course Teacher|Teacher Name|Name)\s*:\s*/i, '').trim();
+  // 🧹 AUTO-CLEANUP MAGIC
+  if (studentName) studentName = studentName.replace(/^(Name|Student Name)\s*:\s*/i, '').trim();
+  if (studentId) studentId = studentId.replace(/^(Student ID|ID|Roll)\s*:\s*/i, '').trim();
+  if (section) section = section.replace(/^(Section|Batch)\s*:\s*/i, '').trim();
+  if (teacherName) teacherName = teacherName.replace(/^(Course Teacher|Teacher Name|Name)\s*:\s*/i, '').trim();
 
   if (submissionDate && !submissionDate.includes('/')) {
     const d = new Date(submissionDate);
     if (!isNaN(d)) submissionDate = d.toLocaleDateString('en-GB', {day:'2-digit',month:'2-digit',year:'numeric'});
   }
+
+  // 💡 DEFAULT PLACEHOLDERS (যাতে ফিল্ড ফাঁকা থাকলেও সুন্দর ডেমো দেখায়)
+  const d_dept = dept || '[Department Name]';
+  const d_courseCode = courseCode || '[Course Code]';
+  const d_courseTitle = courseTitle || '[Course Title]';
+  const d_coverTitle = coverTitle || '[Assignment Topic]';
+  const d_teacherName = teacherName || '[Teacher\'s Name]';
+  const d_teacherDesig = teacherDesig || '[Designation]';
+  const d_studentName = studentName || '[Your Name]';
+  const d_studentId = studentId || '[Your ID]';
+  const d_section = section || '[Section/Batch]';
+  const d_date = submissionDate || '[Date]';
 
   const selectedTemplate = data.template || 'template-1';
   document.getElementById('cover-output').innerHTML = `
@@ -754,19 +765,19 @@ function renderPreview() {
         <img class="cover-logo-img" src="${logoSrc}" alt="NUBTK Logo" crossorigin="anonymous"/>
         <div class="cover-uni-name">Northern University of Business<br/>&amp; Technology Khulna</div>
       </div>
-      <div class="cover-dept">Department of ${dept || 'Computer Science and Engineering'}</div>
+      <div class="cover-dept" style="${!dept ? 'color:#94a3b8;' : ''}">Department of ${d_dept}</div>
       <hr class="cover-divider"/>
     </div>
 
     <div class="cover-meta">
-      ${courseCode ? `<div class="cover-meta-row"><strong>Course Code:</strong> ${courseCode}</div>` : ''}
-      ${courseTitle ? `<div class="cover-meta-row"><strong>Course Title:</strong> ${courseTitle}</div>` : ''}
+      <div class="cover-meta-row" style="${!courseCode ? 'color:#94a3b8;' : ''}"><strong>Course Code:</strong> ${d_courseCode}</div>
+      <div class="cover-meta-row" style="${!courseTitle ? 'color:#94a3b8;' : ''}"><strong>Course Title:</strong> ${d_courseTitle}</div>
       <div style="margin-top:16px;">
         <span class="cover-type-badge">${coverType || 'ASSIGNMENT'}</span>
       </div>
     </div>
 
-    ${coverTitle ? `<div class="cover-title">"${coverTitle}"</div>` : ''}
+    <div class="cover-title" style="${!coverTitle ? 'color:#94a3b8; font-size:1.2rem;' : ''}">"${d_coverTitle}"</div>
 
     <table class="cover-table">
       <tr>
@@ -775,23 +786,24 @@ function renderPreview() {
       </tr>
       <tr>
         <td>
-          <strong>${teacherName}</strong>
-          ${teacherDesig ? `<br/>${teacherDesig}` : ''}<br/>
-          Department of ${dept || 'Computer Science and Engineering'}<br/>
+          <strong style="${!teacherName ? 'color:#94a3b8;' : ''}">${d_teacherName}</strong>
+          <div style="${!teacherDesig ? 'color:#94a3b8; margin-top:4px;' : 'margin-top:4px;'}">${d_teacherDesig}</div>
+          <div style="${!dept ? 'color:#94a3b8;' : ''}">Department of ${d_dept}</div>
           Northern University of Business &amp; Technology Khulna.
         </td>
         <td>
-          <strong>Name:</strong> ${studentName}<br/>
-          <strong>Student ID:</strong> ${studentId}<br/>
-          <strong>Section:</strong> ${section}<br/>
+          <strong>Name:</strong> <span style="${!studentName ? 'color:#94a3b8;' : ''}">${d_studentName}</span><br/>
+          <strong>Student ID:</strong> <span style="${!studentId ? 'color:#94a3b8;' : ''}">${d_studentId}</span><br/>
+          <strong>Section:</strong> <span style="${!section ? 'color:#94a3b8;' : ''}">${d_section}</span><br/>
           Northern University of Business &amp; Technology Khulna.
         </td>
       </tr>
     </table>
 
-    <div class="cover-date">Date of Submission: ${submissionDate}</div>
+    <div class="cover-date" style="${!submissionDate ? 'color:#94a3b8;' : ''}">Date of Submission: ${d_date}</div>
   </div>`;
 }
+
 
 
 
