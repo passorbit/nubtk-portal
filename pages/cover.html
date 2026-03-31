@@ -108,6 +108,89 @@
     }
 
 
+    /* DESIGN 9: Red Arrow / Chevron Background */
+  .template-arrow {
+  background: #ffffff;
+  color: #111;
+  font-family: 'Times New Roman', serif;
+  position: relative;
+  overflow: hidden;
+  padding: 40px 70px;
+  box-sizing: border-box;
+}
+
+/* Top-left stacked chevrons */
+  .template-arrow::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 220px; height: 480px;
+  background:
+    linear-gradient(135deg, #1a1a1a 50%, transparent 50%) 0px 0px / 220px 90px no-repeat,
+    linear-gradient(135deg, transparent 50%, #1a1a1a 50%) 0px 90px / 220px 90px no-repeat,
+    linear-gradient(135deg, #8B0000 50%, transparent 50%) 30px 60px / 180px 80px no-repeat,
+    linear-gradient(135deg, transparent 50%, #8B0000 50%) 30px 140px / 180px 80px no-repeat,
+    linear-gradient(135deg, #C41E1E 50%, transparent 50%) 60px 110px / 140px 70px no-repeat,
+    linear-gradient(135deg, transparent 50%, #C41E1E 50%) 60px 180px / 140px 70px no-repeat,
+    linear-gradient(135deg, #1a1a1a 50%, transparent 50%) 0px 280px / 220px 90px no-repeat,
+    linear-gradient(135deg, transparent 50%, #1a1a1a 50%) 0px 370px / 220px 90px no-repeat,
+    linear-gradient(135deg, #8B0000 50%, transparent 50%) 30px 340px / 180px 80px no-repeat,
+    linear-gradient(135deg, transparent 50%, #8B0000 50%) 30px 420px / 180px 80px no-repeat,
+    linear-gradient(135deg, #C41E1E 50%, transparent 50%) 60px 385px / 140px 70px no-repeat,
+    linear-gradient(135deg, transparent 50%, #C41E1E 50%) 60px 455px / 140px 70px no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Bottom-right stacked chevrons (mirrored) */
+  .template-arrow::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 220px; height: 480px;
+  background:
+    linear-gradient(315deg, #1a1a1a 50%, transparent 50%) 0px 0px / 220px 90px no-repeat,
+    linear-gradient(315deg, transparent 50%, #1a1a1a 50%) 0px 90px / 220px 90px no-repeat,
+    linear-gradient(315deg, #8B0000 50%, transparent 50%) 10px 60px / 180px 80px no-repeat,
+    linear-gradient(315deg, transparent 50%, #8B0000 50%) 10px 140px / 180px 80px no-repeat,
+    linear-gradient(315deg, #C41E1E 50%, transparent 50%) 20px 110px / 140px 70px no-repeat,
+    linear-gradient(315deg, transparent 50%, #C41E1E 50%) 20px 180px / 140px 70px no-repeat,
+    linear-gradient(315deg, #1a1a1a 50%, transparent 50%) 0px 280px / 220px 90px no-repeat,
+    linear-gradient(315deg, transparent 50%, #1a1a1a 50%) 0px 370px / 220px 90px no-repeat,
+    linear-gradient(315deg, #8B0000 50%, transparent 50%) 10px 340px / 180px 80px no-repeat,
+    linear-gradient(315deg, transparent 50%, #8B0000 50%) 10px 420px / 180px 80px no-repeat,
+    linear-gradient(315deg, #C41E1E 50%, transparent 50%) 20px 385px / 140px 70px no-repeat,
+    linear-gradient(315deg, transparent 50%, #C41E1E 50%) 20px 455px / 140px 70px no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* সব content কে decoration এর উপরে রাখো */
+  .template-arrow .cover-header,
+  .template-arrow .cover-logo-row,
+  .template-arrow .cover-meta,
+  .template-arrow .cover-title,
+  .template-arrow .cover-table,
+  .template-arrow .cover-date {
+  position: relative;
+  z-index: 2;
+}
+
+/* Layout — Classic center style */
+  .template-arrow .cover-logo-row  { flex-direction: column; align-items: center; gap: 15px; margin-bottom: 14px; }
+  .template-arrow .cover-logo-img  { width: 165px; height: 165px; object-fit: contain; }
+  .template-arrow .cover-header    { text-align: center; margin-bottom: 20px; }
+  .template-arrow .cover-meta      { text-align: center; margin-bottom: 28px; }
+  .template-arrow .cover-type-badge {
+  display: inline-block; font-size: 14pt; font-weight: 900;
+  border: 2.5px solid #000; padding: 6px 32px;
+  letter-spacing: 2px; text-transform: uppercase; margin: 12px 0;
+}
+  .template-arrow .cover-date { 
+  position: absolute; bottom: 60px; left: 0; right: 0; 
+  text-align: center; font-size: 12pt; font-weight: 700; z-index: 2; 
+}
+
 /* DESIGN 6: NUBTK Gold Arc (Light & Minimal) - INSPIRED BY NEW IMAGE 1000228421.jpg */
     .template-6 { 
       background: white; color: #111; font-family: 'DM Sans', sans-serif; position: relative; 
@@ -448,6 +531,7 @@ function renderFields() {
       <option value="template-6" ${saved.template==='template-6'?'selected':''}>Design 6: NUBTK Gold Arc</option>
       <option value="template-7" ${saved.template==='template-7'?'selected':''}>Design 7: Fine Line Minimal</option>
       <option value="template-wave" ${saved.template==='template-wave'?'selected':''}>Design: Abstract Wave (Pink & Blue)</option>
+      <option value="template-arrow" ${saved.template==='template-arrow'?'selected':''}>Design 9: Red Arrow / Chevron</option>
     </select>
   </div>
   <div class="form-group full">
