@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
   <style>
     .admin-tab-bar { display:flex; gap:4px; margin-bottom:28px; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:4px; width:fit-content; flex-wrap:wrap; }
     .field-item { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-bottom:10px; }
@@ -70,6 +71,10 @@
 
   <div id="admin-login" class="admin-login section-card">
     <h2 style="margin-bottom:20px;">🔐 Admin Login</h2>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Admin Email</label>
+      <input type="email" class="form-input" id="admin-email" placeholder="e.g. admin@nubtk.portal"/>
+    </div>
     <div class="form-group" style="margin-bottom:14px;">
       <label class="form-label">Password</label>
       <input type="password" class="form-input" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') tryLogin()"/>
@@ -352,61 +357,53 @@ function tryLogin() {
   });
 }
 
-  // ─── AUTH & FIREBASE FETCH ──────────────────
+ // ─── AUTHENTICATION LOGIC (SECURE) ───
 
-// পেজ লোড হলেই চেক করবে আগে থেকে লগিন করা আছে কি না
-document.addEventListener('DOMContentLoaded', () => {
-  checkAutoLogin();
-  adminTab('logos'); // ডিফল্ট ট্যাব
-});
-
-function checkAutoLogin() {
-  const savedSession = localStorage.getItem('nubtk_admin_session');
-  if (savedSession === 'true') {
-    // যদি সেশন সেভ থাকে, তাহলে সরাসরি প্যানেল ওপেন হবে
+// পেজ লোড হলে ফায়ারবেস নিজে থেকেই চেক করবে কেউ লগিন করা আছে কি না
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    // লগিন করা থাকলে প্যানেল ওপেন হবে
     document.getElementById('admin-login').style.display = 'none';
     document.getElementById('admin-main').style.display = 'block';
     
     loadAdminSettings(); 
     listenToFirebase();
     listenToTeachers();
-    notify('✅ Restored session successfully!');
+  } else {
+    // লগিন করা না থাকলে লগিন পেজ দেখাবে
+    document.getElementById('admin-login').style.display = 'block';
+    document.getElementById('admin-main').style.display = 'none';
   }
-}
+});
 
 function tryLogin() {
+  const email = document.getElementById('admin-email').value.trim();
   const pw = document.getElementById('admin-pw').value;
-  const remember = document.getElementById('remember-me').checked; // চেকবক্সের ভ্যালু চেক
+
+  if (!email || !pw) { notify('⚠️ Please enter both email and password!'); return; }
+
+  notify('⏳ Authenticating securely...');
   
-  if (!pw) { notify('⚠️ Please enter the password'); return; }
-
-  notify('⏳ Checking password...');
-  db.ref('settings/adminPassword').once('value').then((snapshot) => {
-    const storedPw = snapshot.val() || 'nubtk2025'; 
-    
-    if (pw === storedPw) {
-      // লগিন সাকসেস হলে প্যানেল ওপেন হবে
-      document.getElementById('admin-login').style.display = 'none';
-      document.getElementById('admin-main').style.display = 'block';
-      
-      // যদি Remember Me তে টিক দেওয়া থাকে, তাহলে সেশন সেভ করবে
-      if (remember) {
-        localStorage.setItem('nubtk_admin_session', 'true');
-      }
-
-      loadAdminSettings(); 
-      listenToFirebase();
-      listenToTeachers();
+  // ফায়ারবেস অথেন্টিকেশন দিয়ে লগিন চেক
+  firebase.auth().signInWithEmailAndPassword(email, pw)
+    .then((userCredential) => {
       notify('✅ Welcome, Admin!');
-    } else if (pw === 'nubtk2025') {
-      notify('এত সোজা না চান্দু 😜');
-    } else {
-      notify('❌ Wrong password!');
-    }
-  }).catch(e => {
-    notify('❌ Database error! Check connection.');
+      // সফল হলে onAuthStateChanged নিজে থেকেই প্যানেল ওপেন করে দেবে
+    })
+    .catch((error) => {
+      notify('❌ Login failed! Check credentials.');
+      console.error(error.message);
+    });
+}
+
+function logout() { 
+  firebase.auth().signOut().then(() => {
+    notify('↩️ Logged out successfully');
+    location.reload(); 
   });
 }
+
+// ⚠️ Change Password অপশনটি এখন ফায়ারবেস কনসোল থেকে করতে হবে, তাই সেটিংস প্যানেলের পাসওয়ার্ড চেঞ্জের কোড আপাতত ইগনোর করতে পারেন।
 
 // লগআউট ফাংশন আপডেট করা হলো (সেশন ক্লিয়ার করার জন্য)
 function logout() { 
