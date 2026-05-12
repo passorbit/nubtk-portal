@@ -214,29 +214,63 @@ function generateRoutine() {
   });
 }
 
+// ─── SMART DOWNLOAD FUNCTIONS (FIXED CROPPING) ───
+
 function downloadRoutinePDF() {
   const el = document.getElementById('routine-printable');
-  // PDF এর ওপর-নিচের মার্জিন একটু কমিয়ে দেওয়া হয়েছে যেন সেভ থাকার জায়গা পায়
+  // স্ক্রল বক্সটিকে খুঁজে বের করা
+  const tableWrap = el.querySelector('div[style*="overflow-x:auto"]') || el.querySelector('div[style*="overflow-x: auto"]');
+  
+  // সাময়িকভাবে স্ক্রলিং বন্ধ করে টেবিলটাকে পুরোপুরি প্রসারিত করা
+  const originalOverflow = tableWrap ? tableWrap.style.overflowX : '';
+  if (tableWrap) tableWrap.style.overflowX = 'visible';
+
+  notify('⏳ Preparing full PDF...');
+
   html2pdf().set({
     margin: [6, 10, 6, 10], 
-    filename: `NUBTK_Routine_Section_${document.getElementById('section-input').value}.pdf`,
+    filename: `NUBTK_Routine_Section_${document.getElementById('section-input').value || 'Custom'}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+    // html2canvas কে বলে দেওয়া হচ্ছে যে টেবিলের আসল সাইজ কত
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0, width: el.scrollWidth, windowWidth: el.scrollWidth },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-  }).from(el).save();
-  notify('⬇️ Downloading PDF...');
+  }).from(el).save().then(() => {
+    // ডাউনলোড শেষে আবার আগের ডিজাইনে ফেরত নেওয়া
+    if (tableWrap) tableWrap.style.overflowX = originalOverflow;
+    notify('✅ PDF Downloaded Successfully!');
+  });
 }
 
 function downloadRoutineJPG() {
   const el = document.getElementById('routine-printable');
-  html2canvas(el, { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#fff' }).then(canvas => {
+  // স্ক্রল বক্সটিকে খুঁজে বের করা
+  const tableWrap = el.querySelector('div[style*="overflow-x:auto"]') || el.querySelector('div[style*="overflow-x: auto"]');
+  
+  // সাময়িকভাবে স্ক্রলিং বন্ধ করে টেবিলটাকে পুরোপুরি প্রসারিত করা
+  const originalOverflow = tableWrap ? tableWrap.style.overflowX : '';
+  if (tableWrap) tableWrap.style.overflowX = 'visible';
+
+  notify('⏳ Preparing full JPG...');
+
+  html2canvas(el, { 
+    scale: 2, 
+    useCORS: true, 
+    scrollY: 0, 
+    backgroundColor: '#fff',
+    width: el.scrollWidth, // ম্যাজিক ট্রিকস: ফুল সাইজ ক্যাপচার
+    windowWidth: el.scrollWidth
+  }).then(canvas => {
+    // ডাউনলোড শেষে আবার আগের ডিজাইনে ফেরত নেওয়া
+    if (tableWrap) tableWrap.style.overflowX = originalOverflow;
+    
     const link = document.createElement('a');
-    link.download = `NUBTK_Routine_Section_${document.getElementById('section-input').value}.jpg`;
+    link.download = `NUBTK_Routine_Section_${document.getElementById('section-input').value || 'Custom'}.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 0.95);
     link.click();
+    notify('✅ JPG Downloaded Successfully!');
   });
-  notify('🖼️ Downloading JPG...');
 }
+
 
 // ─── MANUAL ROUTINE BUILDER (Admin Style) ───
 function loadManualBuilder() {
@@ -296,6 +330,9 @@ function loadManualBuilder() {
 
   result.innerHTML = html;
 }
+
+function previewManualRoutine(sec) {
+  saveRoutineDraft(false);
 
 function previewManualRoutine(sec) {
   const secData = {};
