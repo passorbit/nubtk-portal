@@ -291,7 +291,12 @@ function loadManualBuilder() {
 
   let html = `
   <div class="section-card" style="background:#f8fafc; border: 1px solid #e2e8f0;">
-    <h3 style="color:var(--gold);margin-bottom:8px; text-align:center;">Manual Builder: Section ${sec}</h3>
+
+      <div style="text-align:center; margin-bottom:15px; display:flex; justify-content:center; align-items:center; gap:10px;">
+    <h3 style="color:var(--gold); margin:0;">Manual Builder:</h3>
+    <input type="text" id="manual-sec-input" class="form-input" value="${sec === 'CUSTOM' ? '' : sec}" placeholder="Section" style="width: 110px; text-align: center; font-size: 1rem; font-weight: bold; text-transform: uppercase; padding: 6px 10px; border: 2px solid var(--gold);" oninput="this.value=this.value.toUpperCase()">
+  </div>
+
     
     <div class="btn-row" style="justify-content: center; margin-bottom: 20px; gap: 8px;">
         <button class="btn btn-outline" onclick="saveRoutineDraft()" style="font-size:0.8rem; padding: 6px 12px; border-color:#3b82f6; color:#3b82f6;">💾 Save Draft</button>
@@ -323,7 +328,8 @@ function loadManualBuilder() {
 
   html += `</div>
     <div class="btn-row" style="justify-content: center; margin-top: 25px;">
-      <button class="btn btn-gold" onclick="previewManualRoutine('${sec}')">👁️ Preview & Download</button>
+        <button class="btn btn-gold" onclick="previewManualRoutine()">👁️ Preview & Download</button>
+
       <button class="btn btn-outline" onclick="document.getElementById('routine-result').innerHTML=''">❌ Close</button>
     </div>
   </div>`;
@@ -333,6 +339,13 @@ function loadManualBuilder() {
 
 
 function previewManualRoutine(sec) {
+
+saveRoutineDraft(false); // প্রিভিউতে যাওয়ার আগে ডাটা মেমোরিতে সেভ করে রাখা
+  
+  // সেভ হওয়া ড্রাফট থেকে সেকশনের নাম নেওয়া
+  const draftObj = JSON.parse(localStorage.getItem('routine_manual_draft') || '{}');
+  const sec = draftObj.section || 'CUSTOM';
+
   const secData = {};
   
   // ফর্ম থেকে ডাটা কালেক্ট করা
@@ -418,8 +431,9 @@ function saveRoutineDraft(notifyUser = true) {
     draftData[key][field] = el.value;
   });
   
-  const section = document.getElementById('section-input').value.trim();
-  
+    const manualSecInput = document.getElementById('manual-sec-input');
+  const section = manualSecInput ? manualSecInput.value.trim() : document.getElementById('section-input').value.trim();
+
   // ব্রাউজারের মেমোরিতে সেভ করা
   localStorage.setItem('routine_manual_draft', JSON.stringify({
     section: section,
