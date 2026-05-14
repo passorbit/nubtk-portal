@@ -216,41 +216,55 @@ function generateRoutine() {
   });
 }
 
-// ─── SMART DOWNLOAD FUNCTIONS (FIXED CROPPING) ───
+// ─── SMART DOWNLOAD FUNCTIONS (MOBILE CROP FIX) ───
 
 function downloadRoutinePDF() {
   const el = document.getElementById('routine-printable');
-  // স্ক্রল বক্সটিকে খুঁজে বের করা
-  const tableWrap = el.querySelector('div[style*="overflow-x:auto"]') || el.querySelector('div[style*="overflow-x: auto"]');
-  
-  // সাময়িকভাবে স্ক্রলিং বন্ধ করে টেবিলটাকে পুরোপুরি প্রসারিত করা
+  const tableWrap = el.querySelector('div[style*="overflow-x"]');
+  const table = el.querySelector('.routine-table');
+
+  // আসল টেবিলের সাইজ মাপা (প্যাডিং সহ)
+  const fullWidth = table ? table.offsetWidth + 60 : el.scrollWidth;
+
+  // আগের স্টাইলগুলো সেভ করে রাখা
   const originalOverflow = tableWrap ? tableWrap.style.overflowX : '';
+  const originalWidth = el.style.width;
+
+  // মোবাইল স্ক্রিনের লিমিট ভেঙে জোর করে ফুল সাইজ করে দেওয়া
   if (tableWrap) tableWrap.style.overflowX = 'visible';
+  el.style.width = fullWidth + 'px';
 
   notify('⏳ Preparing full PDF...');
 
   html2pdf().set({
     margin: [6, 10, 6, 10], 
-    filename: `NUBTK_Routine_Section_${document.getElementById('section-input').value || 'Custom'}.pdf`,
+    filename: `NUBTK_Routine_Section_${document.getElementById('section-input') ? document.getElementById('section-input').value.trim() : 'Custom'}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    // html2canvas কে বলে দেওয়া হচ্ছে যে টেবিলের আসল সাইজ কত
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0, width: el.scrollWidth, windowWidth: el.scrollWidth },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0, width: fullWidth, windowWidth: fullWidth },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
   }).from(el).save().then(() => {
-    // ডাউনলোড শেষে আবার আগের ডিজাইনে ফেরত নেওয়া
+    // ডাউনলোড শেষ, এবার আবার আগের সাইজে ফিরিয়ে আনা
     if (tableWrap) tableWrap.style.overflowX = originalOverflow;
+    el.style.width = originalWidth;
     notify('✅ PDF Downloaded Successfully!');
   });
 }
 
 function downloadRoutineJPG() {
   const el = document.getElementById('routine-printable');
-  // স্ক্রল বক্সটিকে খুঁজে বের করা
-  const tableWrap = el.querySelector('div[style*="overflow-x:auto"]') || el.querySelector('div[style*="overflow-x: auto"]');
-  
-  // সাময়িকভাবে স্ক্রলিং বন্ধ করে টেবিলটাকে পুরোপুরি প্রসারিত করা
+  const tableWrap = el.querySelector('div[style*="overflow-x"]');
+  const table = el.querySelector('.routine-table');
+
+  // আসল টেবিলের সাইজ মাপা (প্যাডিং সহ)
+  const fullWidth = table ? table.offsetWidth + 60 : el.scrollWidth;
+
+  // আগের স্টাইলগুলো সেভ করে রাখা
   const originalOverflow = tableWrap ? tableWrap.style.overflowX : '';
+  const originalWidth = el.style.width;
+
+  // মোবাইল স্ক্রিনের লিমিট ভেঙে জোর করে ফুল সাইজ করে দেওয়া
   if (tableWrap) tableWrap.style.overflowX = 'visible';
+  el.style.width = fullWidth + 'px';
 
   notify('⏳ Preparing full JPG...');
 
@@ -259,14 +273,15 @@ function downloadRoutineJPG() {
     useCORS: true, 
     scrollY: 0, 
     backgroundColor: '#fff',
-    width: el.scrollWidth, // ম্যাজিক ট্রিকস: ফুল সাইজ ক্যাপচার
-    windowWidth: el.scrollWidth
+    width: fullWidth,        // ক্যানভাসকে ফুল সাইজ বলা
+    windowWidth: fullWidth   // ব্রাউজার উইন্ডোকেও ফুল সাইজ ভাবানো
   }).then(canvas => {
-    // ডাউনলোড শেষে আবার আগের ডিজাইনে ফেরত নেওয়া
+    // ডাউনলোড শেষ, এবার আবার আগের সাইজে ফিরিয়ে আনা
     if (tableWrap) tableWrap.style.overflowX = originalOverflow;
+    el.style.width = originalWidth;
     
     const link = document.createElement('a');
-    link.download = `NUBTK_Routine_Section_${document.getElementById('section-input').value || 'Custom'}.jpg`;
+    link.download = `NUBTK_Routine_Section_${document.getElementById('section-input') ? document.getElementById('section-input').value.trim() : 'Custom'}.jpg`;
     link.href = canvas.toDataURL('image/jpeg', 0.95);
     link.click();
     notify('✅ JPG Downloaded Successfully!');
