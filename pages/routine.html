@@ -455,26 +455,56 @@ function resetManualForm() {
 }
 
 
-  function editGeneratedRoutine() {
-    // বর্তমান সেকশনের নাম এবং ডাটা নেওয়া (যা অলরেডি জেনারেট হয়ে আছে)
-    const section = document.getElementById('section-input').value.trim().toUpperCase();
-    
-    // ডাটাবেস থেকে আসা ডাটা আমরা গ্লোবাল অবজেক্ট হিসেবে সেভ করে রাখব
-    if (!currentSectionData || Object.keys(currentSectionData).length === 0) {
-        notify('⚠️ No routine data found to edit!');
-        return;
-    }
+  // ─── EDIT GENERATED ROUTINE (SMART EXTRACTION) ───
+function editGeneratedRoutine() {
+  const section = document.getElementById('section-input').value.trim().toUpperCase();
+  const draftData = {};
 
-    // অটো-জেনারেটেড ডাটাকে ড্রাফট ফরম্যাটে কনভার্ট করে localStorage এ সেভ করা
-    localStorage.setItem('routine_manual_draft', JSON.stringify({
-        section: section,
-        data: currentSectionData
-    }));
+  // স্ক্রিনে দেখা যাচ্ছে এমন টেবিলের সবগুলো সেল থেকে ডাটা কালেক্ট করা
+  const tableCells = document.querySelectorAll('#routine-result .routine-table tbody td');
+  
+  if (tableCells.length === 0) {
+    notify('⚠️ No routine data found to edit!');
+    return;
+  }
 
-    // এবার ম্যানুয়াল বিল্ডার লোড করা (এটি অটোমেটিক ড্রাফট থেকে ডাটা ফিল করবে)
-    loadManualBuilder();
-    
-    notify('✏️ Routine loaded into editor! You can now modify it.');
+  // প্রতিটি সেল চেক করে ডাটা বের করা
+  TIME_SLOTS.forEach((time, timeIndex) => {
+    DAYS.forEach((day, dayIndex) => {
+      // টেবিলের স্ট্রাকচার অনুযায়ী সঠিক ঘরটি খুঁজে বের করা
+      // (প্রতি সারির প্রথম ঘরটি Day এর নাম, তাই +1 করা হয়েছে)
+      const rowIndex = dayIndex;
+      const colIndex = timeIndex + 1; 
+      
+      const row = document.querySelectorAll('#routine-result .routine-table tbody tr')[rowIndex];
+      if (row) {
+        const cell = row.cells[colIndex];
+        if (cell && !cell.classList.contains('empty') && cell.innerText !== '—') {
+          // সেলের ভেতর থেকে Course, Room এবং Badge এর টেক্সট নেওয়া
+          const course = cell.querySelector('.cell-course') ? cell.querySelector('.cell-course').innerText.trim() : '';
+          const room = cell.querySelector('.cell-room') ? cell.querySelector('.cell-room').innerText.trim() : '';
+          const badge = cell.querySelector('.cell-badge') ? cell.querySelector('.cell-badge').innerText.trim() : '';
+          
+          let type = 'theory';
+          if (badge === 'LAB') type = 'lab';
+          else if (badge === 'PHY LAB') type = 'phy-lab';
+
+          const key = `${day}|${time}`;
+          draftData[key] = { course: course, room: room, type: type };
+        }
+      }
+    });
+  });
+
+  // কালেক্ট করা ডাটাকে ড্রাফট হিসেবে মেমোরিতে সেভ করা
+  localStorage.setItem('routine_manual_draft', JSON.stringify({
+    section: section,
+    data: draftData
+  }));
+
+  // ম্যানুয়াল বিল্ডার লোড করা
+  loadManualBuilder();
+  notify('✏️ Routine loaded! You can now modify it.');
 }
 </script>
 
