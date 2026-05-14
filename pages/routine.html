@@ -132,6 +132,7 @@ const TIME_SLOTS = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', 
 const DAYS = ['Saturday', 'Sunday', 'Tuesday', 'Wednesday', 'Thursday' ];
 
 // ─── GENERATE ROUTINE FROM FIREBASE ─────────
+  let currentSectionData = {};
 function generateRoutine() {
   const section = document.getElementById('section-input').value.trim().toUpperCase();
   if (!section) { notify('⚠️ Please enter your section!'); return; }
@@ -180,6 +181,7 @@ function generateRoutine() {
           <div class="btn-row" style="margin-top:0;margin-bottom:20px;">
             <button class="btn btn-gold" onclick="downloadRoutinePDF()">⬇️ PDF</button>
             <button class="btn btn-outline" onclick="downloadRoutineJPG()">🖼️ JPG</button>
+            <button class="btn btn-outline" style="border-color:#3b82f6; color:#3b82f6;" onclick="editGeneratedRoutine()">✏️ Edit This Routine</button>
           </div>
         </div>
         <div style="padding:0 28px 28px;">
@@ -450,6 +452,29 @@ function resetManualForm() {
     loadManualBuilder(); // ফর্ম রিফ্রেশ করা
     notify('↺ Form Reset Successful!');
   }
+}
+
+
+  function editGeneratedRoutine() {
+    // বর্তমান সেকশনের নাম এবং ডাটা নেওয়া (যা অলরেডি জেনারেট হয়ে আছে)
+    const section = document.getElementById('section-input').value.trim().toUpperCase();
+    
+    // ডাটাবেস থেকে আসা ডাটা আমরা গ্লোবাল অবজেক্ট হিসেবে সেভ করে রাখব
+    if (!currentSectionData || Object.keys(currentSectionData).length === 0) {
+        notify('⚠️ No routine data found to edit!');
+        return;
+    }
+
+    // অটো-জেনারেটেড ডাটাকে ড্রাফট ফরম্যাটে কনভার্ট করে localStorage এ সেভ করা
+    localStorage.setItem('routine_manual_draft', JSON.stringify({
+        section: section,
+        data: currentSectionData
+    }));
+
+    // এবার ম্যানুয়াল বিল্ডার লোড করা (এটি অটোমেটিক ড্রাফট থেকে ডাটা ফিল করবে)
+    loadManualBuilder();
+    
+    notify('✏️ Routine loaded into editor! You can now modify it.');
 }
 </script>
 
