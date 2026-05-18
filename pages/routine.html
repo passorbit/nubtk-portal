@@ -216,34 +216,42 @@ function generateRoutine() {
   });
 }
 
-// ─── SMART DOWNLOAD FUNCTIONS (MOBILE CROP FIX) ───
-
+// ─── SMART PDF DOWNLOAD (SINGLE PAGE FIX) ───
 function downloadRoutinePDF() {
   const el = document.getElementById('routine-printable');
   const tableWrap = el.querySelector('div[style*="overflow-x"]');
   const table = el.querySelector('.routine-table');
 
-  // আসল টেবিলের সাইজ মাপা (প্যাডিং সহ)
+  // ১. আসল টেবিলের প্রস্থ মাপা
   const fullWidth = table ? table.offsetWidth + 60 : el.scrollWidth;
 
   // আগের স্টাইলগুলো সেভ করে রাখা
   const originalOverflow = tableWrap ? tableWrap.style.overflowX : '';
   const originalWidth = el.style.width;
 
-  // মোবাইল স্ক্রিনের লিমিট ভেঙে জোর করে ফুল সাইজ করে দেওয়া
+  // ২. মোবাইল/পিসি স্ক্রিনের লিমিট ভেঙে ফুল সাইজ করা
   if (tableWrap) tableWrap.style.overflowX = 'visible';
   el.style.width = fullWidth + 'px';
 
-  notify('⏳ Preparing full PDF...');
+  // ৩. প্রস্থ বাড়ানোর পর এবার আসল উচ্চতা মাপা (খুব জরুরি)
+  const fullHeight = el.scrollHeight;
+  
+  const secInput = document.getElementById('section-input');
+  const secName = secInput && secInput.value.trim() ? secInput.value.trim() : 'Custom';
+
+  notify('⏳ Preparing perfect single-page PDF...');
 
   html2pdf().set({
-    margin: [6, 10, 6, 10], 
-    filename: `NUBTK_Routine_Section_${document.getElementById('section-input') ? document.getElementById('section-input').value.trim() : 'Custom'}.pdf`,
+    margin: 0, // ম্যাজিক ট্রিক ১: মার্জিন ০ করে দেওয়া, কারণ HTML-এ আগে থেকেই প্যাডিং আছে
+    filename: `NUBTK_Routine_Section_${secName}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, scrollY: 0, width: fullWidth, windowWidth: fullWidth },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    
+    // ম্যাজিক ট্রিক ২: PDF এর পেজ সাইজ A4 না দিয়ে, ডাইনামিক ভাবে রুটিনের সাইজেই পেপার বানানো
+    jsPDF: { unit: 'px', format: [fullWidth, fullHeight], orientation: 'landscape' }
+    
   }).from(el).save().then(() => {
-    // ডাউনলোড শেষ, এবার আবার আগের সাইজে ফিরিয়ে আনা
+    // কাজ শেষ, আগের সাইজে ফেরত আনা
     if (tableWrap) tableWrap.style.overflowX = originalOverflow;
     el.style.width = originalWidth;
     notify('✅ PDF Downloaded Successfully!');
