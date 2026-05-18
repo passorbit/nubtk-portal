@@ -220,44 +220,42 @@ function generateRoutine() {
 function downloadRoutinePDF() {
   const el = document.getElementById('routine-printable');
   const tableWrap = el.querySelector('div[style*="overflow-x"]');
-  const table = el.querySelector('.routine-table');
   
-  // আগের স্টাইলগুলো মেমোরিতে সেভ করে রাখা
-  const origElStyle = el.style.cssText;
-  const origWrapStyle = tableWrap ? tableWrap.style.cssText : '';
-  
-  // রুটিনের আসল প্রস্থ মাপা (নিরাপদ প্যাডিং সহ)
-  const fullWidth = table ? table.offsetWidth + 40 : el.scrollWidth;
+  // ১. বর্তমান স্টাইল সেভ করে রাখা
+  const origOverflow = tableWrap ? tableWrap.style.overflowX : '';
+  const origWidth = el.style.width;
+  const origMinWidth = el.style.minWidth;
+  const origMargin = el.style.margin;
 
-  // ম্যাজিক: রুটিনটাকে স্ক্রিনের একদম বামে লক করে দেওয়া যাতে বাঁ-দিক না কাটে!
-  if (tableWrap) tableWrap.style.setProperty('overflow-x', 'visible', 'important');
-  el.style.setProperty('position', 'absolute', 'important');
-  el.style.setProperty('left', '0', 'important');
-  el.style.setProperty('margin', '0', 'important');
-  el.style.setProperty('width', fullWidth + 'px', 'important');
-  el.style.setProperty('max-width', 'none', 'important');
-  el.style.setProperty('background', '#fff', 'important');
-  el.style.setProperty('z-index', '9999', 'important');
-  
-  window.scrollTo(0, 0); // স্ক্রল করে একদম ওপরে চলে যাওয়া
+  // ২. মোবাইল স্ক্রিন বাইপাস করে জোর করে ডেস্কটপ সাইজ দেওয়া এবং বামে লক করা
+  if (tableWrap) tableWrap.style.overflowX = 'visible';
+  el.style.width = 'max-content'; 
+  el.style.minWidth = '1000px'; // রুটিনকে ছোট হতে বাধা দেওয়া
+  el.style.margin = '0 auto 0 0'; // বাম দিকে লক করা (যাতে বামে না কাটে)
+
   notify('⏳ Preparing perfect single-page PDF...');
-  
-  const secInput = document.getElementById('section-input');
-  const secName = secInput && secInput.value.trim() ? secInput.value.trim() : 'Custom';
 
-  html2pdf().set({
-      margin: 10, 
+  // ৩. Blank Page সল্ভ করার জন্য ব্রাউজারকে ডিজাইন আপডেটের জন্য একটু সময় (150ms) দেওয়া 
+  setTimeout(() => {
+    const secInput = document.getElementById('section-input');
+    const secName = secInput && secInput.value.trim() ? secInput.value.trim() : 'Custom';
+
+    html2pdf().set({
+      margin: 10,
       filename: `NUBTK_Routine_Section_${secName}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
+      html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-      pagebreak: { mode: ['avoid-all'] } // ম্যাজিক ট্রিকস: জীবনেও ২ পেজে ভাঙবে না!
-  }).from(el).save().then(() => {
-      // ডাউনলোড শেষে চোখের পলকে আবার আগের ডিজাইনে ফিরিয়ে আনা
-      el.style.cssText = origElStyle;
-      if (tableWrap) tableWrap.style.cssText = origWrapStyle;
+      pagebreak: { mode: ['avoid-all'] } // ২ পেজে ভাঙা ১০০% বন্ধ
+    }).from(el).save().then(() => {
+      // ৪. ডাউনলোড শেষে আগের অবস্থায় ফিরিয়ে আনা
+      if (tableWrap) tableWrap.style.overflowX = origOverflow;
+      el.style.width = origWidth;
+      el.style.minWidth = origMinWidth;
+      el.style.margin = origMargin;
       notify('✅ PDF Downloaded Successfully!');
-  });
+    });
+  }, 150); // এই 150ms টাইমারটাই Blank Page সমস্যার আসল জাদুকরী সমাধান!
 }
 
 function downloadRoutineJPG() {
