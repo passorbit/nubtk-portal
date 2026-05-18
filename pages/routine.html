@@ -221,40 +221,42 @@ function downloadRoutinePDF() {
   const el = document.getElementById('routine-printable');
   const tableWrap = el.querySelector('div[style*="overflow-x"]');
   const table = el.querySelector('.routine-table');
+  
+  // আগের স্টাইলগুলো মেমোরিতে সেভ করে রাখা
+  const origElStyle = el.style.cssText;
+  const origWrapStyle = tableWrap ? tableWrap.style.cssText : '';
+  
+  // রুটিনের আসল প্রস্থ মাপা (নিরাপদ প্যাডিং সহ)
+  const fullWidth = table ? table.offsetWidth + 40 : el.scrollWidth;
 
-  // ১. আসল টেবিলের প্রস্থ মাপা
-  const fullWidth = table ? table.offsetWidth + 60 : el.scrollWidth;
-
-  // আগের স্টাইলগুলো সেভ করে রাখা
-  const originalOverflow = tableWrap ? tableWrap.style.overflowX : '';
-  const originalWidth = el.style.width;
-
-  // ২. মোবাইল/পিসি স্ক্রিনের লিমিট ভেঙে ফুল সাইজ করা
-  if (tableWrap) tableWrap.style.overflowX = 'visible';
-  el.style.width = fullWidth + 'px';
-
-  // ৩. প্রস্থ বাড়ানোর পর এবার আসল উচ্চতা মাপা (খুব জরুরি)
-  const fullHeight = el.scrollHeight;
+  // ম্যাজিক: রুটিনটাকে স্ক্রিনের একদম বামে লক করে দেওয়া যাতে বাঁ-দিক না কাটে!
+  if (tableWrap) tableWrap.style.setProperty('overflow-x', 'visible', 'important');
+  el.style.setProperty('position', 'absolute', 'important');
+  el.style.setProperty('left', '0', 'important');
+  el.style.setProperty('margin', '0', 'important');
+  el.style.setProperty('width', fullWidth + 'px', 'important');
+  el.style.setProperty('max-width', 'none', 'important');
+  el.style.setProperty('background', '#fff', 'important');
+  el.style.setProperty('z-index', '9999', 'important');
+  
+  window.scrollTo(0, 0); // স্ক্রল করে একদম ওপরে চলে যাওয়া
+  notify('⏳ Preparing perfect single-page PDF...');
   
   const secInput = document.getElementById('section-input');
   const secName = secInput && secInput.value.trim() ? secInput.value.trim() : 'Custom';
 
-  notify('⏳ Preparing perfect single-page PDF...');
-
   html2pdf().set({
-    margin: 0, // ম্যাজিক ট্রিক ১: মার্জিন ০ করে দেওয়া, কারণ HTML-এ আগে থেকেই প্যাডিং আছে
-    filename: `NUBTK_Routine_Section_${secName}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0, width: fullWidth, windowWidth: fullWidth },
-    
-    // ম্যাজিক ট্রিক ২: PDF এর পেজ সাইজ A4 না দিয়ে, ডাইনামিক ভাবে রুটিনের সাইজেই পেপার বানানো
-    jsPDF: { unit: 'px', format: [fullWidth, fullHeight], orientation: 'landscape' }
-    
+      margin: 10, 
+      filename: `NUBTK_Routine_Section_${secName}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+      pagebreak: { mode: ['avoid-all'] } // ম্যাজিক ট্রিকস: জীবনেও ২ পেজে ভাঙবে না!
   }).from(el).save().then(() => {
-    // কাজ শেষ, আগের সাইজে ফেরত আনা
-    if (tableWrap) tableWrap.style.overflowX = originalOverflow;
-    el.style.width = originalWidth;
-    notify('✅ PDF Downloaded Successfully!');
+      // ডাউনলোড শেষে চোখের পলকে আবার আগের ডিজাইনে ফিরিয়ে আনা
+      el.style.cssText = origElStyle;
+      if (tableWrap) tableWrap.style.cssText = origWrapStyle;
+      notify('✅ PDF Downloaded Successfully!');
   });
 }
 
