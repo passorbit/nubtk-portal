@@ -132,7 +132,8 @@ const TIME_SLOTS = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', 
 const DAYS = ['Saturday', 'Sunday', 'Tuesday', 'Wednesday', 'Thursday' ];
 
 // ─── GENERATE ROUTINE FROM FIREBASE ─────────
-  let currentSectionData = {};
+let currentSectionData = {};
+
 function generateRoutine() {
   const section = document.getElementById('section-input').value.trim().toUpperCase();
   if (!section) { notify('⚠️ Please enter your section!'); return; }
@@ -143,15 +144,24 @@ function generateRoutine() {
   db.ref('routines/' + section).once('value').then((snapshot) => {
     const secData = snapshot.val();
 
+    // ─── 🔴 আপডেটেড Not Found মেসেজ এবং Manual Create বাটন ───
     if (!secData) {
-      result.innerHTML = `<div class="no-routine">
-        <div class="big">🔍</div>
-        <p>No routine found for section <strong>${section}</strong>.<br/>
-        Please ask your admin to add routine data.</p>
-      </div>`;
+      result.innerHTML = `
+        <div class="section-card" style="text-align: center; padding: 50px 20px; background: #fafafa; border: 2px dashed #cbd5e1; border-radius: 12px; margin-top: 20px;">
+            <div style="font-size: 3.5rem; margin-bottom: 15px;">📭</div>
+            <h3 style="color: #ef4444; font-size: 1.6rem; font-weight: 800; margin-bottom: 10px;">Routine Not Found!</h3>
+            <p style="color: #64748b; margin-bottom: 25px; font-size: 1rem; line-height: 1.5;">
+                No official routine has been uploaded for <strong style="color:#0f172a;">Section ${section}</strong> yet.<br>Please check if you typed the section name correctly.
+            </p>
+            <button class="btn btn-outline" onclick="loadManualBuilder()" style="border-color: #C9A84C; color: #C9A84C; border-width: 2px;">
+                ✍️ Create One Manually
+            </button>
+        </div>
+      `;
       notify('❌ Routine not found!');
       return;
     }
+    // ─── 🔴 নতুন অংশ শেষ ───
 
     let rows = '';
     TIME_SLOTS.forEach(time => {
