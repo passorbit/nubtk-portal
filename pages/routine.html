@@ -70,9 +70,25 @@
     .slot-input.room-input { width: 110px; }
     .slot-type-sel { width: 120px; cursor: pointer; }
 
-    /* 🆕 New Class Name Styles */
+    /* 🆕 New Class Name Styles (Dark Background Update) */
     .slot-input.name-input { width: 140px; }
-    .cell-class-name { font-size: 0.65rem; color: #475569; margin-top: 4px; font-weight: 600; text-transform: capitalize; line-height: 1.2; }
+    
+    .cell-class-name { 
+      background-color: #1f2937; /* ডার্ক (কালো-ধূসর) ব্যাকগ্রাউন্ড */
+      color: #ffffff; /* সাদা টেক্সট */
+      font-size: 0.65rem; 
+      font-weight: 600; 
+      text-transform: capitalize; 
+      line-height: 1.2;
+      padding: 5px 2px; /* ভেতরের লেখাটিকে সুন্দরভাবে সাজানোর জন্য */
+      
+      /* ম্যাজিক ট্রিকস: বক্সের সীমানা পর্যন্ত ব্যাকগ্রাউন্ড টেনে নেওয়া */
+      margin-top: 6px; 
+      margin-bottom: -6px; 
+      margin-left: -4px; 
+      margin-right: -4px; 
+      border-top: 1px solid #0B1D3A; 
+    }
 
   </style>
 </head>
