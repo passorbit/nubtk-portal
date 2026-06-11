@@ -70,6 +70,10 @@
     .slot-input.room-input { width: 110px; }
     .slot-type-sel { width: 120px; cursor: pointer; }
 
+    /* 🆕 New Class Name Styles */
+    .slot-input.name-input { width: 140px; }
+    .cell-class-name { font-size: 0.65rem; color: #475569; margin-top: 4px; font-weight: 600; text-transform: capitalize; line-height: 1.2; }
+
   </style>
 </head>
 <body>
@@ -226,46 +230,47 @@ function generateRoutine() {
   });
 }
 
-// ─── SMART PDF DOWNLOAD (SINGLE PAGE FIX) ───
+// ─── SMART PDF DOWNLOAD (BULLETPROOF SINGLE PAGE) ───
 function downloadRoutinePDF() {
   const el = document.getElementById('routine-printable');
   const tableWrap = el.querySelector('div[style*="overflow-x"]');
   
-  // ১. বর্তমান স্টাইল সেভ করে রাখা
   const origOverflow = tableWrap ? tableWrap.style.overflowX : '';
   const origWidth = el.style.width;
   const origMinWidth = el.style.minWidth;
   const origMargin = el.style.margin;
 
-  // ২. মোবাইল স্ক্রিন বাইপাস করে জোর করে ডেস্কটপ সাইজ দেওয়া এবং বামে লক করা
   if (tableWrap) tableWrap.style.overflowX = 'visible';
   el.style.width = 'max-content'; 
-  el.style.minWidth = '1000px'; // রুটিনকে ছোট হতে বাধা দেওয়া
-  el.style.margin = '0 auto 0 0'; // বাম দিকে লক করা (যাতে বামে না কাটে)
+  el.style.minWidth = '1000px'; 
+  el.style.margin = '0 auto 0 0'; 
 
   notify('⏳ Preparing perfect single-page PDF...');
 
-  // ৩. Blank Page সল্ভ করার জন্য ব্রাউজারকে ডিজাইন আপডেটের জন্য একটু সময় (150ms) দেওয়া 
   setTimeout(() => {
     const secInput = document.getElementById('section-input');
     const secName = secInput && secInput.value.trim() ? secInput.value.trim() : 'Custom';
+
+    // 🔴 নতুন উচ্চতা মাপা (যেন ২ পেজে না কাটে)
+    const fullWidth = el.scrollWidth;
+    const fullHeight = el.scrollHeight + 30; // এক্সট্রা প্যাডিং
 
     html2pdf().set({
       margin: 10,
       filename: `NUBTK_Routine_Section_${secName}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-      pagebreak: { mode: ['avoid-all'] } // ২ পেজে ভাঙা ১০০% বন্ধ
+      // 🔴 ম্যাজিক ট্রিক: A4 এর বদলে ডায়নামিক ফরম্যাট
+      jsPDF: { unit: 'px', format: [fullWidth, fullHeight], orientation: 'landscape' },
+      pagebreak: { mode: ['avoid-all'] } 
     }).from(el).save().then(() => {
-      // ৪. ডাউনলোড শেষে আগের অবস্থায় ফিরিয়ে আনা
       if (tableWrap) tableWrap.style.overflowX = origOverflow;
       el.style.width = origWidth;
       el.style.minWidth = origMinWidth;
       el.style.margin = origMargin;
       notify('✅ PDF Downloaded Successfully!');
     });
-  }, 150); // এই 150ms টাইমারটাই Blank Page সমস্যার আসল জাদুকরী সমাধান!
+  }, 150); 
 }
 
 function downloadRoutineJPG() {
@@ -309,7 +314,6 @@ function downloadRoutineJPG() {
 
 // ─── MANUAL ROUTINE BUILDER (Admin Style) ───
 function loadManualBuilder() {
-  // মেমোরি থেকে ডাটা খোঁজা
   const savedDraft = localStorage.getItem('routine_manual_draft');
   let draftData = {};
   let savedSection = '';
@@ -326,13 +330,15 @@ function loadManualBuilder() {
 
   let html = `
   <div class="section-card" style="background:#f8fafc; border: 1px solid #e2e8f0;">
-
-      <div style="text-align:center; margin-bottom:15px; display:flex; justify-content:center; align-items:center; gap:10px;">
-    <h3 style="color:var(--gold); margin:0;">Manual Builder:</h3>
-    <input type="text" id="manual-sec-input" class="form-input" value="${sec === 'CUSTOM' ? '' : sec}" placeholder="Section" style="width: 110px; text-align: center; font-size: 1rem; font-weight: bold; text-transform: uppercase; padding: 6px 10px; border: 2px solid var(--gold);" oninput="this.value=this.value.toUpperCase()">
-  </div>
-
+    <div style="text-align:center; margin-bottom:10px; display:flex; justify-content:center; align-items:center; gap:10px;">
+      <h3 style="color:var(--gold); margin:0;">Manual Builder:</h3>
+      <input type="text" id="manual-sec-input" class="form-input" value="${sec === 'CUSTOM' ? '' : sec}" placeholder="Section" style="width: 110px; text-align: center; font-size: 1rem; font-weight: bold; text-transform: uppercase; padding: 6px 10px; border: 2px solid var(--gold);" oninput="this.value=this.value.toUpperCase()">
+    </div>
     
+    <p style="font-size:0.8rem; color:#ef4444; text-align:center; margin-bottom:15px; font-weight: 600;">
+       ⚠️ Note: The "Class Name" should not exceed 20 characters to fit perfectly.
+    </p>
+
     <div class="btn-row" style="justify-content: center; margin-bottom: 20px; gap: 8px;">
         <button class="btn btn-outline" onclick="saveRoutineDraft()" style="font-size:0.8rem; padding: 6px 12px; border-color:#3b82f6; color:#3b82f6;">💾 Save Draft</button>
         <button class="btn btn-outline" onclick="resetManualForm()" style="font-size:0.8rem; padding: 6px 12px; border-color:#f87171; color:#f87171;">↺ Reset Form</button>
@@ -344,12 +350,15 @@ function loadManualBuilder() {
     html += `<div class="routine-day-block"><h4>${day}</h4>`;
     TIME_SLOTS.forEach(time => {
       const key = `${day}|${time}`;
-      // ড্রাফট থেকে ডাটা নেওয়া, না থাকলে ফাঁকা রাখা
-      const val = draftData[key] || { course: '', room: '', type: 'theory' };
+      // 🔴 className প্রপার্টি অ্যাড করা হলো
+      const val = draftData[key] || { course: '', room: '', type: 'theory', className: '' };
       
       html += `<div class="routine-slot-row">
         <span class="slot-time">${time}</span>
-        <input type="text" class="slot-input course-input" placeholder="Course" data-key="${key}" data-field="course" value="${val.course}"/>
+        <input type="text" class="slot-input course-input" placeholder="Code (CSE 1101)" data-key="${key}" data-field="course" value="${val.course}"/>
+        
+        <input type="text" class="slot-input name-input" placeholder="Class Name" data-key="${key}" data-field="className" value="${val.className || ''}" maxlength="20"/>
+        
         <input type="text" class="slot-input room-input" placeholder="Room" data-key="${key}" data-field="room" value="${val.room}"/>
         <select class="slot-input slot-type-sel" data-key="${key}" data-field="type">
           <option value="theory" ${val.type === 'theory' ? 'selected' : ''}>Theory</option>
@@ -364,7 +373,6 @@ function loadManualBuilder() {
   html += `</div>
     <div class="btn-row" style="justify-content: center; margin-top: 25px;">
         <button class="btn btn-gold" onclick="previewManualRoutine()">👁️ Preview & Download</button>
-
       <button class="btn btn-outline" onclick="document.getElementById('routine-result').innerHTML=''">❌ Close</button>
     </div>
   </div>`;
@@ -373,30 +381,7 @@ function loadManualBuilder() {
 }
 
 
-function previewManualRoutine() {
-
-saveRoutineDraft(false); // প্রিভিউতে যাওয়ার আগে ডাটা মেমোরিতে সেভ করে রাখা
-  
-  // সেভ হওয়া ড্রাফট থেকে সেকশনের নাম নেওয়া
-  const draftObj = JSON.parse(localStorage.getItem('routine_manual_draft') || '{}');
-  const sec = draftObj.section || 'CUSTOM';
-
-  const secData = {};
-  
-  // ফর্ম থেকে ডাটা কালেক্ট করা
-  document.querySelectorAll('.slot-input[data-key]').forEach(el => {
-    const key = el.dataset.key;
-    const field = el.dataset.field;
-    if (!secData[key]) secData[key] = {};
-    secData[key][field] = el.value.trim();
-  });
-
-  // ফাঁকা ঘরগুলো ডিলিট করা
-  Object.keys(secData).forEach(k => {
-    if (!secData[k].course) delete secData[k];
-  });
-
-  // প্রিন্ট করার জন্য টেবিল জেনারেট করা
+// প্রিন্ট করার জন্য টেবিল জেনারেট করা
   let rows = '';
   TIME_SLOTS.forEach(time => {
     let row = `<tr><td style="font-weight:700;color:#0B1D3A;white-space:nowrap;background:#f8f8ff;padding:8px 12px;">${time}</td>`;
@@ -406,10 +391,15 @@ saveRoutineDraft(false); // প্রিভিউতে যাওয়ার আ�
       if (cell) {
         const badgeClass = cell.type === 'lab' ? 'badge-lab' : cell.type === 'phy-lab' ? 'badge-phy-lab' : 'badge-theory';
         const badgeLabel = cell.type === 'lab' ? 'LAB' : cell.type === 'phy-lab' ? 'PHY LAB' : 'THEORY';
+        
+        // 🔴 Class Name থাকলে সেটা রেন্ডার করবে
+        const classNameHtml = cell.className ? `<div class="cell-class-name">${cell.className}</div>` : '';
+
         row += `<td>
           <div class="cell-course">${cell.course}</div>
           <div class="cell-room">${cell.room}</div>
-          <span class="cell-badge ${badgeClass}">${badgeLabel}</span>
+          <div style="margin-top:2px;"><span class="cell-badge ${badgeClass}">${badgeLabel}</span></div>
+          ${classNameHtml}
         </td>`;
       } else {
         row += `<td class="empty">—</td>`;
@@ -418,39 +408,6 @@ saveRoutineDraft(false); // প্রিভিউতে যাওয়ার আ�
     row += '</tr>';
     rows += row;
   });
-
-  const result = document.getElementById('routine-result');
-  result.innerHTML = `
-    <div class="section-card" style="padding:0;overflow:hidden;" id="routine-card">
-      <div style="padding:24px 28px 0;">
-        <div class="btn-row" style="margin-top:0;margin-bottom:20px; display:flex; justify-content:center; gap:10px;">
-          <button class="btn btn-gold" onclick="downloadRoutinePDF()">⬇️ Download PDF</button>
-          <button class="btn btn-outline" onclick="downloadRoutineJPG()">🖼️ Download JPG</button>
-          <button class="btn btn-outline" style="border-color:#f87171; color:#f87171;" onclick="loadManualBuilder()">✏️ Back to Edit</button>
-        </div>
-      </div>
-      <div style="padding:0 28px 28px;">
-        <div class="routine-output-wrap" id="routine-printable">
-          <div class="routine-header-block">
-            <div class="uni">Northern University of Business &amp; Technology Khulna</div>
-            <div class="title">Class Schedule · Custom Builder</div>
-            <div class="section-badge">SECTION — ${sec}</div>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="routine-table">
-              <thead>
-                <tr>
-                  <th>TIME</th>
-                  ${DAYS.map(d => `<th>${d.toUpperCase()}</th>`).join('')}
-                </tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
 
 
 // ─── DRAFT SYSTEM & PERSISTENCE ───
