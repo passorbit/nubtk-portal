@@ -381,7 +381,30 @@ function loadManualBuilder() {
 }
 
 
-// প্রিন্ট করার জন্য টেবিল জেনারেট করা
+// ─── PREVIEW MANUAL ROUTINE ───
+function previewManualRoutine() {
+  saveRoutineDraft(false); // প্রিভিউতে যাওয়ার আগে ডাটা মেমোরিতে সেভ করে রাখা
+  
+  // সেভ হওয়া ড্রাফট থেকে সেকশনের নাম নেওয়া
+  const draftObj = JSON.parse(localStorage.getItem('routine_manual_draft') || '{}');
+  const sec = draftObj.section || 'CUSTOM';
+
+  const secData = {};
+  
+  // ফর্ম থেকে ডাটা কালেক্ট করা
+  document.querySelectorAll('.slot-input[data-key]').forEach(el => {
+    const key = el.dataset.key;
+    const field = el.dataset.field;
+    if (!secData[key]) secData[key] = {};
+    secData[key][field] = el.value.trim();
+  });
+
+  // ফাঁকা ঘরগুলো ডিলিট করা
+  Object.keys(secData).forEach(k => {
+    if (!secData[k].course) delete secData[k];
+  });
+
+  // প্রিন্ট করার জন্য টেবিল জেনারেট করা
   let rows = '';
   TIME_SLOTS.forEach(time => {
     let row = `<tr><td style="font-weight:700;color:#0B1D3A;white-space:nowrap;background:#f8f8ff;padding:8px 12px;">${time}</td>`;
@@ -408,6 +431,39 @@ function loadManualBuilder() {
     row += '</tr>';
     rows += row;
   });
+
+  const result = document.getElementById('routine-result');
+  result.innerHTML = `
+    <div class="section-card" style="padding:0;overflow:hidden;" id="routine-card">
+      <div style="padding:24px 28px 0;">
+        <div class="btn-row" style="margin-top:0;margin-bottom:20px; display:flex; justify-content:center; gap:10px;">
+          <button class="btn btn-gold" onclick="downloadRoutinePDF()">⬇️ Download PDF</button>
+          <button class="btn btn-outline" onclick="downloadRoutineJPG()">🖼️ Download JPG</button>
+          <button class="btn btn-outline" style="border-color:#f87171; color:#f87171;" onclick="loadManualBuilder()">✏️ Back to Edit</button>
+        </div>
+      </div>
+      <div style="padding:0 28px 28px;">
+        <div class="routine-output-wrap" id="routine-printable">
+          <div class="routine-header-block">
+            <div class="uni">Northern University of Business &amp; Technology Khulna</div>
+            <div class="title">Class Schedule · Custom Builder</div>
+            <div class="section-badge">SECTION — ${sec}</div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="routine-table">
+              <thead>
+                <tr>
+                  <th>TIME</th>
+                  ${DAYS.map(d => `<th>${d.toUpperCase()}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
 
 
 // ─── DRAFT SYSTEM & PERSISTENCE ───
@@ -479,8 +535,11 @@ function editGeneratedRoutine() {
           if (badge === 'LAB') type = 'lab';
           else if (badge === 'PHY LAB') type = 'phy-lab';
 
+          const classNameNode = cell.querySelector('.cell-class-name');
+          const classNameStr = classNameNode ? classNameNode.innerText.trim() : '';
+
           const key = `${day}|${time}`;
-          draftData[key] = { course: course, room: room, type: type };
+          draftData[key] = { course: course, room: room, type: type, className: classNameStr };
         }
       }
     });
