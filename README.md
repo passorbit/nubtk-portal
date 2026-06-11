@@ -86,22 +86,6 @@ Writing lab reports just got easier. This tool allows students to input their ex
 
 ---
 
-## 📂 Folder Structure
-
-```text
-📦 nubtk-student-portal
-┣ 📂 css
-┃ ┗ 📜 main.css
-┣ 📂 js
-┃ ┗ 📜 main.js
-┣ 📂 pages
-┃ ┣ 📜 cover-page.html
-┃ ┣ 📜 routine.html
-┃ ┣ 📜 directory.html
-┃ ┗ 📜 index-maker.html
-┗ 📜 index.html
-
-
 
 ## 🤝 Contribute
 
@@ -113,7 +97,8 @@ This is an open-source initiative. We highly encourage students, developers, and
 
 **Suvro Mollick**
 - Digital Agency: [Nexmover](https://suvro.nexmover.com)
-- GitHub: [@yourusername](https://github.com/passorbit)
+- GitHub: [@yourusername](https://github.com/yourusername)
+- And all the students from my section
 
 *Special thanks to all contributors and students providing valuable feedback.*
 
