@@ -7,7 +7,7 @@
 ![Open Source](https://img.shields.io/badge/Open%20Source-Yes-success.svg?style=for-the-badge)
 
 <div align="center">
-  <img src="https://via.placeholder.com/1000x400?text=NUBTK+Student+Portal+Banner](https://github.com/passorbit/nubtk-portal/blob/main/Portal_IMG.png)](https://raw.githubusercontent.com/passorbit/nubtk-portal/refs/heads/main/Portal_IMG.png" alt="Project Banner" width="100%">
+  <img src="https://raw.githubusercontent.com/passorbit/nubtk-portal/refs/heads/main/Portal_IMG.png" alt="Project Banner" width="100%">
   <p><strong>A comprehensive, dynamic, and smart digital hub designed to streamline academic activities for the students of Northern University of Business & Technology Khulna (NUBTK).</strong></p>
 </div>
 
