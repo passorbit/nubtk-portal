@@ -7,7 +7,7 @@
 ![Open Source](https://img.shields.io/badge/Open%20Source-Yes-success.svg?style=for-the-badge)
 
 <div align="center">
-  <img src="https://via.placeholder.com/1000x400?text=NUBTK+Student+Portal+Banner" alt="Project Banner" width="100%">
+  <img src="https://raw.githubusercontent.com/passorbit/nubtk-portal/refs/heads/main/Portal_IMG.png" alt="Project Banner" width="100%">
   <p><strong>An all-in-one, dynamic digital ecosystem designed to streamline academic workflows for the students of Northern University of Business & Technology Khulna (NUBTK).</strong></p>
 </div>
 
@@ -97,7 +97,7 @@ This is an open-source initiative. We highly encourage students, developers, and
 
 **Suvro Mollick**
 - Digital Agency: [Nexmover](https://suvro.nexmover.com)
-- GitHub: [@yourusername](https://github.com/yourusername)
+- GitHub: [@yourusername](https://github.com/passorbit)
 - And all the students from my section
 
 *Special thanks to all contributors and students providing valuable feedback.*
