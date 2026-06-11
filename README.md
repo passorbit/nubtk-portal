@@ -7,100 +7,101 @@
 ![Open Source](https://img.shields.io/badge/Open%20Source-Yes-success.svg?style=for-the-badge)
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/passorbit/nubtk-portal/refs/heads/main/Portal_IMG.png" alt="Project Banner" width="100%">
-  <p><strong>A comprehensive, dynamic, and smart digital hub designed to streamline academic activities for the students of Northern University of Business & Technology Khulna (NUBTK).</strong></p>
+  <img src="https://via.placeholder.com/1000x400?text=NUBTK+Student+Portal+Banner" alt="Project Banner" width="100%">
+  <p><strong>An all-in-one, dynamic digital ecosystem designed to streamline academic workflows for the students of Northern University of Business & Technology Khulna (NUBTK).</strong></p>
 </div>
 
 ---
 
 ## 📑 Table of Contents
 - [About The Portal](#-about-the-portal)
-- [Highlighted Module: Class Routine Manager](#-highlighted-module-class-routine-manager)
-- [The Problem It Solves (Technical Highlight)](#-the-problem-it-solves-technical-highlight)
-- [How to Use (User Guide)](#-how-to-use-user-guide)
+- [Core Modules & Features](#-core-modules--features)
+  - [1. Smart Cover Page Generator](#1-smart-cover-page-generator)
+  - [2. Advanced Class Routine Manager](#2-advanced-class-routine-manager)
+  - [3. Teachers Directory](#3-teachers-directory)
+  - [4. Automated Index Maker](#4-automated-index-maker)
+- [The Problem It Solves (Technical Highlights)](#-the-problem-it-solves-technical-highlights)
 - [Pro Tips & Shortcuts](#-pro-tips--shortcuts)
 - [Tech Stack](#-tech-stack)
-- [Roadmap & Future Integrations](#-roadmap--future-integrations)
+- [Folder Structure](#-folder-structure)
 - [Contribute](#-contribute)
-- [Author & Contributors](#-author--contributors)
+- [Authors & Contributors](#-authors--contributors)
 
 ---
 
 ## 📖 About The Portal
 
-The **NUBTK Student Portal** is an ambitious open-source initiative built to enhance the digital experience of university students. It serves as a centralized platform where students can seamlessly manage their academic schedules, generate necessary documents, and access university-related utilities without the hassle of navigating through scattered PDF notices or complex software.
+The **NUBTK Student Portal** is a comprehensive open-source toolkit built to enhance the digital experience of university students. It serves as a centralized platform where students can generate flawless assignment cover pages, manage their academic schedules, find faculty information, and create lab report indexes effortlessly. 
 
 ---
 
-## ✨ Highlighted Module: Class Routine Manager
+## ✨ Core Modules & Features
 
-The current flagship feature of this portal is the **Advanced Class Routine Manager**, which completely revolutionizes how students interact with their class schedules.
+### 1. Smart Cover Page Generator
+A robust tool to automate the creation of official university cover pages for assignments and reports.
+- **Customization:** Select from various official NUBTK logos and customize the PDF output file name.
+- **Smart Auto-Fill:** Automatically detects and formats the teacher's department based on student input.
+- **Live Preview:** Real-time visual updates of your cover page as you type.
+- **QR Code & Link Sharing:** Generate a QR code or a direct link containing your input data. Share it with friends or scan another cover page's QR code to instantly auto-fill your form.
+- **Direct Mail:** Instantly share the generated link via email, including a dedicated **NUBTK Button** to send files directly to *haquenubtk@gmail.com* (Mehedi vai, 4th floor).
 
-### Core Features
-- **🔍 Auto-Generate Schedule**: Enter your section code (e.g., `1A`, `3D`) to instantly fetch the official, up-to-date class routine directly from the live database.
-- **✍️ Manual Routine Builder**: A fully customizable interface allowing students to build a routine completely from scratch. 
-- **🏷️ Custom Class Names**: Add specific course titles (e.g., *Discrete Mathematics*) under the theory/lab badges for better clarity. Styled beautifully with custom dark backgrounds.
-- **🔄 Smart 'Edit' Functionality**: Found a generated routine but want to tweak the times or add class names? The "Edit This Routine" button pulls all existing data into the manual builder for rapid modification.
-- **💾 Local Auto-Save Draft**: Never lose your progress. The manual builder securely saves your inputs in the browser's Local Storage. If you accidentally close the tab, your data will be right there when you return.
+### 2. Advanced Class Routine Manager
+Revolutionizing how students interact with their class schedules.
+- **Live Generator:** Enter your section code to instantly fetch the official schedule.
+- **Manual Builder:** Create custom routines with personalized Class Names (e.g., *Discrete Mathematics*) styled with dark backgrounds under theory/lab badges.
+- **Smart Edits & Auto-Save:** Pull existing data from an auto-generated routine into the manual builder. All manual progress is securely auto-saved as a local draft.
+- **Bulletproof Downloads:** Export as high-resolution JPG or perfectly scaled Single-Page PDF without any mobile cropping issues.
+
+### 3. Teachers Directory
+A centralized, easy-to-navigate directory containing up-to-date information, contact details, and designations of university faculty members. No more searching through massive PDFs to find a teacher's email!
+
+### 4. Automated Index Maker
+Writing lab reports just got easier. This tool allows students to input their experiment names, dates, and page numbers to automatically generate a perfectly formatted Index/Table of Contents page ready for printing.
 
 ---
 
-## 💡 The Problem It Solves (Technical Highlight)
+## 💡 The Problem It Solves (Technical Highlights)
 
-**The Mobile Cropping Issue:** Generating PDFs and Images (JPGs) from wide HTML tables often causes severe cropping issues on mobile devices due to responsive screen width limitations. 
-
-**The Solution:** This project implements a **Bulletproof Smart Download Engine**. When a user hits download, the engine dynamically calculates the absolute scroll-width, temporarily bypasses the mobile viewport limits, captures the full uncropped routine using a 150ms render delay, and flawlessly restores the UI state. It guarantees a **perfect, single-page A4 download** or **full-width high-resolution JPG** across all devices, including smartphones!
-
----
-
-## 🎯 How to Use (User Guide)
-
-### Using the Routine Generator
-1. Navigate to the **Class Routine** section.
-2. Enter your exact section code in the search box (e.g., `2D`).
-3. Click **Generate Routine**.
-4. Review your schedule. If everything looks good, use the **Download PDF** or **Download JPG** buttons.
-
-### Using the Manual Builder
-1. Click the **"✍️ Manual Create"** button.
-2. Enter a custom Section Name at the top.
-3. For each specific time slot, enter the:
-   - Course Code (e.g., *CSE 2105*)
-   - Class Name (Max 20 chars, e.g., *Discrete Math*)
-   - Room Number (e.g., *202*)
-   - Class Type (Theory / Lab / Phy Lab)
-4. Hit **Save Draft** periodically.
-5. Once finished, click **Preview & Download**. Review the layout to ensure all class names fit perfectly, then download!
+- **Mobile Viewport Rendering Fix:** Generating PDFs and Images from wide HTML tables (like the Class Routine) often causes severe cropping on mobile devices. This portal implements a **Smart Download Engine** that temporarily bypasses mobile viewport constraints, delays the capture to ensure full DOM rendering, and seamlessly restores the UI, guaranteeing a perfect export every time.
+- **State URL Sharing:** The Cover Page Generator utilizes URL parameters and QR code integration to share application state. This means users can share a link, and the receiver's form will populate automatically—eliminating repetitive data entry.
 
 ---
 
 ## ⚡ Pro Tips & Shortcuts
 
-- **Smart Edits:** Instead of building from scratch, search for your section, let it auto-generate, and then click **Edit This Routine**. It will auto-fill the entire form, allowing you to just type in the "Class Names" and save massive amounts of time!
-- **Draft Persistence:** If you find it overwhelming to fill in all the inputs at once, just fill in your common data and hit **Save Draft**. You can close the browser and come back days later—your schedule will be waiting for you.
-- **Mobile Experience:** While the Smart Download Engine prevents cropping on mobile, for the best visual experience while *building* the routine, switching your mobile browser to **Desktop Mode** is highly recommended.
+- **The Ultimate Time-Saver (Cover Page):** Fill in your common data (Student Name, ID, Semester, Session). Click **Share -> Copy Link**. Bookmark this link in your browser. Next time you click the bookmark, your personal details will be pre-filled automatically!
+- **Smart Edits (Routine):** Don't build routines from scratch. Search your section, let it auto-generate, click **Edit This Routine**, and just type in the "Class Names". 
+- **Mobile Experience:** For the best visual experience while building routines or cover pages on mobile, switching your browser to **Desktop Mode** is highly recommended.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend Core:** HTML5, CSS3 (Custom Design System), Vanilla JavaScript (ES6+).
-- **Libraries & Dependencies:** 
-  - [`html2pdf.js`](https://ekoopmans.github.io/html2pdf.js/) (For dynamic, single-page PDF generation)
-  - [`html2canvas`](https://html2canvas.hertzen.com/) (For high-resolution JPG exports)
-- **Data Persistence:** Browser LocalStorage API.
+- **Frontend Core:** HTML5, CSS3, Vanilla JavaScript (ES6+).
+- **Libraries & Tools:** 
+  - `html2pdf.js` (For dynamic, single-page PDF generation)
+  - `html2canvas` (For high-resolution JPG exports)
+  - QR Code Generation/Scanning APIs
+- **Data Persistence:** Browser LocalStorage API & URL State Management.
 
 ---
 
-## 🗺️ Roadmap & Future Integrations
+## 📂 Folder Structure
 
-- [x] Advanced Routine Generator & Manual Builder.
-- [x] Bulletproof PDF/JPG Export Engine.
-- [ ] **NUBTK Cover Page Generator**: Integration of a smart tool to automate assignment/report cover pages with custom logos, QR code sharing, and auto-fill links.
-- [ ] Dark Mode support across the entire portal.
-- [ ] Export routines directly to Google Calendar.
+```text
+📦 nubtk-student-portal
+┣ 📂 css
+┃ ┗ 📜 main.css
+┣ 📂 js
+┃ ┗ 📜 main.js
+┣ 📂 pages
+┃ ┣ 📜 cover-page.html
+┃ ┣ 📜 routine.html
+┃ ┣ 📜 directory.html
+┃ ┗ 📜 index-maker.html
+┗ 📜 index.html
 
----
+
 
 ## 🤝 Contribute
 
