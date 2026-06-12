@@ -142,22 +142,67 @@
 </div>
 
 <script>
-  // ১৫০+ শব্দের ডাইনামিক ভাণ্ডার (সহজ থেকে কঠিন)
+  // ৬০০+ শব্দের বিশাল ডাইনামিক ভাণ্ডার (সহজ থেকে কঠিন)
   const wordBank = [
     // Level 1: Short & Easy (3-4 letters)
     "bug","run","api","css","tag","web","app","net","bit","ram","cpu","mac","ip","dns","url",
     "git","bot","dev","hub","jar","log","npm","os","sql","zip","var","let","dom","gui","php",
+    "ptr","def","jvm","jdk","tree","heap","sort","ohm","mass","work","gate","cin","cout","seo",
+    "ads","ssh","ftp","tcp","udp","json","bin","hex","dec","vim","gcc","gdb","aws","gcp","vps",
+    "rom","boot","root","bash","cron","vpn","wifi","lan","wan","node","edge","null","void","main",
+    "char","int","bool","true","flux","play","game","sys","env","lib","src","doc","pwd","cls",
+    "dir","cmd","bat","exe","dll","iso","img","mp3","mp4","avi","mkv","png","jpg","gif","svg",
+    "pdf","rtf","txt","csv","tsv","xml","yml","yaml","ini","cfg","conf","tmp","bak","old","new",
+    "rsa","aes","des","md5","sha","ssl","tls","crt","pem","key","pub","priv","rpc","ipc","shm",
+    "sem","msg","ddl","dml","dcl","tcl","ast","dag","bfs","dfs","lru","mfu","lfu","fifo","lifo",
+    
     // Level 2: Medium (5-7 letters)
-    "code","java","node","html","data","base","hack","tech","logic","loop","array","stack","queue",
-    "pixel","virus","debug","react","cloud","cyber","query","scope","token","valid","agile","cache",
-    "server","client","object","string","number","boolean","method","class","script","syntax","plugin",
-    "commit","branch","merge","deploy","linux","ubuntu","window","router","switch","socket","packet",
+    "java","html","data","base","hack","tech","logic","loop","array","stack","queue","pixel",
+    "virus","debug","react","cloud","cyber","query","scope","token","valid","agile","cache",
+    "server","client","object","string","number","method","class","script","syntax","plugin",
+    "commit","branch","merge","deploy","linux","ubuntu","router","switch","socket","packet",
+    "tuple","lambda","django","import","yield","public","static","thread","graph","search",
+    "scrum","sprint","docker","force","sensor","arduino","gravity","quantum","physics","vector",
+    "energy","optics","malloc","pandas","theme","layout","banner","widget","return","double",
+    "struct","header","pointer","memory","python","module","cipher","crypto","hash","encode",
+    "decode","bcrypt","oauth","kanban","github","gitlab","bitvec","subnet","gateway","proxy",
+    "kernel","driver","shell","prompt","output","input","stream","buffer","mutex","host","domain",
+    "portal","matrix","tensor","scalar","linear","torque","motion","photon","proton","lepton",
+    "quark","plasma","fluid","kinetic","system","design","format","window","mobile","device",
+    "screen","native","flutter","kotlin","swift","ruby","rails","spring","maven","gradle","agency",
+    "camon","ajazz","gaming","anime","payload","exploit","malware","spyware","adware","trojan",
+    "rootkit","botnet","phishing","spoofing","sniffer","scanner","fuzzer","profiler","linker",
+    "loader","emulator","monitor","display","graphic","render","engine","shader","texture",
+    "polygon","vertex","raster","spline","bezier","camera","light","shadow","mirror","reflex",
+    "ambient","diffuse","normal","baking","rigging","morph","blend","animate","timeline","track",
+    "layer","channel","filter","effect","volume","pitch","tempo","chord","scale","octave",
+    
     // Level 3: Hard (8+ letters)
-    "algorithm","database","assignment","deadline","faculty","variable","function","compiler","network",
-    "protocol","security","terminal","frontend","backend","software","hardware","interface","framework",
-    "responsive","encryption","developer","engineer","programming","javascript","typescript","debugging",
-    "repository","deployment","architecture","application","automation","bandwidth","cybersecurity",
-    "firewall","iteration","middleware","optimization","parameter","polymorphism","scalability"
+    "algorithm","database","assignment","deadline","faculty","variable","function","compiler",
+    "network","protocol","security","terminal","frontend","backend","software","hardware",
+    "interface","framework","responsive","encryption","developer","engineer","programming",
+    "javascript","typescript","debugging","repository","deployment","architecture","application",
+    "automation","bandwidth","cybersecurity","firewall","iteration","middleware","optimization",
+    "parameter","polymorphism","scalability","iostream","namespace","template","destructor",
+    "exception","hibernate","linkedlist","recursion","traversal","testing","pipeline","velocity",
+    "momentum","electronics","embedded","inheritance","encapsulation","hashmap","wordpress",
+    "marketing","campaigns","analytics","component","container","virtualization","microservices",
+    "kubernetes","orchestration","authentication","authorization","vulnerability","penetration",
+    "cryptography","steganography","blockchain","consensus","distributed","concurrent",
+    "asynchronous","synchronize","multitasking","overloading","overriding","abstraction",
+    "continuous","integration","dependency","injection","singleton","observer","structural",
+    "behavioral","creational","mechanics","thermodynamics","electromagnetism","kinematics",
+    "relativity","aerodynamics","astrophysics","wavelength","frequency","amplitude","diffraction",
+    "interference","polarization","reflection","refraction","capacitance","inductance","resistance",
+    "transistor","oscillator","amplifier","modulation","demodulation","artificial","intelligence",
+    "machine","learning","supervised","clustering","regression","classification","perceptron",
+    "activation","backpropagation","mechanical","keyboard","controller","generating","visualization",
+    "dashboarding","interactive","multimedia","audiovisual","spreadsheet","wordprocessor",
+    "telecommunication","broadcasting","transmission","multiplexing","attenuation","dispersion",
+    "scattering","absorption","emission","radiation","radioactivity","nucleosynthesis","cosmology",
+    "astronomy","meteorology","climatology","oceanography","geology","seismology","volcanology",
+    "paleontology","biology","chemistry","mathematics","geometry","trigonometry","calculus",
+    "algebra","statistics","probability","combinatorics","topology","bioinformatics"
   ];
 
   let score = 0;
