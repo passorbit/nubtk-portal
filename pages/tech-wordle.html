@@ -133,6 +133,48 @@
       .tile { width: 45px; height: 45px; font-size: 1.5rem; }
       .key { font-size: 0.9rem; height: 40px; min-width: 25px; }
     }
+
+    /* 📖 How to Play Instructions */
+    .how-to-play {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 30px;
+      text-align: left;
+      border: 1px solid #334155;
+    }
+    .how-to-play h3 {
+      color: #C9A84C;
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+    .how-to-play p {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+    .example-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 12px;
+    }
+    .tile-small {
+      width: 40px;
+      height: 40px;
+      font-size: 1.3rem;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+    .example-text {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    .example-text strong {
+      color: #f8fafc;
+    }
   </style>
 </head>
 <body>
@@ -187,6 +229,27 @@
     </div>
 
     <button id="restart-btn" class="btn-restart" onclick="initGame()">🔄 Play Again</button>
+
+    <div class="how-to-play">
+      <h3>How to Play?</h3>
+      <p>Guess the 5-letter hidden word in 6 tries. Type any word and press Enter. The color of the tiles will change to show how close your guess was:</p>
+      
+      <div class="example-row">
+        <div class="tile tile-small correct">A</div>
+        <div class="example-text"><strong>Green:</strong> The letter is in the word and in the <strong>correct spot</strong>.</div>
+      </div>
+      
+      <div class="example-row">
+        <div class="tile tile-small present">R</div>
+        <div class="example-text"><strong>Yellow:</strong> The letter is in the word but in the <strong>wrong spot</strong>.</div>
+      </div>
+      
+      <div class="example-row">
+        <div class="tile tile-small absent">X</div>
+        <div class="example-text"><strong>Gray:</strong> The letter is <strong>not</strong> in the word at all.</div>
+      </div>
+    </div>
+    
   </div>
 </div>
 
