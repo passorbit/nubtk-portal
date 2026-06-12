@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Ludo Hot-Seat — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <style>
+    body { background: #0f172a; display: flex; flex-direction: column; align-items: center; }
+    .game-wrapper { margin-top: 20px; background: #fff; padding: 10px; border-radius: 8px; }
+    #ludo-board { width: 350px; height: 350px; background: #eee; border: 2px solid #333; position: relative; }
+    
+    /* Fullscreen Button */
+    .btn-fs { margin-top: 15px; padding: 10px 20px; background: #C9A84C; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    
+    /* Fullscreen specific style */
+    :fullscreen { background: #0f172a; display: flex; justify-content: center; align-items: center; }
+  </style>
+</head>
+<body>
+
+<div class="page-header" style="text-align: center; color: white;">
+  <h1>Ludo Hot-Seat 🎲</h1>
+  <p>Play with up to 4 friends on one device!</p>
+</div>
+
+<div class="game-wrapper" id="game-container">
+  <div id="ludo-board">
+    <!-- Ludo board graphics logic goes here -->
+    <p style="padding-top: 150px; text-align: center; color: #555;">(Ludo Board UI)</p>
+  </div>
+</div>
+
+<button class="btn-fs" onclick="toggleFullScreen()">⛶ Toggle Full Screen</button>
+
+<script>
+  function toggleFullScreen() {
+    const elem = document.getElementById("game-container");
+    if (!document.fullscreenElement) {
+      elem.requestFullscreen().catch(err => alert(`Error: ${err.message}`));
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  // লুডু ইঞ্জিন
+let diceValue = 0;
+let currentPlayer = 0; // 0, 1, 2, 3 (৪ জন খেলোয়াড়)
+
+function rollDice() {
+  diceValue = Math.floor(Math.random() * 6) + 1;
+  document.getElementById('dice-result').innerText = `Dice: ${diceValue}`;
+  
+  // লজিক: যদি ৬ ওঠে, আরেকবার সুযোগ। আর পিস মুভমেন্টের ফাংশন কল হবে
+  if(diceValue === 6) {
+    document.getElementById('status').innerText = "Wow! 6! Move your piece.";
+  } else {
+    document.getElementById('status').innerText = "Move your piece.";
+  }
+}
+
+// পিস মুভমেন্ট লজিক (Simplified)
+function movePiece(pieceId, steps) {
+  // এখানে বোর্ড পজিশন আপডেট হবে
+  // যেমন: currentPosition[pieceId] += steps;
+  console.log(`Piece ${pieceId} moved ${steps} steps`);
+}
+</script>
+
+</body>
+</html>
