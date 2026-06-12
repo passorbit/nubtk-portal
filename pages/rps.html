@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rock Paper Scissors — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* 🎮 Rock Paper Scissors Styles */
+    .game-wrapper {
+      max-width: 450px;
+      margin: 30px auto;
+      text-align: center;
+      background: #0f172a;
+      padding: 30px 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      color: white;
+    }
+    
+    .scoreboard {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border: 1px solid #334155;
+    }
+    .score-box {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .score-box span {
+      display: block;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #C9A84C;
+      margin-top: 5px;
+    }
+
+    .arena {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 0 20px;
+    }
+    .player-side, .comp-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .player-side p, .comp-side p {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+    .choice-emoji {
+      font-size: 4rem;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e293b;
+      border-radius: 50%;
+      border: 3px solid #334155;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .vs-text {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #ef4444;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+    }
+
+    .result-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 25px;
+      min-height: 35px;
+      transition: color 0.3s;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .btn-choice {
+      background: #334155;
+      color: white;
+      border: 2px solid #475569;
+      padding: 12px 20px;
+      font-size: 1.2rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-choice:hover {
+      background: #C9A84C;
+      border-color: #C9A84C;
+      color: #0f172a;
+      transform: translateY(-3px);
+    }
+    
+    /* Animation class */
+    .pop-in {
+      animation: pop 0.4s ease forwards;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="games.html">Games Zone</a> › Rock Paper Scissors</div>
+    <h1>Rock Paper Scissors ✊🖐️✌️</h1>
+    <p>Can you outsmart the bot? Choose your weapon!</p>
+  </div>
+
+  <div class="game-wrapper">
+    <div class="scoreboard">
+      <div class="score-box">You <span id="p-score">0</span></div>
+      <div class="score-box">Bot <span id="c-score">0</span></div>
+    </div>
+    
+    <div class="arena">
+      <div class="player-side">
+        <div class="choice-emoji" id="player-emoji">❓</div>
+        <p>You</p>
+      </div>
+      <div class="vs-text">VS</div>
+      <div class="comp-side">
+        <div class="choice-emoji" id="comp-emoji">🤖</div>
+        <p>Bot</p>
+      </div>
+    </div>
+
+    <div class="result-text" id="result">Waiting for your move...</div>
+
+    <div class="controls">
+      <button class="btn-choice" onclick="playGame('rock')">✊ Rock</button>
+      <button class="btn-choice" onclick="playGame('paper')">🖐️ Paper</button>
+      <button class="btn-choice" onclick="playGame('scissors')">✌️ Scissors</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const emojis = { rock: '✊', paper: '🖐️', scissors: '✌️' };
+  let pScore = 0;
+  let cScore = 0;
+
+  function playGame(playerChoice) {
+    const choices = ['rock', 'paper', 'scissors'];
+    const compChoice = choices[Math.floor(Math.random() * 3)];
+    
+    const pEmojiObj = document.getElementById('player-emoji');
+    const cEmojiObj = document.getElementById('comp-emoji');
+    const resultObj = document.getElementById('result');
+
+    // Remove animation class to reset
+    pEmojiObj.classList.remove('pop-in');
+    cEmojiObj.classList.remove('pop-in');
+    
+    // Trigger Reflow for animation restart
+    void pEmojiObj.offsetWidth;
+
+    // Update Emojis
+    pEmojiObj.innerText = emojis[playerChoice];
+    cEmojiObj.innerText = emojis[compChoice];
+    
+    // Add animation
+    pEmojiObj.classList.add('pop-in');
+    cEmojiObj.classList.add('pop-in');
+    
+    // Determine Winner
+    let result = '';
+    let color = '';
+    
+    if (playerChoice === compChoice) {
+      result = "😲 It's a Draw!";
+      color = '#f59e0b'; // Orange/Gold
+    } else if (
+      (playerChoice === 'rock' && compChoice === 'scissors') ||
+      (playerChoice === 'paper' && compChoice === 'rock') ||
+      (playerChoice === 'scissors' && compChoice === 'paper')
+    ) {
+      result = "🎉 You Won!";
+      color = '#10b981'; // Green
+      pScore++;
+    } else {
+      result = "😢 Bot Won!";
+      color = '#ef4444'; // Red
+      cScore++;
+    }
+    
+    // Update UI
+    resultObj.innerText = result;
+    resultObj.style.color = color;
+    document.getElementById('p-score').innerText = pScore;
+    document.getElementById('c-score').innerText = cScore;
+  }
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
