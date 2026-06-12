@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>2048 Puzzle — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* 🎮 2048 Styles */
+    .game-wrapper {
+      max-width: 400px;
+      margin: 30px auto;
+      text-align: center;
+    }
+    .score-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      padding: 15px 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      color: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .score-box {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .score-box span { color: #C9A84C; font-size: 1.5rem; }
+    
+    .grid-container {
+      background: #bbada0;
+      padding: 10px;
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      touch-action: none; /* মোবাইলে সোয়াইপ করার সময় পেজ স্ক্রল হওয়া বন্ধ করবে */
+    }
+    .grid-cell {
+      aspect-ratio: 1;
+      background: #cdc1b4;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #776e65;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s ease-in-out;
+    }
+
+    /* টাইলস কালার */
+    .val-2 { background: #eee4da; }
+    .val-4 { background: #ede0c8; }
+    .val-8 { background: #f2b179; color: #f9f6f2; }
+    .val-16 { background: #f59563; color: #f9f6f2; }
+    .val-32 { background: #f67c5f; color: #f9f6f2; }
+    .val-64 { background: #f65e3b; color: #f9f6f2; }
+    .val-128, .val-256, .val-512, .val-1024, .val-2048 {
+      background: #edcf72; color: #f9f6f2; font-size: 1.5rem; box-shadow: 0 0 10px rgba(237, 207, 114, 0.5);
+    }
+    
+    .btn-restart {
+      background: #C9A84C;
+      color: #0f172a;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.2s;
+    }
+    .btn-restart:hover { background: #b4933b; }
+    
+    #game-over {
+      display: none;
+      color: #ef4444;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="games.html">Games Zone</a> › 2048</div>
+    <h1>2048 Puzzle 🔢</h1>
+    <p>Swipe or use arrow keys to merge numbers and reach 2048!</p>
+  </div>
+
+  <div class="game-wrapper">
+    <div class="score-container">
+      <div class="score-box">Score: <span id="score">0</span></div>
+      <button class="btn-restart" onclick="restartGame()">🔄 New Game</button>
+    </div>
+    
+    <div class="grid-container" id="grid">
+      </div>
+    
+    <div id="game-over">Game Over! No more moves left.</div>
+  </div>
+</div>
+
+<script>
+  const grid = document.getElementById('grid');
+  const scoreDisplay = document.getElementById('score');
+  const gameOverText = document.getElementById('game-over');
+  let squares = [];
+  let score = 0;
+
+  // বোর্ড তৈরি করা
+  function createBoard() {
+    grid.innerHTML = '';
+    squares = [];
+    for (let i = 0; i < 16; i++) {
+      let square = document.createElement('div');
+      square.innerHTML = '';
+      square.className = 'grid-cell';
+      grid.appendChild(square);
+      squares.push(square);
+    }
+    generate();
+    generate();
+  }
+
+  // ফাঁকা ঘরে ২ বা ৪ বসানো
+  function generate() {
+    let emptySquares = squares.filter(sq => sq.innerHTML == '');
+    if (emptySquares.length === 0) return;
+    let randomSquare = emptySquares[Math.floor(Math.random() * emptySquares.length)];
+    randomSquare.innerHTML = Math.random() > 0.1 ? 2 : 4;
+    applyColors();
+  }
+
+  // রঙ আপডেট করা
+  function applyColors() {
+    squares.forEach(sq => {
+      let val = sq.innerHTML;
+      sq.className = 'grid-cell'; // রিসেট ক্লাস
+      if (val) sq.classList.add(`val-${val}`);
+    });
+  }
+
+  // গেম লজিক (স্লাইড এবং মার্জ)
+  function slide(row) {
+    let filteredRow = row.filter(num => num);
+    let missing = 4 - filteredRow.length;
+    let zeros = Array(missing).fill('');
+    return filteredRow.concat(zeros);
+  }
+
+  function combine(row) {
+    for (let i = 0; i < 3; i++) {
+      if (row[i] !== '' && row[i] === row[i + 1]) {
+        row[i] = parseInt(row[i]) * 2;
+        score += row[i];
+        row[i + 1] = '';
+      }
+    }
+    return row;
+  }
+
+  function operate(row) {
+    row = slide(row);
+    row = combine(row);
+    row = slide(row);
+    return row;
+  }
+
+  // কীবোর্ড কন্ট্রোল
+  function control(e) {
+    if (e.key === 'ArrowRight') moveRight();
+    else if (e.key === 'ArrowLeft') moveLeft();
+    else if (e.key === 'ArrowUp') moveUp();
+    else if (e.key === 'ArrowDown') moveDown();
+  }
+  document.addEventListener('keyup', control);
+
+  function moveRight() {
+    let moved = false;
+    for (let i = 0; i < 16; i += 4) {
+      let row = [squares[i].innerHTML, squares[i+1].innerHTML, squares[i+2].innerHTML, squares[i+3].innerHTML];
+      let newRow = operate(row);
+      for (let j = 0; j < 4; j++) {
+        if(squares[i+j].innerHTML !== newRow[j]) moved = true;
+        squares[i+j].innerHTML = newRow[j];
+      }
+    }
+    if(moved) { generate(); checkGameOver(); }
+  }
+
+  function moveLeft() {
+    let moved = false;
+    for (let i = 0; i < 16; i += 4) {
+      let row = [squares[i+3].innerHTML, squares[i+2].innerHTML, squares[i+1].innerHTML, squares[i].innerHTML];
+      let newRow = operate(row);
+      newRow.reverse();
+      for (let j = 0; j < 4; j++) {
+        if(squares[i+j].innerHTML !== newRow[j]) moved = true;
+        squares[i+j].innerHTML = newRow[j];
+      }
+    }
+    if(moved) { generate(); checkGameOver(); }
+  }
+
+  function moveDown() {
+    let moved = false;
+    for (let i = 0; i < 4; i++) {
+      let col = [squares[i].innerHTML, squares[i+4].innerHTML, squares[i+8].innerHTML, squares[i+12].innerHTML];
+      let newCol = operate(col);
+      for (let j = 0; j < 4; j++) {
+        if(squares[i+(j*4)].innerHTML !== newCol[j]) moved = true;
+        squares[i+(j*4)].innerHTML = newCol[j];
+      }
+    }
+    if(moved) { generate(); checkGameOver(); }
+  }
+
+  function moveUp() {
+    let moved = false;
+    for (let i = 0; i < 4; i++) {
+      let col = [squares[i+12].innerHTML, squares[i+8].innerHTML, squares[i+4].innerHTML, squares[i].innerHTML];
+      let newCol = operate(col);
+      newCol.reverse();
+      for (let j = 0; j < 4; j++) {
+        if(squares[i+(j*4)].innerHTML !== newCol[j]) moved = true;
+        squares[i+(j*4)].innerHTML = newCol[j];
+      }
+    }
+    if(moved) { generate(); checkGameOver(); }
+  }
+
+  // গেম ওভার চেক
+  function checkGameOver() {
+    scoreDisplay.innerHTML = score;
+    let zeros = squares.filter(sq => sq.innerHTML == '').length;
+    if (zeros === 0) {
+      let canMove = false;
+      for (let i = 0; i < 15; i++) {
+        if (squares[i].innerHTML === squares[i+1].innerHTML && (i+1)%4 !== 0) canMove = true;
+        if (i < 12 && squares[i].innerHTML === squares[i+4].innerHTML) canMove = true;
+      }
+      if (!canMove) {
+        gameOverText.style.display = 'block';
+        document.removeEventListener('keyup', control);
+      }
+    }
+  }
+
+  function restartGame() {
+    score = 0;
+    scoreDisplay.innerHTML = score;
+    gameOverText.style.display = 'none';
+    document.addEventListener('keyup', control);
+    createBoard();
+  }
+
+  // 📱 মোবাইল টাচ (Swipe) লজিক
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  grid.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, {passive: false});
+
+  grid.addEventListener('touchend', e => {
+    let touchEndX = e.changedTouches[0].screenX;
+    let touchEndY = e.changedTouches[0].screenY;
+    handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+  }, {passive: false});
+
+  function handleSwipe(startX, startY, endX, endY) {
+    let diffX = endX - startX;
+    let diffY = endY - startY;
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      // Horizontal swipe
+      if (Math.abs(diffX) > 30) diffX > 0 ? moveRight() : moveLeft();
+    } else {
+      // Vertical swipe
+      if (Math.abs(diffY) > 30) diffY > 0 ? moveDown() : moveUp();
+    }
+  }
+
+  // গেম শুরু
+  createBoard();
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
