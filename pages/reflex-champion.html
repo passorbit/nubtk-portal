@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Reflex Champion — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    /* ⚡ Reflex Champion Styles */
+    .game-wrapper {
+      max-width: 600px;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    .scoreboard {
+      display: inline-block;
+      background: #1e293b;
+      padding: 10px 25px;
+      border-radius: 50px;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #94a3b8;
+      border: 2px solid #334155;
+    }
+    .scoreboard span {
+      color: #C9A84C;
+      font-size: 1.4rem;
+    }
+
+    .reflex-box {
+      width: 100%;
+      height: 350px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.1s; /* Very fast transition */
+      user-select: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .msg {
+      font-size: 3rem;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 10px;
+    }
+    .sub-msg {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* States */
+    .idle {
+      background: #0f172a;
+      border: 4px solid #334155;
+    }
+    .idle .msg { color: #38bdf8; }
+    
+    .waiting {
+      background: #ef4444; /* Red */
+      border: 4px solid #b91c1c;
+    }
+    
+    .ready {
+      background: #10b981; /* Green */
+      border: 4px solid #047857;
+    }
+    
+    .result {
+      background: #1e293b;
+      border: 4px solid #C9A84C;
+    }
+    .result .msg { color: #C9A84C; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="games.html">Games Zone</a> › Reflex Champion</div>
+    <h1>Reflex Champion ⚡</h1>
+    <p>How fast is your reaction time? Test your limits!</p>
+  </div>
+
+  <div class="game-wrapper">
+    <div class="scoreboard">
+      Best Time: <span id="best-time">0 ms</span>
+    </div>
+
+    <!-- Clickable Area -->
+    <div id="reflex-box" class="reflex-box idle">
+      <div id="main-msg" class="msg">Click to Start</div>
+      <div id="sub-msg" class="sub-msg">Wait for the green screen</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const reflexBox = document.getElementById('reflex-box');
+  const mainMsg = document.getElementById('main-msg');
+  const subMsg = document.getElementById('sub-msg');
+  const bestTimeDisplay = document.getElementById('best-time');
+
+  let state = 'idle'; // States: idle, waiting, ready, result
+  let startTime;
+  let timeoutId;
+  let bestTime = Infinity;
+
+  reflexBox.addEventListener('click', handleBoxClick);
+  // Prevent double firing on mobile
+  reflexBox.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleBoxClick();
+  }, {passive: false});
+
+  function handleBoxClick() {
+    if (state === 'idle' || state === 'result') {
+      startWaiting();
+    } else if (state === 'waiting') {
+      falseStart();
+    } else if (state === 'ready') {
+      recordTime();
+    }
+  }
+
+  function startWaiting() {
+    state = 'waiting';
+    reflexBox.className = 'reflex-box waiting';
+    mainMsg.innerText = "Wait for Green...";
+    subMsg.innerText = "Do NOT click yet!";
+    
+    // Random delay between 2 to 5 seconds
+    const randomDelay = Math.floor(Math.random() * 3000) + 2000;
+    timeoutId = setTimeout(makeReady, randomDelay);
+  }
+
+  function makeReady() {
+    state = 'ready';
+    reflexBox.className = 'reflex-box ready';
+    mainMsg.innerText = "CLICK NOW!";
+    subMsg.innerText = "";
+    startTime = Date.now(); // Record the exact millisecond it turned green
+  }
+
+  function recordTime() {
+    const reactionTime = Date.now() - startTime;
+    state = 'result';
+    reflexBox.className = 'reflex-box result';
+    mainMsg.innerText = `${reactionTime} ms`;
+    
+    // Fun ratings based on speed
+    let rating = "";
+    if (reactionTime < 150) rating = "Are you a Robot? 🤖";
+    else if (reactionTime < 220) rating = "Ninja Reflexes! 🥷";
+    else if (reactionTime < 300) rating = "Great Job! 👍";
+    else if (reactionTime < 400) rating = "Average Speed 🐢";
+    else rating = "Too Slow! Wake Up! 😴";
+
+    subMsg.innerText = `${rating} Click to try again.`;
+
+    // Update Best Time
+    if (reactionTime < bestTime) {
+      bestTime = reactionTime;
+      bestTimeDisplay.innerText = `${bestTime} ms`;
+    }
+  }
+
+  function falseStart() {
+    clearTimeout(timeoutId); // Stop the green screen from appearing
+    state = 'result';
+    reflexBox.className = 'reflex-box idle'; // Use idle colors but show error
+    mainMsg.innerText = "Too Soon!";
+    mainMsg.style.color = "#ef4444"; // Red text
+    subMsg.innerText = "You clicked before it turned green. Click to try again.";
+  }
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
