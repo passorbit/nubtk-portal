@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Terminal Hacker — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    /* 💻 Terminal Hacker Styles */
+    body {
+      background-color: #0f172a;
+    }
+    .game-wrapper {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #000000;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(16, 185, 129, 0.1);
+      overflow: hidden;
+      font-family: 'Fira Code', monospace;
+      color: #10b981; /* Hacker Green */
+    }
+
+    .terminal-header {
+      background: #1e293b;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+    }
+    .mac-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .mac-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .mac-red { background: #ef4444; }
+    .mac-yellow { background: #f59e0b; }
+    .mac-green { background: #10b981; }
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-right: 44px; /* balance buttons */
+    }
+
+    .terminal-body {
+      padding: 20px;
+      height: 400px;
+      overflow-y: auto;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    /* Custom Scrollbar for terminal */
+    .terminal-body::-webkit-scrollbar { width: 8px; }
+    .terminal-body::-webkit-scrollbar-track { background: #000; }
+    .terminal-body::-webkit-scrollbar-thumb { background: #10b981; border-radius: 4px; }
+
+    .log-line { margin-bottom: 8px; word-wrap: break-word; }
+    .color-error { color: #ef4444; }
+    .color-success { color: #38bdf8; font-weight: bold; }
+    .color-warn { color: #f59e0b; }
+    .color-system { color: #94a3b8; }
+
+    .input-line {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .prompt {
+      color: #10b981;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+    .terminal-input {
+      background: transparent;
+      border: none;
+      color: #10b981;
+      font-family: 'Fira Code', monospace;
+      font-size: 1rem;
+      flex: 1;
+      outline: none;
+      caret-color: #10b981;
+    }
+    
+    .hints-panel {
+      padding: 15px;
+      background: #0f172a;
+      border-top: 1px solid #334155;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .hints-panel strong { color: #10b981; }
+
+    /* Blinking Cursor animation */
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="games.html">Games Zone</a> › Terminal Hacker</div>
+    <h1 style="color: #10b981; font-family: 'Fira Code', monospace;">Terminal Hacker 💻</h1>
+    <p>Crack the 4-digit system PIN. You have 10 attempts.</p>
+  </div>
+
+  <div class="game-wrapper" onclick="document.getElementById('cmd-input').focus()">
+    <div class="terminal-header">
+      <div class="mac-btns">
+        <div class="mac-btn mac-red"></div>
+        <div class="mac-btn mac-yellow"></div>
+        <div class="mac-btn mac-green"></div>
+      </div>
+      <div class="terminal-title">root@nubtk-server:~</div>
+    </div>
+    
+    <div class="terminal-body" id="terminal-body">
+      <div class="log-line">Initializing NUBTK mainframe connection... <span class="color-success">OK</span></div>
+      <div class="log-line">Bypassing security firewall... <span class="color-success">OK</span></div>
+      <div class="log-line color-warn">WARNING: System locked. 4-Digit PIN required.</div>
+      <div class="log-line color-system">Type your 4-digit guess and press Enter. Type 'clear' to clean screen.</div>
+      <div class="log-line">--------------------------------------------------</div>
+      
+      <div id="logs"></div>
+      
+      <div class="input-line" id="input-container">
+        <span class="prompt">root@nubtk:~$</span>
+        <input type="text" id="cmd-input" class="terminal-input" autocomplete="off" maxlength="10" autofocus>
+      </div>
+    </div>
+    
+    <div class="hints-panel">
+      <strong>[SYSTEM CLUE]:</strong><br>
+      🟢 <strong>Bulls:</strong> Number of digits that are correct AND in the correct position.<br>
+      🟡 <strong>Cows:</strong> Number of digits that are correct BUT in the wrong position.
+    </div>
+  </div>
+</div>
+
+<script>
+  let secretPIN = "";
+  let attemptsLeft = 10;
+  let gameActive = true;
+
+  const terminalBody = document.getElementById('terminal-body');
+  const logsDiv = document.getElementById('logs');
+  const cmdInput = document.getElementById('cmd-input');
+  const inputContainer = document.getElementById('input-container');
+
+  function initGame() {
+    // Generate random 4-digit PIN (can have duplicate digits like 1224)
+    secretPIN = Math.floor(1000 + Math.random() * 9000).toString();
+    attemptsLeft = 10;
+    gameActive = true;
+    cmdInput.disabled = false;
+    inputContainer.style.display = 'flex';
+    cmdInput.focus();
+  }
+
+  function printLog(text, colorClass = "") {
+    const line = document.createElement('div');
+    line.className = `log-line ${colorClass}`;
+    line.innerHTML = text;
+    logsDiv.appendChild(line);
+    terminalBody.scrollTop = terminalBody.scrollHeight; // Auto-scroll to bottom
+  }
+
+  function processCommand(cmd) {
+    cmd = cmd.trim();
+    if (!cmd) return;
+
+    // Print the user's command
+    printLog(`<span class="prompt">root@nubtk:~$</span> ${cmd}`);
+
+    if (cmd.toLowerCase() === 'clear') {
+      logsDiv.innerHTML = "";
+      return;
+    }
+
+    if (!gameActive) {
+      if (cmd.toLowerCase() === 'restart' || cmd.toLowerCase() === 'yes' || cmd.toLowerCase() === 'y') {
+        logsDiv.innerHTML = "";
+        printLog("Rebooting system... <span class='color-success'>OK</span>");
+        initGame();
+      } else {
+        printLog("System offline. Type 'restart' to try again.", "color-system");
+      }
+      return;
+    }
+
+    // Validation
+    if (cmd.length !== 4 || isNaN(cmd)) {
+      printLog("Error: PIN must be exactly 4 digits (e.g., 1054).", "color-error");
+      return;
+    }
+
+    attemptsLeft--;
+
+    // Check Logic (Mastermind Bulls & Cows)
+    let bulls = 0; // Correct digit & correct place
+    let cows = 0;  // Correct digit & wrong place
+    
+    let secretArr = secretPIN.split('');
+    let guessArr = cmd.split('');
+    let secretCount = {};
+    let guessCount = {};
+
+    // 1st Pass: Find Bulls
+    for (let i = 0; i < 4; i++) {
+      if (guessArr[i] === secretArr[i]) {
+        bulls++;
+      } else {
+        secretCount[secretArr[i]] = (secretCount[secretArr[i]] || 0) + 1;
+        guessCount[guessArr[i]] = (guessCount[guessArr[i]] || 0) + 1;
+      }
+    }
+
+    // 2nd Pass: Find Cows
+    for (let digit in guessCount) {
+      if (secretCount[digit]) {
+        cows += Math.min(secretCount[digit], guessCount[digit]);
+      }
+    }
+
+    // Output Result
+    if (bulls === 4) {
+      printLog("ACCESS GRANTED. Firewall breached successfully.", "color-success");
+      printLog(`You hacked the system in ${10 - attemptsLeft} attempts!`, "color-success");
+      endGame();
+    } else {
+      printLog(`> Output: 🟢 ${bulls} Bulls | 🟡 ${cows} Cows`);
+      
+      if (attemptsLeft === 0) {
+        printLog(`ACCESS DENIED. Max attempts reached. Intruder detected!`, "color-error");
+        printLog(`The secret PIN was: <span class="color-error">${secretPIN}</span>`);
+        endGame();
+      } else {
+        printLog(`> Attempts remaining: ${attemptsLeft}`, "color-warn");
+      }
+    }
+  }
+
+  function endGame() {
+    gameActive = false;
+    inputContainer.style.display = 'none';
+    printLog("--------------------------------------------------");
+    printLog("Type 'restart' to hack a new system. Type here: <input type='text' id='restart-input' class='terminal-input' style='width: 100px;' autocomplete='off'>");
+    
+    // Switch focus to the new restart input
+    setTimeout(() => {
+      const restartInput = document.getElementById('restart-input');
+      if (restartInput) {
+        restartInput.focus();
+        restartInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            processCommand(e.target.value);
+          }
+        });
+      }
+    }, 100);
+  }
+
+  cmdInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const val = this.value;
+      this.value = '';
+      processCommand(val);
+    }
+  });
+
+  // Keep focus on input when clicking anywhere in the terminal
+  document.getElementById('terminal-body').addEventListener('click', () => {
+    if (gameActive) cmdInput.focus();
+    else {
+      const rInput = document.getElementById('restart-input');
+      if (rInput) rInput.focus();
+    }
+  });
+
+  initGame();
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
