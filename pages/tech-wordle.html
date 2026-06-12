@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Tech Wordle — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* 🧩 Tech Wordle Styles */
+    .game-wrapper {
+      max-width: 500px;
+      margin: 20px auto;
+      text-align: center;
+      background: #0f172a;
+      padding: 20px 10px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      color: white;
+    }
+    
+    .status-msg {
+      font-size: 1.2rem;
+      font-weight: 700;
+      min-height: 30px;
+      margin-bottom: 15px;
+      color: #C9A84C;
+    }
+
+    .board {
+      display: grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap: 5px;
+      margin: 0 auto 30px;
+      width: fit-content;
+    }
+    
+    .row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+    
+    .tile {
+      width: 50px;
+      height: 50px;
+      border: 2px solid #334155;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.4s ease;
+      background: #0f172a;
+    }
+
+    /* Colors for feedback */
+    .tile.correct {
+      background: #10b981; /* Green */
+      border-color: #10b981;
+      color: white;
+      transform: rotateX(360deg);
+    }
+    .tile.present {
+      background: #f59e0b; /* Yellow */
+      border-color: #f59e0b;
+      color: white;
+      transform: rotateX(360deg);
+    }
+    .tile.absent {
+      background: #475569; /* Gray */
+      border-color: #475569;
+      color: white;
+      transform: rotateX(360deg);
+    }
+
+    /* Keyboard Styles */
+    .keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 0 auto;
+      max-width: 100%;
+    }
+    .key-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+    .key {
+      background: #1e293b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      height: 45px;
+      min-width: 30px;
+      flex: 1;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: 0.2s;
+    }
+    .key:hover { background: #334155; }
+    .key.correct { background: #10b981; }
+    .key.present { background: #f59e0b; }
+    .key.absent { background: #475569; opacity: 0.5; }
+    
+    .key-large {
+      flex: 1.5;
+      font-size: 0.9rem;
+      background: #334155;
+    }
+
+    .btn-restart {
+      background: #C9A84C;
+      color: #0f172a;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: 0.2s;
+      display: none;
+    }
+    .btn-restart:hover { background: #b4933b; }
+
+    @media (max-width: 400px) {
+      .tile { width: 45px; height: 45px; font-size: 1.5rem; }
+      .key { font-size: 0.9rem; height: 40px; min-width: 25px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="games.html">Games Zone</a> › Tech Wordle</div>
+    <h1>Tech Wordle 🧩</h1>
+    <p>Guess the 5-letter Tech, Math, or Physics word in 6 tries!</p>
+  </div>
+
+  <div class="game-wrapper">
+    <div id="status" class="status-msg"></div>
+    
+    <div id="board" class="board"></div>
+    
+    <div id="keyboard" class="keyboard">
+      <div class="key-row">
+        <button class="key" data-key="q">Q</button>
+        <button class="key" data-key="w">W</button>
+        <button class="key" data-key="e">E</button>
+        <button class="key" data-key="r">R</button>
+        <button class="key" data-key="t">T</button>
+        <button class="key" data-key="y">Y</button>
+        <button class="key" data-key="u">U</button>
+        <button class="key" data-key="i">I</button>
+        <button class="key" data-key="o">O</button>
+        <button class="key" data-key="p">P</button>
+      </div>
+      <div class="key-row">
+        <button class="key" data-key="a">A</button>
+        <button class="key" data-key="s">S</button>
+        <button class="key" data-key="d">D</button>
+        <button class="key" data-key="f">F</button>
+        <button class="key" data-key="g">G</button>
+        <button class="key" data-key="h">H</button>
+        <button class="key" data-key="j">J</button>
+        <button class="key" data-key="k">K</button>
+        <button class="key" data-key="l">L</button>
+      </div>
+      <div class="key-row">
+        <button class="key key-large" data-key="enter">ENTER</button>
+        <button class="key" data-key="z">Z</button>
+        <button class="key" data-key="x">X</button>
+        <button class="key" data-key="c">C</button>
+        <button class="key" data-key="v">V</button>
+        <button class="key" data-key="b">B</button>
+        <button class="key" data-key="n">N</button>
+        <button class="key" data-key="m">M</button>
+        <button class="key key-large" data-key="backspace">⌫</button>
+      </div>
+    </div>
+
+    <button id="restart-btn" class="btn-restart" onclick="initGame()">🔄 Play Again</button>
+  </div>
+</div>
+
+<script>
+  // Strictly 5-letter words (CSE, Math, Physics)
+  const wordBank = [
+    // CSE / Web / Tech
+    "ARRAY","STACK","QUEUE","MACRO","LOGIC","CACHE","PIXEL","VIRUS","DEBUG","REACT",
+    "CLOUD","CYBER","QUERY","SCOPE","TOKEN","VALID","AGILE","LINUX","ROUTE","FLOAT",
+    "PRINT","CLASS","SWIFT","ASCII","BASIC","COBOL","GRAPH","INDEX","INPUT","BOARD",
+    "DRIVE","FRAME","LAYER","PANEL","THEME","AUDIO","VIDEO","IMAGE","PROXY","SHELL",
+    "PATCH","CRASH","CLICK","MOUSE","FLASH","CHART","TABLE","BLOCK","CHAIN","CRYPT",
+    "NODES","PORTS","BYTES","GATES","WIRES","CHIPS","DRONE","MICRO","VOXEL","STATE",
+    "PROPS","HOOKS","FETCH","AWAIT","ASYNC","EVENT","YIELD","SUPER","THROW","CATCH",
+    "BREAK","WHILE","CONST","MATCH","SHIFT","TRACK","TRACE","MERGE","SPLIT","SLICE",
+    "PARSE","CHECK","BUILD","MOUNT","ALIGN","COLOR","WIDTH","DEPTH","TRAIT","ROBOT",
+    // Math
+    "ANGLE","RATIO","PROVE","SLOPE","PRIME","LIMIT","EXACT","VALUE","DIGIT","MODEL",
+    "AXIOM","CURVE","POINT","SPACE","TORUS","SCALE","SOLVE","EQUAL","LOCUS","RADII",
+    "TALLY","CHORD","STATS","VECTS",
+    // Physics / Science
+    "FORCE","POWER","LIGHT","SOUND","PHASE","FLUID","SOLID","QUARK","ORBIT","LASER",
+    "PRISM","RADAR","SONAR","ATOMS","WAVES","SPEED","FIELD","CLOCK","METER","MOTOR",
+    "OPTIC","FLAME","VAPOR","MAGMA","FOCAL","LUNAR","SOLAR","POLAR","AXIAL","MASSES"
+  ];
+
+  let targetWord = "";
+  let currentAttempt = 0;
+  let currentLetter = 0;
+  let grid = [];
+  let gameActive = true;
+
+  const boardElement = document.getElementById('board');
+  const statusElement = document.getElementById('status');
+  const restartBtn = document.getElementById('restart-btn');
+
+  function initGame() {
+    targetWord = wordBank[Math.floor(Math.random() * wordBank.length)];
+    currentAttempt = 0;
+    currentLetter = 0;
+    grid = [];
+    gameActive = true;
+    statusElement.innerText = "";
+    restartBtn.style.display = 'none';
+
+    // Reset Keyboard UI
+    document.querySelectorAll('.key').forEach(key => {
+      key.classList.remove('correct', 'present', 'absent');
+    });
+
+    // Generate Board UI
+    boardElement.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      let row = [];
+      let rowElement = document.createElement('div');
+      rowElement.className = 'row';
+      for (let j = 0; j < 5; j++) {
+        let tile = document.createElement('div');
+        tile.className = 'tile';
+        rowElement.appendChild(tile);
+        row.push(tile);
+      }
+      boardElement.appendChild(rowElement);
+      grid.push(row);
+    }
+  }
+
+  function handleInput(key) {
+    if (!gameActive) return;
+
+    if (key === 'backspace') {
+      if (currentLetter > 0) {
+        currentLetter--;
+        grid[currentAttempt][currentLetter].innerText = '';
+      }
+    } else if (key === 'enter') {
+      if (currentLetter === 5) {
+        checkGuess();
+      } else {
+        showMessage("Not enough letters!");
+      }
+    } else if (/^[a-z]$/.test(key)) {
+      if (currentLetter < 5) {
+        grid[currentAttempt][currentLetter].innerText = key.toUpperCase();
+        currentLetter++;
+      }
+    }
+  }
+
+  function checkGuess() {
+    let guess = "";
+    for (let i = 0; i < 5; i++) {
+      guess += grid[currentAttempt][i].innerText;
+    }
+
+    let targetArray = targetWord.split('');
+    let guessArray = guess.split('');
+    let tileColors = ['absent', 'absent', 'absent', 'absent', 'absent'];
+
+    // First pass: Find Green letters (Correct)
+    for (let i = 0; i < 5; i++) {
+      if (guessArray[i] === targetArray[i]) {
+        tileColors[i] = 'correct';
+        targetArray[i] = null; // Mark as used
+      }
+    }
+
+    // Second pass: Find Yellow letters (Present)
+    for (let i = 0; i < 5; i++) {
+      if (tileColors[i] === 'absent' && targetArray.includes(guessArray[i])) {
+        tileColors[i] = 'present';
+        targetArray[targetArray.indexOf(guessArray[i])] = null; // Mark as used
+      }
+    }
+
+    // Apply colors to board and keyboard
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        let tile = grid[currentAttempt][i];
+        tile.classList.add(tileColors[i]);
+        updateKeyboard(guessArray[i].toLowerCase(), tileColors[i]);
+      }, i * 250); // Delay for animation
+    }
+
+    // Check Win/Loss after animation
+    setTimeout(() => {
+      if (guess === targetWord) {
+        showMessage("🎉 Brilliant! You got it!");
+        endGame();
+      } else {
+        currentAttempt++;
+        currentLetter = 0;
+        if (currentAttempt === 6) {
+          showMessage(`Game Over! The word was ${targetWord}`);
+          endGame();
+        }
+      }
+    }, 1500);
+  }
+
+  function updateKeyboard(letter, color) {
+    const keyBtn = document.querySelector(`.key[data-key="${letter}"]`);
+    if (!keyBtn) return;
+    
+    // Do not downgrade a green key to yellow/gray
+    if (keyBtn.classList.contains('correct')) return;
+    if (keyBtn.classList.contains('present') && color === 'absent') return;
+
+    keyBtn.classList.remove('present', 'absent');
+    keyBtn.classList.add(color);
+  }
+
+  function showMessage(msg) {
+    statusElement.innerText = msg;
+    setTimeout(() => { if(gameActive) statusElement.innerText = ""; }, 2000);
+  }
+
+  function endGame() {
+    gameActive = false;
+    restartBtn.style.display = 'inline-block';
+  }
+
+  // Keyboard Event Listener
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleInput('enter');
+    else if (e.key === 'Backspace') handleInput('backspace');
+    else {
+      const key = e.key.toLowerCase();
+      if (/^[a-z]$/.test(key)) handleInput(key);
+    }
+  });
+
+  // On-screen Keyboard Listener
+  document.querySelectorAll('.key').forEach(btn => {
+    btn.addEventListener('click', () => {
+      handleInput(btn.getAttribute('data-key'));
+    });
+  });
+
+  // Start the game for the first time
+  initGame();
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
