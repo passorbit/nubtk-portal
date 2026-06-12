@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Neon Tic-Tac-Toe — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* 🎮 Neon Tic-Tac-Toe Styles */
+    .game-container {
+      max-width: 400px;
+      margin: 40px auto;
+      text-align: center;
+      background: #0f172a; /* ডার্ক ব্যাকগ্রাউন্ড */
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      color: #fff;
+    }
+    .status {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      min-height: 35px;
+      transition: color 0.3s;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+    .cell {
+      aspect-ratio: 1;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+    .cell:hover { background: #334155; }
+    
+    /* নিয়ন ইফেক্ট */
+    .cell.x {
+      color: #38bdf8; /* Light Blue */
+      text-shadow: 0 0 15px rgba(56, 189, 248, 0.8);
+    }
+    .cell.o {
+      color: #f43f5e; /* Rose/Red */
+      text-shadow: 0 0 15px rgba(244, 63, 94, 0.8);
+    }
+    
+    .reset-btn {
+      background: #C9A84C;
+      color: #0f172a;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .reset-btn:hover {
+      background: #b4933b;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="games.html">Games Zone</a> › Tic-Tac-Toe</div>
+    <h1>Neon Tic-Tac-Toe ❌⭕</h1>
+    <p>Grab a friend and see who wins! Player 1 (X) vs Player 2 (O)</p>
+  </div>
+
+  <div class="game-container">
+    <div class="status" id="status">Player X's Turn</div>
+    <div class="board" id="board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    <button class="reset-btn" onclick="resetGame()">🔄 Restart Game</button>
+  </div>
+</div>
+
+<script>
+  const cells = document.querySelectorAll('.cell');
+  const statusText = document.getElementById('status');
+  let board = ['', '', '', '', '', '', '', '', ''];
+  let currentPlayer = 'X';
+  let running = true;
+
+  // জেতার লজিক (Winning Combinations)
+  const winConditions = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // সোজাসুজি
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // লম্বালম্বি
+    [0, 4, 8], [2, 4, 6]             // কোণাকুণি
+  ];
+
+  cells.forEach(cell => cell.addEventListener('click', cellClicked));
+
+  function cellClicked() {
+    const cellIndex = this.getAttribute('data-index');
+    if (board[cellIndex] !== '' || !running) return;
+
+    updateCell(this, cellIndex);
+    checkWinner();
+  }
+
+  function updateCell(cell, index) {
+    board[index] = currentPlayer;
+    cell.textContent = currentPlayer;
+    cell.classList.add(currentPlayer.toLowerCase()); // x বা o ক্লাস অ্যাড করা (কালারের জন্য)
+  }
+
+  function checkWinner() {
+    let roundWon = false;
+    for (let i = 0; i < winConditions.length; i++) {
+      const [a, b, c] = winConditions[i];
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        roundWon = true;
+        break;
+      }
+    }
+
+    if (roundWon) {
+      statusText.innerHTML = `🎉 Player <span>${currentPlayer}</span> Wins! 🎉`;
+      statusText.style.color = currentPlayer === 'X' ? '#38bdf8' : '#f43f5e';
+      running = false;
+    } else if (!board.includes('')) {
+      statusText.textContent = "😲 It's a Draw!";
+      statusText.style.color = '#C9A84C';
+      running = false;
+    } else {
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      statusText.textContent = `Player ${currentPlayer}'s Turn`;
+      statusText.style.color = '#fff';
+    }
+  }
+
+  function resetGame() {
+    board = ['', '', '', '', '', '', '', '', ''];
+    currentPlayer = 'X';
+    running = true;
+    statusText.textContent = "Player X's Turn";
+    statusText.style.color = '#fff';
+    cells.forEach(cell => {
+      cell.textContent = '';
+      cell.classList.remove('x', 'o');
+    });
+  }
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
