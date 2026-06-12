@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Games Zone — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* 🎮 Games Specific CSS */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-top: 30px;
+    }
+    .game-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      text-decoration: none;
+    }
+    .game-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+      border-color: #C9A84C;
+    }
+    .game-icon {
+      font-size: 4rem;
+      margin-bottom: 15px;
+      background: #f8fafc;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .game-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .game-desc {
+      font-size: 0.9rem;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+    .game-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .gbadge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .gbadge-single { background: #EBF4FF; color: #1D4ED8; }
+    .gbadge-multi { background: #FCE7F3; color: #9D174D; }
+    .gbadge-brain { background: #FEF3C7; color: #B45309; }
+    
+    .btn-play {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #C9A84C;
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .game-card:hover .btn-play {
+      background: #C9A84C;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › Games Zone</div>
+    <h1>Games Zone 🎮</h1>
+    <p>Take a break from your studies! Play fun games directly in your browser. No download required.</p>
+  </div>
+
+  <div class="games-grid">
+    
+    <a href="#" class="game-card" onclick="alert('Tic-Tac-Toe is coming in the next step!'); return false;">
+      <div class="game-icon">❌⭕</div>
+      <h3 class="game-title">Neon Tic-Tac-Toe</h3>
+      <div class="game-badges">
+        <span class="gbadge gbadge-multi">👥 2 Players</span>
+        <span class="gbadge gbadge-brain">⚔️ Classic</span>
+      </div>
+      <p class="game-desc">Challenge your friend on the same screen in this beautifully designed modern Tic-Tac-Toe.</p>
+      <button class="btn-play">▶ Play Now</button>
+    </a>
+
+    <a href="#" class="game-card" onclick="alert('2048 Puzzle is coming soon!'); return false;">
+      <div class="game-icon">🔢</div>
+      <h3 class="game-title">2048 Puzzle</h3>
+      <div class="game-badges">
+        <span class="gbadge gbadge-single">👤 Single Player</span>
+        <span class="gbadge gbadge-brain">🧩 Brain Game</span>
+      </div>
+      <p class="game-desc">Slide the tiles, merge the same numbers, and try to reach the legendary 2048 tile!</p>
+      <button class="btn-play">▶ Play Now</button>
+    </a>
+
+    <a href="#" class="game-card" onclick="alert('Rock Paper Scissors is coming soon!'); return false;">
+      <div class="game-icon">✊🖐️</div>
+      <h3 class="game-title">Rock Paper Scissors</h3>
+      <div class="game-badges">
+        <span class="gbadge gbadge-single">👤 vs Bot</span>
+        <span class="gbadge gbadge-multi">⏱️ Quick Play</span>
+      </div>
+      <p class="game-desc">A quick time-killer! Can you outsmart the computer in this classic hand game?</p>
+      <button class="btn-play">▶ Play Now</button>
+    </a>
+
+  </div>
+</div>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
