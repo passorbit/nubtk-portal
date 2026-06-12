@@ -100,6 +100,39 @@
       font-family: 'DM Sans', sans-serif;
     }
     .hints-panel strong { color: #10b981; }
+    /* 📖 How to Play Instructions (Terminal) */
+    .how-to-play {
+      padding: 20px;
+      background: #0f172a;
+      border-top: 1px solid #334155;
+      text-align: left;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .how-to-play h3 {
+      color: #10b981;
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .how-to-play p {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .example-box {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-top: 15px;
+    }
+    .example-box strong { color: #f8fafc; }
+    .highlight-bull { color: #10b981; font-weight: bold; }
+    .highlight-cow { color: #f59e0b; font-weight: bold; }
 
     /* Blinking Cursor animation */
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
@@ -139,11 +172,22 @@
       </div>
     </div>
     
-    <div class="hints-panel">
-      <strong>[SYSTEM CLUE]:</strong><br>
-      🟢 <strong>Bulls:</strong> Number of digits that are correct AND in the correct position.<br>
-      🟡 <strong>Cows:</strong> Number of digits that are correct BUT in the wrong position.
+    <div class="how-to-play">
+      <h3>How to Play?</h3>
+      <p>Crack the secret 4-digit system PIN within 10 attempts. After each guess, the terminal will give you clues:</p>
+      <p>🟢 <strong>Bulls:</strong> Correct digit in the <strong>correct</strong> position.<br>
+         🟡 <strong>Cows:</strong> Correct digit in the <strong>wrong</strong> position.</p>
+      
+      <div class="example-box">
+        <p style="margin-bottom: 8px; color: #cbd5e1;"><strong>Example:</strong> If the secret PIN is <strong>8352</strong> and you guess <strong>8025</strong>:</p>
+        <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+          <li><span class="highlight-bull">8</span> is correct and in the right spot = <span class="highlight-bull">1 Bull</span></li>
+          <li><span class="highlight-cow">2</span> and <span class="highlight-cow">5</span> are correct but in the wrong spots = <span class="highlight-cow">2 Cows</span></li>
+          <li>Terminal Output: <code style="background: #000; padding: 2px 6px; border-radius: 4px; color: #10b981;">🟢 1 Bulls | 🟡 2 Cows</code></li>
+        </ul>
+      </div>
     </div>
+    
   </div>
 </div>
 
