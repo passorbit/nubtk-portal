@@ -528,15 +528,14 @@ function switchTab(tab) {
 
 // 🔴 FIX 1: গ্লোবাল মেমোরি ভেরিয়েবল যোগ করা হলো
 window.liveAdminConfig = null; 
+window.firebaseLoaded = false;
 
 function getAdminConfig() {
-  // যদি লাইভ ডেটা থাকে, তবে লোকাল স্টোরেজ চেক করার দরকার নেই
   if (window.liveAdminConfig) return window.liveAdminConfig;
-
+  if (!window.firebaseLoaded) return null; // 🆕 এখনো ডেটা আসেনি, wait করো
+  
   const saved = localStorage.getItem('nubtk_cover_config');
-  if (saved) {
-      try { return JSON.parse(saved); } catch(e){}
-  }
+  if (saved) { try { return JSON.parse(saved); } catch(e){} }
   
   // ডিফল্ট ফিল্ডগুলো আগের মতোই থাকবে...
   return {
@@ -561,6 +560,11 @@ function getAdminConfig() {
 function renderFields() {
   const cfg = getAdminConfig();
   const container = document.getElementById('fields-container');
+  
+  if (!cfg) { // 🆕
+    container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px;">⏳ Loading logos & fields from server...</p>';
+    return;
+  }
   const saved = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
   let html = '';
 
@@ -1025,6 +1029,7 @@ renderFields();
 
 // পেজ লোড হলেই ডাটাবেস থেকে লেটেস্ট লোগো ও ফিল্ড নিয়ে আসবে
 db.ref('settings').on('value', (snapshot) => {
+  window.firebaseLoaded = true;
   const data = snapshot.val() || {};
   
   // 🔴 FIX: Array Mutation Safety for Cover Page
