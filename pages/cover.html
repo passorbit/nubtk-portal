@@ -526,22 +526,29 @@ function switchTab(tab) {
   if (tab === 'saved') renderSavedList();
 }
 
-// ─── ADMIN CONFIG ───────────────────────────
+// 🔴 FIX 1: গ্লোবাল মেমোরি ভেরিয়েবল যোগ করা হলো
+window.liveAdminConfig = null; 
+
 function getAdminConfig() {
+  // যদি লাইভ ডেটা থাকে, তবে লোকাল স্টোরেজ চেক করার দরকার নেই
+  if (window.liveAdminConfig) return window.liveAdminConfig;
+
   const saved = localStorage.getItem('nubtk_cover_config');
-  if (saved) return JSON.parse(saved);
+  if (saved) {
+      try { return JSON.parse(saved); } catch(e){}
+  }
+  
+  // ডিফল্ট ফিল্ডগুলো আগের মতোই থাকবে...
   return {
     logoOptions: [],
     fields: [
-      { id:'dept', label:'Department', type:'select', required:true,
-        options:['Computer Science and Engineering','Civil Engineering','Electrical and Electronic Engineering','Architecture','Business Administration','Law','English Language & Literature'] },
+      { id:'dept', label:'Department', type:'select', required:true, options:['Computer Science and Engineering','Civil Engineering','Electrical and Electronic Engineering','Architecture','Business Administration','Law','English Language & Literature'] },
       { id:'courseTitle', label:'Course Title', type:'text', required:true, placeholder:'e.g. Data Structures' },
       { id:'courseCode', label:'Course Code', type:'text', required:true, placeholder:'e.g. CSE 2101' },
       { id:'coverType', label:'Type', type:'select', required:true, options:['ASSIGNMENT','LAB REPORT','TERM PAPER','PROJECT REPORT','PRESENTATION'] },
       { id:'coverTitle', label:'Title (Optional)', type:'text', required:false, placeholder:'Assignment/Lab topic' },
       { id:'teacherName', label:"Teacher's Name", type:'text', required:true, placeholder:'e.g. Md. Hasibul Islam' },
-      { id:'teacherDesig', label:"Teacher's Designation", type:'select', required:false,
-        options:['Lecturer','Senior Lecturer','Assistant Professor','Associate Professor','Professor','Head of Department'] },
+      { id:'teacherDesig', label:"Teacher's Designation", type:'select', required:false, options:['Lecturer','Senior Lecturer','Assistant Professor','Associate Professor','Professor','Head of Department'] },
       { id:'studentName', label:'Your Name', type:'text', required:true, placeholder:'Your full name' },
       { id:'studentId', label:'Student ID', type:'text', required:true, placeholder:'e.g. 11240321910' },
       { id:'section', label:'Section', type:'text', required:true, placeholder:'e.g. 2D' },
@@ -1019,18 +1026,25 @@ renderFields();
 // পেজ লোড হলেই ডাটাবেস থেকে লেটেস্ট লোগো ও ফিল্ড নিয়ে আসবে
 db.ref('settings').on('value', (snapshot) => {
   const data = snapshot.val() || {};
-  const liveConfig = {
+  
+  // 🔴 FIX 2: ডেটা সরাসরি গ্লোবাল ভেরিয়েবলে রাখা হচ্ছে
+  window.liveAdminConfig = {
     logoOptions: data.logos || [],
     fields: data.fields || getAdminConfig().fields 
   };
-  localStorage.setItem('nubtk_cover_config', JSON.stringify(liveConfig));
   
-  // লাইভ ডাটাবেস থেকে টিচারদের লিস্ট লোকাল স্টোরেজে সেভ করে রাখা
-  if(data.teachers) {
-    localStorage.setItem('nubtk_teachers_map', JSON.stringify(data.teachers));
+  // Try-Catch ব্যবহার করা হলো যেন মেমোরি ফুল হলেও ক্র্যাশ না করে
+  try {
+      localStorage.setItem('nubtk_cover_config', JSON.stringify(window.liveAdminConfig));
+  } catch(e) {
+      console.warn('LocalStorage limit exceeded! Serving logos directly from Live DB.');
   }
   
-  renderFields(); 
+  if(data.teachers) {
+    try { localStorage.setItem('nubtk_teachers_map', JSON.stringify(data.teachers)); } catch(e){}
+  }
+  
+  renderFields(); // এখন এটি সব অবস্থাতেই কাজ করবে!
 });
   
 </script>
