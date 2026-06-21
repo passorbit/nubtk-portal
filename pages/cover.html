@@ -1020,51 +1020,32 @@ function deleteSaved(i) {
 renderFields();
 
 // পেজ লোড হলেই ডাটাবেস থেকে লেটেস্ট লোগো ও ফিল্ড নিয়ে আসবে
-db.ref('settings').on('value', (snapshot) => {
-  window.firebaseLoaded = true;
-  const data = snapshot.val() || {};
-  
-  // 🔴 FIX: Array Mutation Safety for Cover Page
+Promise.all([
+  db.ref('settings/logos').once('value'),
+  db.ref('settings/fields').once('value')
+]).then(([logosSnap, fieldsSnap]) => {
   let safeLogos = [];
-  if (data.logos) {
-      safeLogos = Array.isArray(data.logos) ? data.logos : Object.values(data.logos);
+  if (logosSnap.val()) {
+    safeLogos = Array.isArray(logosSnap.val()) ? logosSnap.val() : Object.values(logosSnap.val());
   }
-  
+
   let safeFields = getAdminConfig().fields;
-  if (data.fields) {
-      safeFields = Array.isArray(data.fields) ? data.fields : Object.values(data.fields);
+  if (fieldsSnap.val()) {
+    safeFields = Array.isArray(fieldsSnap.val()) ? fieldsSnap.val() : Object.values(fieldsSnap.val());
   }
-  
+
   window.liveAdminConfig = {
     logoOptions: safeLogos,
-    fields: safeFields 
+    fields: safeFields
   };
-  
+
   try {
-      localStorage.setItem('nubtk_cover_config', JSON.stringify(window.liveAdminConfig));
+    localStorage.setItem('nubtk_cover_config', JSON.stringify(window.liveAdminConfig));
   } catch(e) {
-      console.warn('LocalStorage limit exceeded!');
-  }
-  
-  if(data.teachers) {
-    try { localStorage.setItem('nubtk_teachers_map', JSON.stringify(data.teachers)); } catch(e){}
+    console.warn('LocalStorage limit exceeded!');
   }
 
-  const logoGrid = document.getElementById('logo-grid');
-  const draft = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
-
-  if (safeLogos.length > 0 && logoGrid) {
-    // form already render হয়ে আছে, শুধু logo grid update করো
-    logoGrid.innerHTML = safeLogos.map((src, i) => {
-      const sel = (draft.logoIdx == i) ? 'selected' : '';
-      return `<div class="logo-opt ${sel}" onclick="selectLogo(${i})" data-idx="${i}"><img src="${src}" alt="Logo ${i+1}"/></div>`;
-    }).join('');
-    // আগের selected logo index restore করো
-    if (draft.logoIdx != null) selectLogo(draft.logoIdx, false);
-  } else {
-    // logo-grid নেই মানে form এখনো render হয়নি, পুরো renderFields() দরকার
-    renderFields();
-  }
+  renderFields();
 });
   
 </script>
