@@ -1049,6 +1049,18 @@ db.ref('settings').on('value', (snapshot) => {
   if(data.teachers) {
     try { localStorage.setItem('nubtk_teachers_map', JSON.stringify(data.teachers)); } catch(e){}
   }
+
+  if (safeLogos.length > 0) {
+  const logoGrid = document.getElementById('logo-grid');
+  if (logoGrid) {
+    const draft = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
+    logoGrid.innerHTML = safeLogos.map((src, i) => {
+      const sel = (draft.logoIdx == i) ? 'selected' : '';
+      return `<div class="logo-opt ${sel}" onclick="selectLogo(${i})" data-idx="${i}"><img src="${src}" alt="Logo ${i+1}"/></div>`;
+    }).join('');
+    return; // শুধু logo update, পুরো form re-render না
+  }
+}
   
   renderFields(); // এখন এটি সব অবস্থাতেই কাজ করবে!
 });
