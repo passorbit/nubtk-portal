@@ -562,7 +562,7 @@ function renderFields() {
   const saved = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
   let html = '';
 
-  const logos = cfg.logoOptions && cfg.logoOptions.length > 0 ? cfg.logoOptions : getDefaultLogos();
+  const logos = (window.liveAdminConfig?.logoOptions?.length > 0) ? window.liveAdminConfig.logoOptions : (cfg.logoOptions?.length > 0 ? cfg.logoOptions : getDefaultLogos());
   html += `<div class="form-group full">
     <label class="form-label">Select Cover Design</label>
     <select class="form-select" id="form-template" style="margin-bottom: 10px;">
