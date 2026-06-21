@@ -702,11 +702,25 @@ function processCSVData(csvText) {
   const allData = { ...liveRoutineData }; 
   let count = 0;
 
+  // 🔴 ভ্যালিড দিনগুলোর লিস্ট (Monday সহ)
+  const VALID_DAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.trim().replace(/^"|"$/g, ''));
     if (cols.length >= 6) {
       const sec = cols[0].toUpperCase();
-      const day = cols[1]; 
+      
+      // 🔴 Day Formatting & Validation Logic
+      let rawDay = cols[1]; 
+      const formattedDay = rawDay.charAt(0).toUpperCase() + rawDay.slice(1).toLowerCase();
+      
+      // যদি দিনটি আমাদের লিস্টে না থাকে, তবে এই সারিটি ডেটাবেসে যাবে না
+      if (!VALID_DAYS.includes(formattedDay)) {
+          console.warn(`Skipped invalid day in CSV: ${rawDay}`);
+          continue; 
+      }
+
+      const day = formattedDay; // সঠিক ফরম্যাটের দিনটি সেভ করা হলো
       const time = cols[2]; 
       const course = cols[3];
       const room = cols[4];
