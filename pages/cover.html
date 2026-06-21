@@ -532,7 +532,6 @@ window.firebaseLoaded = false;
 
 function getAdminConfig() {
   if (window.liveAdminConfig) return window.liveAdminConfig;
-  if (!window.firebaseLoaded) return null; // 🆕 এখনো ডেটা আসেনি, wait করো
   
   const saved = localStorage.getItem('nubtk_cover_config');
   if (saved) { try { return JSON.parse(saved); } catch(e){} }
@@ -560,11 +559,6 @@ function getAdminConfig() {
 function renderFields() {
   const cfg = getAdminConfig();
   const container = document.getElementById('fields-container');
-  
-  if (!cfg) { // 🆕
-    container.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px;">⏳ Loading logos & fields from server...</p>';
-    return;
-  }
   const saved = JSON.parse(localStorage.getItem('nubtk_cover_draft') || '{}');
   let html = '';
 
