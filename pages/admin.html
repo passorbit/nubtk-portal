@@ -93,22 +93,23 @@
       <button class="tab-btn" onclick="adminTab('settings')">⚙️ Settings</button>
     </div>
 
-    <!-- Admin Logo -->
     <div class="panel active" id="atab-logos">
-      <div class="section-card">
-        <h2>Upload Logos</h2>
-        <div class="logo-upload-zone" onclick="document.getElementById('logo-file-input').click()">
-          <input type="file" id="logo-file-input" accept="image/*" multiple onchange="handleLogoUpload(this)"/>
-          <div style="font-size:2rem;margin-bottom:8px;">📁</div>
-          <div style="font-size:0.9rem;color:var(--muted);">Click to upload logo images (PNG/JPG)</div>
-        </div>
-        <div class="uploaded-logos" id="uploaded-logos-display"></div>
-        <div class="btn-row">
-          <button class="btn btn-gold" onclick="saveLogos()">💾 Save Logos</button>
-        </div>
-      </div>
+  <div class="section-card">
+    <h2>Manage Logos (Link Only)</h2>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">
+      ছবিটা GitHub repo, imgbb.com, বা jsDelivr CDN-এ হোস্ট করে সরাসরি image link এখানে পেস্ট করো।
+    </p>
+    <div style="display:flex; gap:10px; margin-bottom:18px;">
+      <input type="text" id="logo-link-input" class="form-input" placeholder="https://example.com/logo.png" style="flex:1;"
+             onkeydown="if(event.key==='Enter') addLogoByLink()"/>
+      <button class="btn btn-outline" onclick="addLogoByLink()">+ Add Link</button>
     </div>
-
+    <div class="uploaded-logos" id="uploaded-logos-display"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="saveLogos()">💾 Save Logos</button>
+    </div>
+  </div>
+</div>
     
 
     <!-- Admin Cover -->
@@ -772,38 +773,25 @@ function redrawLogos() {
   document.getElementById('uploaded-logos-display').innerHTML = uploadedLogos.map((src,i) => `
     <div class="uploaded-logo-item"><img src="${src}"/><button class="del-logo" onclick="removeLogo(${i})">✕</button></div>`).join('');
 }
-function handleLogoUpload(input) {
-  Array.from(input.files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => { 
-      // 🔴 MAGIC FIX: Auto-Compressor (যেকোনো সাইজের ছবি আপলোড করা যাবে)
-      const img = new Image();
-      img.onload = () => {
-         const canvas = document.createElement('canvas');
-         const MAX_WIDTH = 250; // কভার পেজের জন্য এটি পারফেক্ট সাইজ
-         let width = img.width;
-         let height = img.height;
-         
-         if (width > MAX_WIDTH) {
-             height = height * (MAX_WIDTH / width);
-             width = MAX_WIDTH;
-         }
-         
-         canvas.width = width;
-         canvas.height = height;
-         const ctx = canvas.getContext('2d');
-         ctx.drawImage(img, 0, 0, width, height);
-         
-         // ট্রান্সপারেন্সি ঠিক রাখার জন্য PNG হিসেবে সেভ হবে
-         const compressedBase64 = canvas.toDataURL('image/png');
-         uploadedLogos.push(compressedBase64); 
-         redrawLogos();
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-  input.value = ''; 
+function addLogoByLink() {
+  const input = document.getElementById('logo-link-input');
+  const url = input.value.trim();
+  if (!url) { notify('⚠️ একটা image link পেস্ট করো!'); return; }
+  if (!/^https?:\/\//i.test(url)) { notify('⚠️ Valid http(s) link দিতে হবে!'); return; }
+  if (uploadedLogos.includes(url)) { notify('⚠️ এই লিংকটা আগেই আছে!'); return; }
+
+  notify('⏳ লিংক চেক করা হচ্ছে...');
+  const testImg = new Image();
+  testImg.onload = () => {
+    uploadedLogos.push(url);
+    redrawLogos();
+    input.value = '';
+    notify('✅ Logo link added! এখন "💾 Save Logos" ক্লিক করো।');
+  };
+  testImg.onerror = () => {
+    notify('❌ এই লিংক থেকে image লোড হলো না। লিংকটা চেক করো।');
+  };
+  testImg.src = url;
 }
 function removeLogo(i) { uploadedLogos.splice(i,1); redrawLogos(); }
 
