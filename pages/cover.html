@@ -45,47 +45,81 @@
 
     /* DESIGN 10: Green Black Geometric */
 .template-10 {
-  background: #f5f5f5; color: #111;
+  background: #f0f0f0; color: #111;
   font-family: 'Times New Roman', serif;
   position: relative; overflow: hidden;
 }
+/* Top-left black triangle */
 .template-10::before {
   content: ''; position: absolute; top: 0; left: 0;
   width: 0; height: 0; border-style: solid;
-  border-width: 320px 280px 0 0;
+  border-width: 400px 180px 0 0;
   border-color: #1a1a1a transparent transparent transparent;
   z-index: 0;
 }
+/* Top-left green triangle */
 .template-10::after {
   content: ''; position: absolute; top: 0; left: 0;
   width: 0; height: 0; border-style: solid;
-  border-width: 220px 180px 0 0;
+  border-width: 400px 120px 0 0;
   border-color: #2d7a2d transparent transparent transparent;
   z-index: 0;
 }
+/* Right side black bar */
 .template-10 .geo-accent {
-  position: absolute; bottom: 0; right: 0;
+  position: absolute; top: 0; right: 0;
   width: 0; height: 0; border-style: solid;
-  border-width: 0 0 280px 240px;
+  border-width: 0 180px 400px 0;
+  border-color: transparent #1a1a1a transparent transparent;
+  z-index: 0;
+}
+/* Right side green bar */
+.template-10 .geo-accent2 {
+  position: absolute; top: 0; right: 0;
+  width: 0; height: 0; border-style: solid;
+  border-width: 0 120px 400px 0;
+  border-color: transparent #2d7a2d transparent transparent;
+  z-index: 0;
+}
+/* Bottom-left black triangle */
+.template-10 .geo-accent3 {
+  position: absolute; bottom: 0; left: 0;
+  width: 0; height: 0; border-style: solid;
+  border-width: 0 0 300px 180px;
   border-color: transparent transparent #1a1a1a transparent;
   z-index: 0;
 }
-.template-10 .geo-accent2 {
+/* Bottom-left green triangle */
+.template-10 .geo-accent4 {
+  position: absolute; bottom: 0; left: 0;
+  width: 0; height: 0; border-style: solid;
+  border-width: 0 0 300px 120px;
+  border-color: transparent transparent #2d7a2d transparent;
+  z-index: 0;
+}
+/* Bottom-right black triangle */
+.template-10 .geo-accent5 {
   position: absolute; bottom: 0; right: 0;
   width: 0; height: 0; border-style: solid;
-  border-width: 0 0 180px 160px;
-  border-color: transparent transparent #2d7a2d transparent;
+  border-width: 0 0 300px 180px;
+  border-color: transparent transparent transparent #1a1a1a;
+  z-index: 0;
+}
+/* Bottom-right green triangle */
+.template-10 .geo-accent6 {
+  position: absolute; bottom: 0; right: 0;
+  width: 0; height: 0; border-style: solid;
+  border-width: 0 0 300px 120px;
+  border-color: transparent transparent transparent #2d7a2d;
   z-index: 0;
 }
 .template-10 .cover-header,
 .template-10 .cover-meta,
 .template-10 .cover-title,
 .template-10 .cover-table,
-.template-10 .cover-date {
-  position: relative; z-index: 2;
-}
+.template-10 .cover-date { position: relative; z-index: 2; }
 .template-10 .cover-logo-row { position: relative; z-index: 2; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 6px; margin-top: 10px; }
-.template-10 .cover-logo-img { width: 160px; height: 160px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3)); }
+.template-10 .cover-logo-img { width: 160px; height: 160px; object-fit: contain; filter: none; background: transparent; }
 .template-10 .cover-header { text-align: center; margin-bottom: 8px; }
 .template-10 .cover-uni-name { color: #111; font-size: 17pt; font-weight: 900; }
 .template-10 .cover-dept { color: #2d7a2d; font-size: 12pt; font-weight: 700; margin-top: 4px; }
@@ -97,7 +131,7 @@
 .template-10 .cover-table th { background: #1a1a1a; color: #4caf50; border: 1px solid #333; }
 .template-10 .cover-table td { border: 1px solid #ccc; color: #111; }
 .template-10 .cover-table td strong { color: #1a1a1a; }
-.template-10 .cover-date { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; font-size: 11pt; font-weight: 700; color: #fff; z-index: 2; }
+.template-10 .cover-date { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; font-size: 11pt; font-weight: 700; color: #1a1a1a; z-index: 2; }
 
 
 /* DESIGN 8: Abstract Colorful Wave - INSPIRED BY YOUR LATEST IMAGE */
@@ -978,7 +1012,7 @@ function renderPreview() {
         </td>
       </tr>
     </table>
-    ${tpl === 'template-10' ? '<div class="geo-accent"></div><div class="geo-accent2"></div>' : ''}
+    ${tpl === 'template-10' ? '<div class="geo-accent"></div><div class="geo-accent2"></div><div class="geo-accent3"></div><div class="geo-accent4"></div><div class="geo-accent5"></div><div class="geo-accent6"></div>' : ''}
     <div class="cover-date" style="${!submDate ? 'color:#94a3b8;' : ''}">Date of Submission: ${d_date}</div>
   </div>`;
 }
