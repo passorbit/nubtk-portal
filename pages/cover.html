@@ -933,56 +933,54 @@ function renderPreview() {
 
 
 
-// ─── DOWNLOAD ───────────────────────────────
+function ensureLogoLoaded(el) {
+  const img = el.querySelector('.cover-logo-img');
+  if (!img || img.complete) return Promise.resolve();
+  return new Promise(resolve => {
+    img.onload = resolve;
+    img.onerror = resolve; // ফেইল করলেও আটকে থাকবে না
+    setTimeout(resolve, 4000); // safety: 4s এর বেশি অপেক্ষা না করা
+  });
+}
+
 function downloadPDF() {
   const { missingRequired } = collectData();
-  
-  // ডাউনলোড করার সময় চেক করবে ফিল্ড ফাঁকা আছে কি না
-  if (missingRequired) {
-    notify('⚠️ Fill the Required Fields first!');
-    switchTab('edit'); // ফাঁকা থাকলে এডিট ফর্মে ফেরত পাঠাবে
-    return;
-  }
+  if (missingRequired) { notify('⚠️ Fill the Required Fields first!'); switchTab('edit'); return; }
 
   const el = document.getElementById('cover-page');
   const shadow = document.querySelector('.preview-shadow');
-  if(shadow) shadow.style.transform = 'scale(1)'; 
-  
-  html2pdf().set({
-    margin: 0, filename: 'NUBTK_Cover_Page.pdf',
-    image: { type: 'jpeg', quality: 1 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-    jsPDF: { unit: 'px', format: [794, 1120], orientation: 'portrait' } 
-  }).from(el).save().then(() => {
-    adjustPreviewScale(); 
+  if (shadow) shadow.style.transform = 'scale(1)';
+
+  notify('⬇️ Preparing PDF...');
+  ensureLogoLoaded(el).then(() => {
+    html2pdf().set({
+      margin: 0, filename: 'NUBTK_Cover_Page.pdf',
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+      jsPDF: { unit: 'px', format: [794, 1120], orientation: 'portrait' }
+    }).from(el).save().then(() => adjustPreviewScale());
   });
-  notify('⬇️ Downloading PDF...');
 }
 
 function downloadJPG() {
   const { missingRequired } = collectData();
-  
-  // ডাউনলোড করার সময় চেক করবে ফিল্ড ফাঁকা আছে কি না
-  if (missingRequired) {
-    notify('⚠️ Fill the Required Fields first!');
-    switchTab('edit'); // ফাঁকা থাকলে এডিট ফর্মে ফেরত পাঠাবে
-    return;
-  }
+  if (missingRequired) { notify('⚠️ Fill the Required Fields first!'); switchTab('edit'); return; }
 
   const el = document.getElementById('cover-page');
   const shadow = document.querySelector('.preview-shadow');
-  if(shadow) shadow.style.transform = 'scale(1)'; 
+  if (shadow) shadow.style.transform = 'scale(1)';
 
-  html2canvas(el, { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#fff' }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'NUBTK_Cover_Page.jpg';
-    link.href = canvas.toDataURL('image/jpeg', 0.95);
-    link.click();
-    adjustPreviewScale(); 
+  notify('🖼️ Preparing JPG...');
+  ensureLogoLoaded(el).then(() => {
+    html2canvas(el, { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#fff' }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'NUBTK_Cover_Page.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+      adjustPreviewScale();
+    });
   });
-  notify('🖼️ Downloading JPG...');
 }
-
 // ─── SAVED DRAFTS ────────────────────────────
 function saveDraftNamed() {
   const { data } = collectData(); 
