@@ -1023,21 +1023,30 @@ function deleteSaved(i) {
 // ─── INIT ────────────────────────────────────
 renderFields();
 
-// পেজ লোড হলেই ডাটাবেস থেকে লেটেস্ট লোগো ও ফিল্ড নিয়ে আসবে
+// পেজ লোড হলেই ডাটাবেস থেকে লেটেস্ট লোগো ও ফিল্ড নিয়ে আসবে
 db.ref('settings').on('value', (snapshot) => {
   const data = snapshot.val() || {};
   
-  // 🔴 FIX 2: ডেটা সরাসরি গ্লোবাল ভেরিয়েবলে রাখা হচ্ছে
+  // 🔴 FIX: Array Mutation Safety for Cover Page
+  let safeLogos = [];
+  if (data.logos) {
+      safeLogos = Array.isArray(data.logos) ? data.logos : Object.values(data.logos);
+  }
+  
+  let safeFields = getAdminConfig().fields;
+  if (data.fields) {
+      safeFields = Array.isArray(data.fields) ? data.fields : Object.values(data.fields);
+  }
+  
   window.liveAdminConfig = {
-    logoOptions: data.logos || [],
-    fields: data.fields || getAdminConfig().fields 
+    logoOptions: safeLogos,
+    fields: safeFields 
   };
   
-  // Try-Catch ব্যবহার করা হলো যেন মেমোরি ফুল হলেও ক্র্যাশ না করে
   try {
       localStorage.setItem('nubtk_cover_config', JSON.stringify(window.liveAdminConfig));
   } catch(e) {
-      console.warn('LocalStorage limit exceeded! Serving logos directly from Live DB.');
+      console.warn('LocalStorage limit exceeded!');
   }
   
   if(data.teachers) {
