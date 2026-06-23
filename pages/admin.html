@@ -1076,11 +1076,21 @@ function listenToVisitors() {
 
 function resetVisitorStats() {
   if (!confirm('সব visitor stats reset করবে?')) return;
-  db.ref('visitors').set({
-    online_count: 0,
-    total_visits: 0,
-    pages: { index: 0, cover: 0, routine: 0 }
-  }).then(() => notify('✅ Stats reset করা হয়েছে!'));
+
+  // সরাসরি চাইল্ড নোডগুলো জিরো করা হচ্ছে যাতে Permission Denied না হয়
+  Promise.all([
+    db.ref('visitors/total_visits').set(0),
+    db.ref('visitors/pages/index').set(0),
+    db.ref('visitors/pages/cover').set(0),
+    db.ref('visitors/pages/routine').set(0),
+    db.ref('visitors/online_count').set(0),
+    db.ref('visitors/online_users').remove() // আটকে থাকা ফেক ইউজারও ক্লিয়ার করে দেবে
+  ]).then(() => {
+    notify('✅ Stats reset করা হয়েছে!');
+  }).catch(err => {
+    notify('❌ Error: ' + err.message);
+    console.error("Reset Error:", err);
+  });
 }
 </script>
 
