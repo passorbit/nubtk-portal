@@ -412,6 +412,7 @@ firebase.auth().onAuthStateChanged((user) => {
     loadAdminSettings(); 
     listenToFirebase();
     listenToTeachers();
+    listenToVisitors();
   } else {
     // লগিন করা না থাকলে লগিন পেজ দেখাবে
     document.getElementById('admin-login').style.display = 'block';
