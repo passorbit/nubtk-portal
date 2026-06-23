@@ -6,6 +6,8 @@
   <title>NUBTK Student Portal</title>
   <link rel="stylesheet" href="css/main.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -96,6 +98,20 @@
 </footer>
 
 <script>
+
+  // --- Firebase Initialization ----
+const firebaseConfig = {
+  apiKey: "AIzaSyCF9BoDxWa-0XTwbCBxjHrrBdQrKioJua8",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+
+  
 function toggleNav() {
   document.querySelector('.nav-links').classList.toggle('open');
 }
@@ -103,11 +119,11 @@ function toggleNav() {
   const PAGE_NAME = 'index';
   const db = firebase.database();
   
-  // Total visit count বাড়াবে
+  // Total visit count+
   db.ref('visitors/total_visits').transaction(v => (v || 0) + 1);
   db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1);
   
-  // Online count — page খুললে বাড়বে, বন্ধ করলে কমবে
+  // Online count — page
   const onlineRef = db.ref('visitors/online_count');
   const userRef = db.ref('visitors/online_users/' + Date.now() + Math.random());
   
