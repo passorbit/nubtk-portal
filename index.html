@@ -112,27 +112,27 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
   
-function toggleNav() {
-  document.querySelector('.nav-links').classList.toggle('open');
-}
-  (function() {
-  const PAGE_NAME = 'index';
+(function() {
+  const PAGE_NAME = 'cover'; // পেজ অনুযায়ী নাম চেঞ্জ করবেন (যেমন cover.html এর জন্য 'cover' দেবেন)
   const db = firebase.database();
   
-  // Total visit count+
-  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1);
-  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1);
+  // Total visit count
+  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1).catch(e => console.error(e));
+  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1).catch(e => console.error(e));
   
-  // Online count — page
+  // Online count — ডট (.) সমস্যা ফিক্স করা হয়েছে
   const onlineRef = db.ref('visitors/online_count');
-  const userRef = db.ref('visitors/online_users/' + Date.now() + Math.random());
   
-  userRef.set(true);
+  // সেফ আইডি তৈরি
+  const safeRandomId = Date.now() + '_' + Math.floor(Math.random() * 1000);
+  const userRef = db.ref('visitors/online_users/' + safeRandomId);
+  
+  userRef.set(true).catch(e => console.error(e));
   userRef.onDisconnect().remove();
   
   db.ref('visitors/online_users').on('value', snap => {
     const count = snap.numChildren();
-    onlineRef.set(count);
+    onlineRef.set(count).catch(e => console.error(e));
   });
 })();
 </script>
