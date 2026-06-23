@@ -571,6 +571,29 @@ function editGeneratedRoutine() {
   loadManualBuilder();
   notify('✏️ Routine loaded! You can now modify it.');
 }
+
+
+
+  (function() {
+  const PAGE_NAME = 'routine';
+  const db = firebase.database();
+  
+  // Total visit count বাড়াবে
+  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1);
+  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1);
+  
+  // Online count — page খুললে বাড়বে, বন্ধ করলে কমবে
+  const onlineRef = db.ref('visitors/online_count');
+  const userRef = db.ref('visitors/online_users/' + Date.now() + Math.random());
+  
+  userRef.set(true);
+  userRef.onDisconnect().remove();
+  
+  db.ref('visitors/online_users').on('value', snap => {
+    const count = snap.numChildren();
+    onlineRef.set(count);
+  });
+})();
 </script>
 
 <script src="../navbar.js"></script>
