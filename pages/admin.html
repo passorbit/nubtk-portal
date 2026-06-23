@@ -503,7 +503,8 @@ function listenToTeachers() {
     // ম্যাজিক কানেকশন: কভার পেজের জন্য নাম ও পদবির ম্যাপ তৈরি করে সেভ করা
     const teacherMap = {};
     Object.values(liveTeachers).forEach(t => {
-      teacherMap[t.name] = t.designation;
+      let safeName = t.name.replace(/[.#$\[\]/]/g, ''); 
+      teacherMap[safeName] = t.designation;
     });
     db.ref('settings/teachers').set(teacherMap);
   });
