@@ -91,7 +91,18 @@
       <button class="tab-btn" id="atab-btn-teachers" onclick="adminTab('teachers')">👨‍🏫 Teachers</button>
       <button class="tab-btn" onclick="adminTab('students')">👨‍🎓 Students</button>
       <button class="tab-btn" onclick="adminTab('visitors')">📊 Visitors</button>
+      <button class="tab-btn" onclick="adminTab('support')">📨 Support</button>
       <button class="tab-btn" onclick="adminTab('settings')">⚙️ Settings</button>
+    </div>
+    <div class="panel" id="atab-support" style="display:none;">
+      <div class="section-card">
+        <h2>📨 Support Messages</h2>
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:20px;">Messages and issues reported by students.</p>
+        
+        <div id="messages-list" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+          <p style="color: #64748b; text-align: center;">Loading messages...</p>
+        </div>
+      </div>
     </div>
 
     <div class="panel active" id="atab-logos">
@@ -389,6 +400,7 @@ function tryLogin() {
       listenToFirebase();
       listenToTeachers(); // 🆕 টিচার ডিরেক্টরি লোড করবে
       listenToVisitors();
+      listenToSupportMessages();
       notify('✅ Welcome, Admin!');
     } else if (pw === 'nubtk2025') {
       notify('এত সোজা না চান্দু 😜');
@@ -413,6 +425,7 @@ firebase.auth().onAuthStateChanged((user) => {
     listenToFirebase();
     listenToTeachers();
     listenToVisitors();
+    listenToSupportMessages();
   } else {
     // লগিন করা না থাকলে লগিন পেজ দেখাবে
     document.getElementById('admin-login').style.display = 'block';
@@ -471,8 +484,7 @@ function changePassword() {
 function logout() { location.reload(); }
 
 function adminTab(tab) {
-  // 🆕 'students' ট্যাব যুক্ত করা হলো
-  const tabs = ['logos','fields','routine','teachers','students','visitors','settings'];
+const tabs = ['logos','fields','routine','teachers','students','visitors','support','settings'];
   document.querySelectorAll('.admin-tab-bar .tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i]===tab));
   tabs.forEach(t => {
     const el = document.getElementById('atab-'+t);
@@ -1091,6 +1103,47 @@ function resetVisitorStats() {
     notify('❌ Error: ' + err.message);
     console.error("Reset Error:", err);
   });
+}
+
+  // ─── SUPPORT MESSAGES LOGIC ───
+function listenToSupportMessages() {
+  db.ref('support_messages').on('value', (snapshot) => {
+    const list = document.getElementById('messages-list');
+    list.innerHTML = ''; // Clear loading text
+
+    if (!snapshot.exists()) {
+      list.innerHTML = '<p style="color: #64748b; text-align: center; padding: 20px 0;">No messages yet.</p>';
+      return;
+    }
+
+    // নতুন মেসেজ ওপরে দেখানোর জন্য Array তে নিয়ে reverse করা হচ্ছে
+    const messages = [];
+    snapshot.forEach(child => {
+       messages.unshift({ id: child.key, ...child.val() });
+    });
+
+    list.innerHTML = messages.map(data => `
+      <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 10px; margin-bottom: 12px; border-left: 4px solid #38bdf8; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <strong style="color: #38bdf8; font-size: 1.1rem;">${data.name}</strong>
+            <span style="color: #94a3b8; font-size: 0.85rem; margin-left:8px; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">ID: ${data.studentId || 'N/A'}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:15px;">
+             <span style="color: #64748b; font-size: 0.8rem;">${data.time || 'Unknown Time'}</span>
+             <button onclick="deleteMessage('${data.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.95rem; padding:0;" title="Delete Message">🗑️</button>
+          </div>
+        </div>
+        <p style="color: #f8fafc; margin: 0; line-height: 1.5; font-size:0.95rem; white-space: pre-wrap;">${data.message}</p>
+      </div>
+    `).join('');
+  });
+}
+
+function deleteMessage(id) {
+   if(confirm('Are you sure you want to delete this message?')) {
+      db.ref('support_messages/' + id).remove().then(() => notify('🗑️ Message deleted'));
+   }
 }
 </script>
 
