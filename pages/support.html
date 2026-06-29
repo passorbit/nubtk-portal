@@ -44,12 +44,21 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script>
+    // আপনার আসল Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCF9BoDxWa-0XTwbCBxjHrrBdQrKioJua8",
+      authDomain: "nubtk-portal.firebaseapp.com",
+      databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "nubtk-portal",
+      storageBucket: "nubtk-portal.firebasestorage.app",
+      messagingSenderId: "45891604739",
+      appId: "1:45891604739:web:33251f784080f09816d936"
+    };
+
     // ফায়ারবেস ইনিশিয়ালাইজেশন
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
-    
-    // নাম পরিবর্তন করে supportDb দেওয়া হলো কনফ্লিক্ট এড়ানোর জন্য
     const supportDb = firebase.database();
 
     // ফর্ম সাবমিট করার লজিক
@@ -60,18 +69,15 @@
       const studentId = document.getElementById('sender-id').value;
       const msg = document.getElementById('sender-msg').value;
       
-      // বর্তমান সময় বের করা
       const now = new Date();
       const timestamp = now.toLocaleDateString() + " " + now.toLocaleTimeString();
 
-      // db এর জায়গায় supportDb ব্যবহার করা হলো
       supportDb.ref('support_messages').push({
         name: name,
         studentId: studentId,
         message: msg,
         time: timestamp
       }).then(() => {
-        // সাকসেস মেসেজ দেখানো এবং ফর্ম ক্লিয়ার করা
         document.getElementById('success-msg').style.display = 'block';
         document.getElementById('support-form').reset();
         
@@ -84,6 +90,7 @@
       });
     });
 
+    
     (function() {
   const PAGE_NAME = 'support'; // পেজ অনুযায়ী নাম চেঞ্জ করবেন (যেমন cover.html এর জন্য 'cover' দেবেন)
   const db = firebase.database();
