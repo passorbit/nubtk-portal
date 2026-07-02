@@ -9,6 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
   <style>
     .admin-tab-bar { display:flex; gap:4px; margin-bottom:28px; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:4px; width:fit-content; flex-wrap:wrap; }
     .field-item { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-bottom:10px; }
@@ -379,6 +380,11 @@ const firebaseConfig = {
   appId: "1:45891604739:web:33251f784080f09816d936"
 };
 firebase.initializeApp(firebaseConfig);
+  const appCheck = firebase.appCheck();
+appCheck.activate(
+  '6LfgyEEtAAAAAHQSS-8guIgRI_pdHO3kyar9Lreo', // তোমার Site key
+  true // token auto-refresh
+);
 const db = firebase.database();
 let liveRoutineData = {}; 
 
