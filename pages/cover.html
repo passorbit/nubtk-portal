@@ -10,6 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
   <style>
     /* COVER PAGE PRINT STYLES */
     .cover-preview {
@@ -574,6 +575,11 @@ const firebaseConfig = {
   appId: "1:45891604739:web:33251f784080f09816d936"
 };
 firebase.initializeApp(firebaseConfig);
+  const appCheck = firebase.appCheck();
+appCheck.activate(
+  '6LfgyEEtAAAAAHQSS-8guIgRI_pdHO3kyar9Lreo', // তোমার Site key
+  true // token auto-refresh
+);
 const db = firebase.database();
   
 // ─── HELPERS ────────────────────────────────
