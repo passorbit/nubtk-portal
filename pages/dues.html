@@ -149,7 +149,7 @@ function showDetails(studentID) {
 
   const fields = [
     { key: "Total Received", label: "Total Received" },
-    { key: "Scholar ", label: "Scholarship" },
+    { key: "Scholar", label: "Scholarship" }, // স্পেস মুছে দেওয়া হয়েছে
     { key: "Credit Taken", label: "Credit Taken" },
     { key: "Reg Fee", label: "Registration Fee" },
     { key: "Net Payable", label: "Net Payable" },
@@ -159,25 +159,26 @@ function showDetails(studentID) {
   ];
 
   fields.forEach(f => {
-    if(student[f.key]) {
+    // ডেটা আছে কিনা নিশ্চিত করা
+    if(student[f.key] !== undefined && student[f.key] !== "") {
       let div = document.createElement('div');
       div.className = 'info-box';
-      if(f.key === "Scholar ") div.classList.add('scholar-box');
+      if(f.key === "Scholar") div.classList.add('scholar-box');
 
       let val = student[f.key];
       
       // Credit Taken এবং Scholar বাদে বাকি সব সংখ্যায় ৳ বসবে
-      if (f.key !== "Credit Taken" && f.key !== "Scholar " && !isNaN(val.replace(/,/g, '')) && val !== "0") {
+      if (f.key !== "Credit Taken" && f.key !== "Scholar" && !isNaN(String(val).replace(/,/g, '')) && val !== "0") {
         val = "৳ " + val;
       }
       
-      if (f.key === "Scholar ") val += "%";
+      // Scholar এর শেষে % বসবে
+      if (f.key === "Scholar") val += "%";
 
       div.innerHTML = `<span>${f.label}</span> <strong>${val}</strong>`;
       infoGrid.appendChild(div);
     }
   });
-
   // Highlight Dues
   let duesKey = Object.keys(student).find(k => k.toLowerCase().includes('100% dues') || k.toLowerCase().includes('due'));
   if (duesKey && student[duesKey]) {
