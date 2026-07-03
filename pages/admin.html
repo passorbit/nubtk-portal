@@ -1141,69 +1141,96 @@ function resetVisitorStats() {
     return;
   }
 
-  status.innerText = "Processing and Uploading...";
+  status.innerText = "Processing and Uploading... Please wait.";
   status.style.color = "blue";
 
   Papa.parse(fileInput.files[0], {
-    skipEmptyLines: true, // ফাইলের শেষে থাকা ফাঁকা লাইন ইগনোর করবে
+    skipEmptyLines: true, // ফাইলের শেষে থাকা ফাঁকা লাইন বাদ দেবে
     complete: function(results) {
-      const rows = results.data;
-      
-      let headerIndex = -1;
-      // ডাইনামিক ভাবে খুঁজে বের করবে ফাইলের কোন লাইনে "Student ID" আছে
-      for (let i = 0; i < rows.length; i++) {
-        if (rows[i].some(cell => cell && String(cell).trim() === 'Student ID')) {
-          headerIndex = i;
-          break;
-        }
-      }
+      try {
+        const rows = results.data;
+        if (!rows || rows.length === 0) throw new Error("CSV file is empty or corrupted.");
 
-      if (headerIndex === -1) {
-        status.innerText = "Error: 'Student ID' column not found in the CSV!";
-        status.style.color = "red";
-        return;
-      }
+        let headerIndex = -1;
+        let idIndex = -1;
 
-      const headers = rows[headerIndex]; 
-      let studentsData = {};
-
-      // হেডিংয়ের ঠিক পরের লাইন থেকে স্টুডেন্টদের ডেটা শুরু
-      for (let i = headerIndex + 1; i < rows.length; i++) {
-        const row = rows[i];
-        
-        // Student ID কলামের পজিশন খুঁজে বের করা
-        const idIndex = headers.findIndex(h => h && String(h).trim() === 'Student ID');
-        
-        // ID না থাকলে বা ওই ঘর ফাঁকা থাকলে স্কিপ করবে
-        if (!row || !row[idIndex]) continue; 
-
-        let studentID = String(row[idIndex]).trim();
-        let studentInfo = {};
-
-        // হেডিং অনুযায়ী ডেটাগুলো সাজানো (অত্যন্ত নিরাপদ লজিক যাতে ক্র্যাশ না করে)
-        for (let j = 0; j < headers.length; j++) {
-          let key = (headers[j]) ? String(headers[j]).trim() : `Column_${j}`;
-          let value = (row[j] != null) ? String(row[j]).trim() : "";
-          
-          if (key && key !== `Column_${j}`) {
-            studentInfo[key] = value;
+        // অত্যন্ত সাবধানে Student ID কলামটি খুঁজে বের করা
+        for (let i = 0; i < rows.length; i++) {
+          if (Array.isArray(rows[i])) {
+            for (let j = 0; j < rows[i].length; j++) {
+              let cellValue = rows[i][j];
+              if (cellValue && typeof cellValue === 'string' && cellValue.trim() === 'Student ID') {
+                headerIndex = i;
+                idIndex = j;
+                break;
+              }
+            }
           }
+          if (headerIndex !== -1) break;
         }
-        studentsData[studentID] = studentInfo;
-      }
 
-      // Firebase-এ সেভ করা
-      const dbRef = firebase.database().ref('payment_dues');
-      dbRef.set({
-        title: "100% Dues List - Payment Last Date: 25.03.2026",
-        students: studentsData
-      }).then(() => {
-        status.innerText = "Successfully uploaded and synced with Firebase!";
-        status.style.color = "green";
-      }).catch((error) => {
-        status.innerText = "Firebase Error: " + error.message;
+        if (headerIndex === -1 || idIndex === -1) {
+          throw new Error("Could not find 'Student ID' column in the CSV!");
+        }
+
+        const headers = rows[headerIndex];
+        let studentsData = {};
+        let count = 0;
+
+        // হেডিংয়ের পরের লাইন থেকে ডেটা নেওয়া শুরু
+        for (let i = headerIndex + 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!Array.isArray(row)) continue;
+          
+          let rawId = row[idIndex];
+          if (!rawId) continue; // ID ফাঁকা থাকলে স্কিপ
+          
+          let studentID = String(rawId).trim();
+          if (!studentID) continue;
+
+          let studentInfo = {};
+          
+          for (let j = 0; j < headers.length; j++) {
+            let h = headers[j];
+            let key = (h && typeof h === 'string') ? h.trim() : ('Column_' + j);
+            let val = row[j];
+            
+            // undefined বা null থাকলে ফায়ারবেস এরর দেয়, তাই সেফটি চেক
+            let value = (val !== undefined && val !== null) ? String(val).trim() : "";
+            
+            if (key) {
+              studentInfo[key] = value;
+            }
+          }
+          studentsData[studentID] = studentInfo;
+          count++;
+        }
+
+        if (count === 0) throw new Error("No valid student data found!");
+
+        // 🔴 ফায়ারবেসে আপলোড করার অংশ
+        const dbRef = firebase.database().ref('payment_dues');
+        dbRef.set({
+          title: "100% Dues List Fall 2025",
+          students: studentsData
+        }).then(() => {
+          status.innerText = `Success! ${count} students synced to Firebase.`;
+          status.style.color = "green";
+        }).catch((error) => {
+          status.innerText = "Firebase Error: " + error.message + " (Check Firebase Rules!)";
+          status.style.color = "red";
+          console.error("Firebase Details:", error);
+        });
+
+      } catch (err) {
+        status.innerText = "Error: " + err.message;
         status.style.color = "red";
-      });
+        console.error("CSV Parse Error:", err);
+      }
+    },
+    error: function(err) {
+      status.innerText = "PapaParse failed to read file: " + err.message;
+      status.style.color = "red";
     }
   });
 }
