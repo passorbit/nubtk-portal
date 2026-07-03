@@ -165,14 +165,18 @@ function showDetails(studentID) {
       if(f.key === "Scholar ") div.classList.add('scholar-box');
 
       let val = student[f.key];
-      if (
-          moneyFields.includes(f.key) &&
-          !isNaN(val.replace(/,/g, '')) &&
-          val !== "0"
-        ) {
-          val = "৳ " + val;
-          }
-      if (f.key === "Scholar ") val += "%";
+
+if (
+    moneyFields.includes(f.key) &&
+    !isNaN(val.replace(/,/g, '')) &&
+    val !== "0"
+) {
+    val = "৳ " + val;
+}
+
+if (f.key === "Scholar ") {
+    val += "%";
+}
 
       div.innerHTML = `<span>${f.label}</span> <strong>${val}</strong>`;
       infoGrid.appendChild(div);
