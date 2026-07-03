@@ -11,6 +11,56 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+
+  <style>
+    /* SMART ACTIONS CARD */
+    .smart-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .action-btn-card {
+      background: linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(14,32,64,0) 100%);
+      border: 1px solid var(--gold); border-radius: 12px; padding: 20px;
+      text-align: center; cursor: pointer; transition: 0.3s;
+    }
+    .action-btn-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(201,168,76,0.2); background: rgba(201,168,76,0.15); }
+    .action-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .action-title { font-weight: bold; color: var(--gold); font-size: 1.1rem; }
+
+    /* MODAL / POPUP STYLES */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(11,29,58,0.85); backdrop-filter: blur(8px);
+      display: none; justify-content: center; align-items: center; z-index: 9999;
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active { display: flex; opacity: 1; }
+    .modal-content {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 16px; width: 90%; max-width: 550px;
+      padding: 30px; position: relative; max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6); transform: translateY(20px); transition: 0.3s;
+    }
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+    .modal-close {
+      position: absolute; top: 15px; right: 20px; background: none; border: none;
+      color: var(--muted); font-size: 1.5rem; cursor: pointer; transition: 0.2s;
+    }
+    .modal-close:hover { color: #f87171; }
+
+    /* DUES GRID INSIDE MODAL */
+    .dues-header { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+    .dues-header h2 { color: #fff; margin-bottom: 5px; font-size: 1.5rem; }
+    .dues-badge { background: var(--gold); color: #000; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; }
+    
+    .dues-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .dues-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
+    .dues-box span { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .dues-box strong { font-size: 1.2rem; color: #fff; font-weight: bold; }
+    
+    .dues-highlight { background: rgba(248, 113, 113, 0.1); border: 1px solid #f87171; grid-column: span 2; padding: 20px; border-radius: 8px; margin-top: 15px;}
+    .dues-highlight span { display: block; font-size: 0.8rem; color: #fca5a5; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .dues-highlight strong { font-size: 1.8rem; color: #f87171; }
+    .scholar-box strong { color: #4ade80; }
+    @media(max-width: 500px) { .dues-grid { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
 
@@ -19,6 +69,14 @@
     <div class="breadcrumb"><a href="../index.html">Home</a> › Student Profile</div>
     <h1 id="welcome-title">Welcome to your Profile</h1>
     <p>Manage your academic information and portal settings below.</p>
+  </div>
+
+  <div class="smart-actions-grid">
+    <div class="action-btn-card" onclick="openDuesPopup()">
+      <div class="action-icon">💳</div>
+      <div class="action-title">My Payment Dues</div>
+      <p style="font-size: 0.8rem; color: var(--muted); margin-top: 5px;">Click to view your current semester financial status.</p>
+    </div>
   </div>
 
   <div class="section-card">
@@ -68,10 +126,26 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="duesModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeDuesPopup()">✕</button>
+    
+    <div class="dues-header">
+      <h2 id="modalStName">Loading...</h2>
+      <span id="modalStId" class="dues-badge">ID: Loading...</span>
+    </div>
+    
+    <div class="dues-grid" id="modalDuesGrid">
+      </div>
+    
+    <div id="modalHighlight" class="dues-highlight" style="display: none;">
+      </div>
+  </div>
+</div>
+
 <div class="notif" id="notif"></div>
 
 <script>
-  
 // --- HELPERS ---
 function notify(msg, dur=2800) {
   const n = document.getElementById('notif');
@@ -96,11 +170,11 @@ appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4b
 const auth = firebase.auth();
 const db = firebase.database();
 let currentUserUid = null;
+let savedStudentId = null; // গ্লোবাল ভেরিয়েবল আইডি সেভ রাখার জন্য
 
 // --- PROFILE LOADING FLOW ---
 auth.onAuthStateChanged((user) => {
   if (!user) {
-    // লগইন করা না থাকলে সরাসরি লগইন পেজে ব্যাক করাবে
     window.location.href = 'login.html';
   } else {
     currentUserUid = user.uid;
@@ -109,7 +183,6 @@ auth.onAuthStateChanged((user) => {
 });
 
 function loadProfileData(uid) {
-  notify('⏳ Loading profile data...');
   db.ref('registered_students/' + uid).once('value')
     .then((snapshot) => {
       const data = snapshot.val();
@@ -121,11 +194,9 @@ function loadProfileData(uid) {
         document.getElementById('prof-dept').value = data.department || '';
         document.getElementById('prof-course').value = data.course || '';
         document.getElementById('prof-code').value = data.courseCode || '';
+        
+        savedStudentId = data.studentId; // পপআপের জন্য আইডি মেমোরিতে রেখে দিলাম
       }
-    })
-    .catch(err => {
-      console.error(err);
-      notify('❌ Error fetching data!');
     });
 }
 
@@ -141,19 +212,12 @@ function updateProfileData() {
   if (!name) { notify('⚠️ Name cannot be empty!'); return; }
 
   notify('⏳ Saving updates...');
-  
   db.ref('registered_students/' + currentUserUid).update({
-    name: name,
-    department: dept,
-    course: course,
-    courseCode: courseCode
+    name: name, department: dept, course: course, courseCode: courseCode
   }).then(() => {
     document.getElementById('welcome-title').innerText = `Welcome, ${name}`;
     notify('✅ Profile information updated!');
-  }).catch(err => {
-    console.error(err);
-    notify('❌ Failed to update profile.');
-  });
+  }).catch(err => { console.error(err); notify('❌ Failed to update profile.'); });
 }
 
 // --- LOGOUT FLOW ---
@@ -162,6 +226,99 @@ function handleLogout() {
     notify('↩️ Logged out successfully');
     setTimeout(() => { window.location.href = 'login.html'; }, 800);
   });
+}
+
+// --- 🌟 SMART DUES POPUP LOGIC 🌟 ---
+function openDuesPopup() {
+  if (!savedStudentId) {
+    notify('⚠️ Student ID not found in profile!');
+    return;
+  }
+  
+  notify('⏳ Fetching your dues...');
+  
+  // ফায়ারবেসের পেমেন্ট নোড থেকে ডাটা নিয়ে আসা
+  db.ref('payment_dues/students/' + savedStudentId).once('value')
+    .then(snap => {
+      const studentData = snap.val();
+      if (!studentData) {
+        notify('✅ You have no dues record found (Clear).');
+        return;
+      }
+      renderDuesPopup(savedStudentId, studentData);
+    })
+    .catch(err => {
+      console.error(err);
+      notify('❌ Error fetching data!');
+    });
+}
+
+function renderDuesPopup(id, student) {
+  const modal = document.getElementById('duesModal');
+  const grid = document.getElementById('modalDuesGrid');
+  const highlight = document.getElementById('modalHighlight');
+  
+  document.getElementById('modalStName').innerText = student['Student Full Name'] || document.getElementById('prof-name').value;
+  document.getElementById('modalStId').innerText = 'ID: ' + id;
+  
+  grid.innerHTML = '';
+  highlight.style.display = 'none';
+  highlight.innerHTML = '';
+  
+  // dues.html এর মত সেম লজিক দিয়ে ডাটা সাজানো
+  const fields = [
+    { key: "Total Received", label: "Total Received" },
+    { key: "Scholar", label: "Scholarship" },
+    { key: "Credit Taken", label: "Credit Taken" },
+    { key: "Reg Fee", label: "Registration Fee" },
+    { key: "Net Payable", label: "Net Payable" },
+    { key: "Previous Dues", label: "Previous Dues" },
+    { key: "Total   Payable", label: "Total Payable" },
+    { key: "Received Amount", label: "Recent Received" }
+  ];
+
+  fields.forEach(f => {
+    if(student[f.key] !== undefined && student[f.key] !== "") {
+      let val = student[f.key];
+      let isScholar = f.key === "Scholar";
+      
+      if (f.key !== "Credit Taken" && !isScholar && !isNaN(String(val).replace(/,/g, '')) && val !== "0") {
+        val = "৳ " + val;
+      }
+      if (isScholar) val += "%";
+
+      grid.innerHTML += `
+        <div class="dues-box ${isScholar ? 'scholar-box' : ''}">
+          <span>${f.label}</span>
+          <strong>${val}</strong>
+        </div>
+      `;
+    }
+  });
+
+  // Highlight Box Logic
+  let duesKey = Object.keys(student).find(k => k.toLowerCase().includes('100% dues') || k.toLowerCase().includes('due'));
+  if (duesKey && student[duesKey]) {
+    let due = student[duesKey];
+    if (!isNaN(due.replace(/,/g, ''))) due = "৳ " + due;
+    highlight.innerHTML = `<span>${duesKey}</span><strong>${due}</strong>`;
+    highlight.style.display = 'block';
+  }
+  
+  // পপআপ দেখানো
+  modal.classList.add('active');
+}
+
+function closeDuesPopup() {
+  document.getElementById('duesModal').classList.remove('active');
+}
+
+// পপআপের বাইরের অংশ ক্লিক করলে পপআপ ক্লোজ হবে
+window.onclick = function(event) {
+  const modal = document.getElementById('duesModal');
+  if (event.target == modal) {
+    closeDuesPopup();
+  }
 }
 </script>
 
