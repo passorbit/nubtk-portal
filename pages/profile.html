@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Profile — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › Student Profile</div>
+    <h1 id="welcome-title">Welcome to your Profile</h1>
+    <p>Manage your academic information and portal settings below.</p>
+  </div>
+
+  <div class="section-card">
+    <h2>Academic & Personal Information</h2>
+    
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" id="prof-name" placeholder="Your full name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Student ID (Read-Only)</label>
+        <input type="text" class="form-input" id="prof-id" readonly style="background: rgba(255,255,255,0.05); cursor: not-allowed; color: var(--gold); font-weight: bold;"/>
+        <p class="form-hint">Contact Admin to change your Student ID.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address (Read-Only)</label>
+        <input type="email" class="form-input" id="prof-email" readonly style="background: rgba(255,255,255,0.05); cursor: not-allowed; opacity: 0.7;"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <select class="form-select" id="prof-dept">
+          <option value="">-- Select Department --</option>
+          <option value="Computer Science and Engineering">Computer Science and Engineering</option>
+          <option value="Civil Engineering">Civil Engineering</option>
+          <option value="Electrical and Electronic Engineering">Electrical and Electronic Engineering</option>
+          <option value="Architecture">Architecture</option>
+          <option value="Business Administration">Business Administration</option>
+          <option value="Law">Law</option>
+          <option value="English Language & Literature">English Language & Literature</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Course Title</label>
+        <input type="text" class="form-input" id="prof-course" placeholder="e.g. Mathematics"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current Course Code</label>
+        <input type="text" class="form-input" id="prof-code" placeholder="e.g. MATH 2101" oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top: 30px;">
+      <button class="btn btn-gold" onclick="updateProfileData()">💾 Save Info</button>
+      <button class="btn btn-outline" style="border-color: #f87171; color: #f87171;" onclick="handleLogout()">↩ Logout</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// --- HELPERS ---
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+
+const auth = firebase.auth();
+const db = firebase.database();
+let currentUserUid = null;
+
+// --- PROFILE LOADING FLOW ---
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    // লগইন করা না থাকলে সরাসরি লগইন পেজে ব্যাক করাবে
+    window.location.href = 'login.html';
+  } else {
+    currentUserUid = user.uid;
+    loadProfileData(user.uid);
+  }
+});
+
+function loadProfileData(uid) {
+  notify('⏳ Loading profile data...');
+  db.ref('registered_students/' + uid).once('value')
+    .then((snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        document.getElementById('welcome-title').innerText = `Welcome, ${data.name || 'Student'}`;
+        document.getElementById('prof-name').value = data.name || '';
+        document.getElementById('prof-id').value = data.studentId || '';
+        document.getElementById('prof-email').value = data.email || '';
+        document.getElementById('prof-dept').value = data.department || '';
+        document.getElementById('prof-course').value = data.course || '';
+        document.getElementById('prof-code').value = data.courseCode || '';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      notify('❌ Error fetching data!');
+    });
+}
+
+// --- UPDATE PROFILE DATA ---
+function updateProfileData() {
+  if (!currentUserUid) return;
+
+  const name = document.getElementById('prof-name').value.trim();
+  const dept = document.getElementById('prof-dept').value;
+  const course = document.getElementById('prof-course').value.trim();
+  const courseCode = document.getElementById('prof-code').value.trim();
+
+  if (!name) { notify('⚠️ Name cannot be empty!'); return; }
+
+  notify('⏳ Saving updates...');
+  
+  db.ref('registered_students/' + currentUserUid).update({
+    name: name,
+    department: dept,
+    course: course,
+    courseCode: courseCode
+  }).then(() => {
+    document.getElementById('welcome-title').innerText = `Welcome, ${name}`;
+    notify('✅ Profile information updated!');
+  }).catch(err => {
+    console.error(err);
+    notify('❌ Failed to update profile.');
+  });
+}
+
+// --- LOGOUT FLOW ---
+function handleLogout() {
+  auth.signOut().then(() => {
+    notify('↩️ Logged out successfully');
+    setTimeout(() => { window.location.href = 'login.html'; }, 800);
+  });
+}
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
