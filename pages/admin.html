@@ -290,6 +290,27 @@
     </div>
 
 
+    <!-- Dues -->
+    <div id="atab-dues" class="panel" style="display:none;">
+      <h2 style="color:var(--gold); margin-bottom:15px;">💰 Manage Payment Dues</h2>
+      <div class="section-card" style="border-color: #f87171; background: rgba(248, 113, 113, 0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="color:#f87171; font-size:1.1rem;">⚡ Upload 100% Dues List (CSV)</h3>
+        </div>
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:20px;">
+          Upload the official CSV file containing students' financial data. This will update the "Payment Dues" page for students.
+        </p>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="file" id="csvDuesInput" accept=".csv" class="form-input" style="max-width: 300px; padding: 6px 10px;" />
+          <button class="btn btn-outline" style="color: #f87171; border-color: #f87171;" onclick="uploadDuesCSV()">☁️ Sync Dues to Firebase</button>
+        </div>
+        
+        <div id="duesUploadStatus" style="margin-top: 20px; font-weight: bold; font-size: 0.95rem; padding: 10px; border-radius: 5px; display: none;"></div>
+      </div>
+    </div>
+
+
     
     <!-- Admin Visitors -->
 <div class="panel" id="atab-visitors" style="display:none;">
