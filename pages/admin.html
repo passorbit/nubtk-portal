@@ -1217,8 +1217,10 @@ function resetVisitorStats() {
           let studentInfo = {};
           for (let j = 0; j < headers.length; j++) {
             let h = headers[j];
-            let key = (h !== null && h !== undefined && String(h).trim() !== "") 
-                      ? String(h).trim().replace(/[.#$/\[\]]/g, "_") : ('Column_' + j);
+            let key = (h !== null && h !== undefined && String(h).trim() !== "")
+    ? String(h).trim()
+        .replace(/[.#$/\[\]]/g, "_")
+    : ('Column_' + j);
             
             let val = row[j];
             // null বা undefined থাকলে তাকে নিরাপদ স্ট্রিংয়ে কনভার্ট করবে
