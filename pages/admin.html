@@ -1145,41 +1145,63 @@ function resetVisitorStats() {
   status.style.color = "blue";
 
   Papa.parse(fileInput.files[0], {
+    skipEmptyLines: true, // ফাইলের শেষে থাকা ফাঁকা লাইন ইগনোর করবে
     complete: function(results) {
       const rows = results.data;
       
-      // ৬ নম্বর লাইনটি (index 5) হলো আমাদের মেইন হেডিং
-      const headers = rows[5]; 
+      let headerIndex = -1;
+      // ডাইনামিক ভাবে খুঁজে বের করবে ফাইলের কোন লাইনে "Student ID" আছে
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i].some(cell => cell && String(cell).trim() === 'Student ID')) {
+          headerIndex = i;
+          break;
+        }
+      }
+
+      if (headerIndex === -1) {
+        status.innerText = "Error: 'Student ID' column not found in the CSV!";
+        status.style.color = "red";
+        return;
+      }
+
+      const headers = rows[headerIndex]; 
       let studentsData = {};
 
-      // ৭ নম্বর লাইন (index 6) থেকে স্টুডেন্টদের ডেটা শুরু
-      for (let i = 6; i < rows.length; i++) {
+      // হেডিংয়ের ঠিক পরের লাইন থেকে স্টুডেন্টদের ডেটা শুরু
+      for (let i = headerIndex + 1; i < rows.length; i++) {
         const row = rows[i];
-        if (!row || !row[1]) continue; // ফাঁকা রো বা ID না থাকলে স্কিপ করবে
+        
+        // Student ID কলামের পজিশন খুঁজে বের করা
+        const idIndex = headers.findIndex(h => h && String(h).trim() === 'Student ID');
+        
+        // ID না থাকলে বা ওই ঘর ফাঁকা থাকলে স্কিপ করবে
+        if (!row || !row[idIndex]) continue; 
 
-        let studentID = row[1].trim();
+        let studentID = String(row[idIndex]).trim();
         let studentInfo = {};
 
-        // হেডিং অনুযায়ী ডেটাগুলো অবজেক্টে সাজানো
+        // হেডিং অনুযায়ী ডেটাগুলো সাজানো (অত্যন্ত নিরাপদ লজিক যাতে ক্র্যাশ না করে)
         for (let j = 0; j < headers.length; j++) {
-          let key = headers[j] ? headers[j].trim() : `Column_${j}`;
-          let value = row[j] ? row[j].trim() : "";
-          studentInfo[key] = value;
+          let key = (headers[j]) ? String(headers[j]).trim() : `Column_${j}`;
+          let value = (row[j] != null) ? String(row[j]).trim() : "";
+          
+          if (key && key !== `Column_${j}`) {
+            studentInfo[key] = value;
+          }
         }
-        // ID কে key হিসেবে ধরে ডেটা সেভ করছি
         studentsData[studentID] = studentInfo;
       }
 
-      // Firebase-এ সেভ করা (.set ব্যবহার করায় পুরোনো সব মুছে নতুনটা বসবে)
+      // Firebase-এ সেভ করা
       const dbRef = firebase.database().ref('payment_dues');
       dbRef.set({
-        title: "100% Dues List Fall 2025 - Payment Last Date: 25.03.2026", // এটি ডায়নামিক করতে পারো
+        title: "100% Dues List - Payment Last Date: 25.03.2026",
         students: studentsData
       }).then(() => {
         status.innerText = "Successfully uploaded and synced with Firebase!";
         status.style.color = "green";
       }).catch((error) => {
-        status.innerText = "Error uploading: " + error.message;
+        status.innerText = "Firebase Error: " + error.message;
         status.style.color = "red";
       });
     }
