@@ -288,6 +288,18 @@
       </div>
     </div>
 
+     <!-- Payment Due -->
+
+    <div class="upload-section">
+  <h2>Upload Payment Dues (CSV)</h2>
+  <input type="file" id="csvFileInput" accept=".csv" />
+  <button onclick="uploadCSV()">Upload to Firebase</button>
+  <p id="uploadStatus"></p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    
+
     <!-- Admin Visitors -->
 <div class="panel" id="atab-visitors" style="display:none;">
   <div class="section-card">
@@ -1108,6 +1120,63 @@ function resetVisitorStats() {
   }).catch(err => {
     notify('❌ Error: ' + err.message);
     console.error("Reset Error:", err);
+  });
+}
+  
+
+ // Payment DUE Code
+  function uploadCSV() {
+  const fileInput = document.getElementById('csvFileInput');
+  const status = document.getElementById('uploadStatus');
+
+  if (!fileInput.files.length) {
+    status.innerText = "Please select a CSV file first!";
+    status.style.color = "red";
+    return;
+  }
+
+  status.innerText = "Processing and Uploading...";
+  status.style.color = "blue";
+
+  Papa.parse(fileInput.files[0], {
+    complete: function(results) {
+      const rows = results.data;
+      
+      // ৬ নম্বর লাইনটি (index 5) হলো আমাদের মেইন হেডিং
+      const headers = rows[5]; 
+      let studentsData = {};
+
+      // ৭ নম্বর লাইন (index 6) থেকে স্টুডেন্টদের ডেটা শুরু
+      for (let i = 6; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[1]) continue; // ফাঁকা রো বা ID না থাকলে স্কিপ করবে
+
+        let studentID = row[1].trim();
+        let studentInfo = {};
+
+        // হেডিং অনুযায়ী ডেটাগুলো অবজেক্টে সাজানো
+        for (let j = 0; j < headers.length; j++) {
+          let key = headers[j] ? headers[j].trim() : `Column_${j}`;
+          let value = row[j] ? row[j].trim() : "";
+          studentInfo[key] = value;
+        }
+        // ID কে key হিসেবে ধরে ডেটা সেভ করছি
+        studentsData[studentID] = studentInfo;
+      }
+
+      // Firebase-এ সেভ করা (.set ব্যবহার করায় পুরোনো সব মুছে নতুনটা বসবে)
+      const dbRef = firebase.database().ref('payment_dues');
+      dbRef.set({
+        title: "100% Dues List Fall 2025 - Payment Last Date: 25.03.2026", // এটি ডায়নামিক করতে পারো
+        students: studentsData
+      }).then(() => {
+        status.innerText = "Successfully uploaded and synced with Firebase!";
+        status.style.color = "green";
+      }).catch((error) => {
+        status.innerText = "Error uploading: " + error.message;
+        status.style.color = "red";
+      });
+    }
   });
 }
 
