@@ -121,7 +121,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
   const appCheck = firebase.appCheck();
 appCheck.activate(
-  '6LfgyEEtAAAAAHQSS-8guIgRI_pdHO3kyar9Lreo',
+  new firebase.appCheck.ReCaptchaV3Provider('6LfgyEEtAAAAAHQSS-8guIgRI_pdHO3kyar9Lreo'),
   true
 );
 
