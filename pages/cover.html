@@ -576,6 +576,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
   const appCheck = firebase.appCheck();
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 appCheck.activate(
   new firebase.appCheck.ReCaptchaV3Provider('6LfgyEEtAAAAAHQSS-8guIgRI_pdHO3kyar9Lreo'),
   true // token auto-refresh
