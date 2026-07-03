@@ -250,22 +250,42 @@
 
 
     <!-- Admin Students -->
-    <div id="atab-dues" class="panel" style="display:none;">
-      <h2 style="color:var(--gold); margin-bottom:15px;">💰 Manage Payment Dues</h2>
-      <div class="section-card" style="border-color: #f87171; background: rgba(248, 113, 113, 0.05);">
+    <div id="atab-students" class="panel" style="display:none;">
+      <h2 style="color:var(--gold); margin-bottom:15px;">👨‍🎓 Manage Student Database</h2>
+      
+      <div class="section-card" style="border-color: #4ade80; background: rgba(74, 222, 128, 0.05);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 style="color:#f87171; font-size:1.1rem;">⚡ Upload 100% Dues List (CSV)</h3>
+          <h3 style="color:#4ade80; font-size:1.1rem;">⚡ Extract Students from Dues List (CSV)</h3>
+          <div class="live-indicator"><div class="live-dot"></div> Ready to Extract</div>
         </div>
         <p style="font-size:0.85rem; color:var(--muted); margin-bottom:20px;">
-          Upload the official CSV file containing students' financial data. This will update the "Payment Dues" page for students.
+          Upload the <b>"100% Dues List"</b> or similar CSV file. The system will automatically ignore the top headers and extract only <b>Student IDs</b> and <b>Names</b> for the Cover Page auto-fill.
         </p>
 
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <input type="file" id="csvDuesInput" accept=".csv" class="form-input" style="max-width: 300px; padding: 6px 10px;" />
-          <button class="btn btn-outline" style="color: #f87171; border-color: #f87171;" onclick="uploadDuesCSV()">☁️ Sync Dues to Firebase</button>
+        <div class="logo-upload-zone" onclick="document.getElementById('student-csv-upload').click()" style="margin-bottom: 20px;">
+          <input type="file" id="student-csv-upload" accept=".csv" onchange="handleStudentCSV(event)">
+          <div style="font-size:2rem;margin-bottom:8px;">📁</div>
+          <div style="font-size:0.9rem;color:var(--muted);">Click to upload Student Data (CSV)</div>
         </div>
-        
-        <div id="duesUploadStatus" style="margin-top: 20px; font-weight: bold; font-size: 0.95rem; padding: 10px; border-radius: 5px; display: none;"></div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h3 style="font-size: 1rem; font-weight: 500; color: #fff;">Preview: <span id="stu-count" style="color: var(--gold); font-weight: bold;">0</span> students extracted</h3>
+          <button class="btn btn-gold" onclick="saveStudentsToFirebase()">💾 Save to Live DB</button>
+        </div>
+
+        <div class="routine-wrap" style="max-height: 350px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+          <table class="routine-table">
+            <thead style="position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 10px rgba(0,0,0,0.5);">
+              <tr>
+                <th style="width: 30%;">Student ID</th>
+                <th style="text-align: left; padding-left: 20px;">Student Full Name</th>
+              </tr>
+            </thead>
+            <tbody id="student-preview-body">
+              <tr><td colspan="2" class="empty" style="padding: 30px;">No data uploaded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
