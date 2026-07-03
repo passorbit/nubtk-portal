@@ -126,7 +126,7 @@ function handleLogin() {
     });
 }
 
-// --- REGISTRATION LOGIC ---
+// --- REGISTRATION LOGIC WITH DUPLICATE CHECK ---
 function handleRegister() {
   const name = document.getElementById('reg-name').value.trim();
   const studentId = document.getElementById('reg-id').value.trim();
@@ -136,27 +136,44 @@ function handleRegister() {
   if (!name || !studentId || !email || !pw) { notify('⚠️ All fields are required!'); return; }
   if (pw.length < 6) { notify('⚠️ Password must be at least 6 characters!'); return; }
 
-  notify('⏳ Creating account...');
+  notify('⏳ Checking Student ID...');
   
-  auth.createUserWithEmailAndPassword(email, pw)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      
-      // অ্যাকাউন্ট তৈরি হওয়ার পর তার আইডি ও নাম ডেটাবেসের 'registered_students' নোডে সেভ হবে
-      db.ref('registered_students/' + user.uid).set({
-        name: name,
-        studentId: studentId,
-        email: email,
-        department: '',
-        course: '',
-        courseCode: ''
-      }).then(() => {
-        notify('🎉 Registration Successful!');
-        setTimeout(() => { window.location.href = 'profile.html'; }, 1200);
-      });
+  // ডুপ্লিকেট আইডি চেক করার লজিক
+  db.ref('registered_students').orderByChild('studentId').equalTo(studentId).once('value')
+    .then((snapshot) => {
+      if (snapshot.exists()) {
+        // যদি আইডি আগে থেকেই থাকে, তবে মেসেজ এবং সাপোর্ট লিংক দেখাবে
+        const n = document.getElementById('notif');
+        n.innerHTML = `⚠️ This ID is already registered!<br><span style="font-size:0.85rem; margin-top:6px; display:inline-block;">If you think someone else used your ID, please <a href="support.html" style="color:var(--gold); text-decoration:underline;">contact Support</a>.</span>`;
+        n.classList.add('show');
+        setTimeout(() => n.classList.remove('show'), 6000); // মেসেজটা একটু বেশি সময় (৬ সেকেন্ড) স্ক্রিনে থাকবে
+      } else {
+        // আইডি ফ্রি থাকলে অ্যাকাউন্ট তৈরি করবে
+        notify('⏳ Creating account...');
+        auth.createUserWithEmailAndPassword(email, pw)
+          .then((userCredential) => {
+            const user = userCredential.user;
+            
+            db.ref('registered_students/' + user.uid).set({
+              name: name,
+              studentId: studentId,
+              email: email,
+              department: '',
+              course: '',
+              courseCode: ''
+            }).then(() => {
+              notify('🎉 Registration Successful!');
+              setTimeout(() => { window.location.href = 'profile.html'; }, 1200);
+            });
+          })
+          .catch(err => {
+            notify('❌ Registration failed! Email might be already in use.');
+            console.error(err);
+          });
+      }
     })
     .catch(err => {
-      notify('❌ Registration failed! Email might be already in use.');
+      notify('❌ Database error during validation.');
       console.error(err);
     });
 }
