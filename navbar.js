@@ -3,7 +3,6 @@ const isInsidePagesFolder = window.location.pathname.includes('/pages/');
 const homeLink = isInsidePagesFolder ? '../index.html' : 'index.html';
 const pagesPrefix = isInsidePagesFolder ? '' : 'pages/';
 
-// আপনার হুবহু অরিজিনাল HTML স্ট্রাকচার
 const navbarHTML = `
 <nav class="navbar">
   <div class="nav-inner">
@@ -20,7 +19,7 @@ const navbarHTML = `
       <a href="${pagesPrefix}teachers.html" class="nav-link">Teacher's Directory</a>
       <a href="${pagesPrefix}index-maker.html" class="nav-link">Index Maker</a>
       <a href="${pagesPrefix}games.html" class="nav-link">Games</a>
-      <a href="${pagesPrefix}admin.html" class="nav-link nav-admin">Admin</a>
+      <a href="${pagesPrefix}login.html" class="nav-link nav-admin" id="nav-login-btn">🔐 Login</a>
     </div>
     
     <button class="nav-hamburger" onclick="toggleNav()">&#9776;</button>
@@ -28,10 +27,8 @@ const navbarHTML = `
 </nav>
 `;
 
-// বডির একদম শুরুতে নেভিগেশন বারটি বসিয়ে দেওয়া
 document.body.insertAdjacentHTML('afterbegin', navbarHTML);
 
-// মোবাইল মেনু টগল করার গ্লোবাল ফাংশন
 window.toggleNav = function() {
   const navLinks = document.querySelector('.nav-links');
   if (navLinks) {
@@ -39,23 +36,37 @@ window.toggleNav = function() {
   }
 };
 
-// কোন পেজে আছি সেটা বুঝে 'active' ক্লাস দেওয়ার লজিক
 setTimeout(() => {
   const currentUrl = window.location.href;
   const links = document.querySelectorAll('.nav-link');
   
   links.forEach(link => {
     const href = link.getAttribute('href');
-    
-    // Home পেজের জন্য স্পেশাল চেক
     if (href === '../index.html' || href === 'index.html') {
       if (currentUrl.endsWith('/') || currentUrl.endsWith('index.html')) {
         link.classList.add('active');
       }
     } 
-    // অন্যান্য পেজের জন্য চেক
     else if (currentUrl.includes(href.replace('../', '').replace('pages/', ''))) {
       link.classList.add('active');
     }
   });
+
+  // ⚡ ম্যাজিক: ফায়ারবেস চেক করবে ইউজার লগইন করা কি না
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged((user) => {
+      const loginBtn = document.getElementById('nav-login-btn');
+      if (loginBtn) {
+        if (user) {
+          // লগইন করা থাকলে Profile পেজে নিয়ে যাবে
+          loginBtn.innerHTML = "👨‍🎓 Profile";
+          loginBtn.href = `${pagesPrefix}profile.html`;
+        } else {
+          // লগইন না থাকলে Login পেজে নিয়ে যাবে
+          loginBtn.innerHTML = "🔐 Login";
+          loginBtn.href = `${pagesPrefix}login.html`;
+        }
+      }
+    });
+  }
 }, 50);
