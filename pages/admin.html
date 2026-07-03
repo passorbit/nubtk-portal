@@ -286,8 +286,26 @@
           </table>
         </div>
       </div>
-    </div>
 
+      <div class="section-card" style="margin-top: 20px; border-color: #f87171; background: rgba(248, 113, 113, 0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 style="color:#f87171; font-size:1.1rem;">💰 Upload Payment Dues (CSV)</h3>
+        </div>
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:20px;">
+          Upload the "100% Dues List" CSV file. This will automatically overwrite the old data and update the Student Portal.
+        </p>
+
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input type="file" id="csvFileInput" accept=".csv" class="form-input" style="max-width: 300px; padding: 6px 10px;" />
+          <button class="btn btn-outline" style="color: #f87171; border-color: #f87171;" onclick="uploadCSV()">☁️ Sync Dues to Firebase</button>
+        </div>
+        <p id="uploadStatus" style="margin-top: 15px; font-weight: bold; font-size: 0.9rem;"></p>
+      </div>
+
+    </div> <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+
+    
     <!-- Admin Visitors -->
 <div class="panel" id="atab-visitors" style="display:none;">
   <div class="section-card">
