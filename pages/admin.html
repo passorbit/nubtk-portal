@@ -1164,14 +1164,18 @@ function resetVisitorStats() {
         let headerIndex = -1;
         let idIndex = -1;
 
+        // 1. অত্যন্ত সাবধানে Student ID কলামটি খুঁজে বের করা (ফাঁকা ঘর থাকলেও এরর আসবে না)
         for (let i = 0; i < rows.length; i++) {
           if (Array.isArray(rows[i])) {
             for (let j = 0; j < rows[i].length; j++) {
               let cellVal = rows[i][j];
-              if (cellVal && typeof cellVal === 'string' && cellVal.trim().toLowerCase() === 'student id') {
-                headerIndex = i;
-                idIndex = j;
-                break;
+              if (cellVal !== null && cellVal !== undefined) {
+                 let strVal = String(cellVal).trim().toLowerCase();
+                 if (strVal === 'student id' || strVal === 'id') {
+                    headerIndex = i;
+                    idIndex = j;
+                    break;
+                 }
               }
             }
           }
@@ -1179,30 +1183,48 @@ function resetVisitorStats() {
         }
 
         if (headerIndex === -1 || idIndex === -1) {
-          throw new Error("Could not find 'Student ID' column.");
+          throw new Error("Could not find 'Student ID' column in the CSV.");
         }
 
         const headers = rows[headerIndex];
         let studentsData = {};
         let count = 0;
 
+        // 2. ডায়নামিক টাইটেল বের করা (যেমন: ফাইলের ভেতর থেকে 70% Dues List অটোমেটিক ধরে নেবে)
+        let listTitle = "Student Payment Dues List";
+        for (let i = 0; i < headerIndex; i++) {
+          if(Array.isArray(rows[i])) {
+            let rowStr = rows[i].join(" ");
+            if (rowStr.toLowerCase().includes("dues list")) {
+              listTitle = rowStr.replace(/,/g, '').trim(); // কমা মুছে ক্লিন টাইটেল বানাবে
+              break;
+            }
+          }
+        }
+
+        // 3. স্টুডেন্টদের ডেটা এক্সট্রাক্ট করা
         for (let i = headerIndex + 1; i < rows.length; i++) {
           const row = rows[i];
           if (!Array.isArray(row)) continue;
           
           let rawId = row[idIndex];
-          if (!rawId) continue;
+          if (rawId === null || rawId === undefined) continue;
           
           let studentID = String(rawId).trim();
-          if (!studentID || studentID === "") continue;
+          // ভুল আইডি বা ফাঁকা রো স্কিপ করবে
+          if (studentID === "" || isNaN(studentID.charAt(0))) continue;
 
           let studentInfo = {};
           for (let j = 0; j < headers.length; j++) {
             let h = headers[j];
-            let key = (h && typeof h === 'string') ? h.trim() : ('Column_' + j);
+            let key = (h !== null && h !== undefined && String(h).trim() !== "") 
+                      ? String(h).trim() : ('Column_' + j);
+            
             let val = row[j];
-            let value = (val !== undefined && val !== null) ? String(val).trim() : "";
-            if (key) studentInfo[key] = value;
+            // null বা undefined থাকলে তাকে নিরাপদ স্ট্রিংয়ে কনভার্ট করবে
+            let value = (val !== null && val !== undefined) ? String(val).trim() : "";
+            
+            studentInfo[key] = value;
           }
           studentsData[studentID] = studentInfo;
           count++;
@@ -1210,9 +1232,10 @@ function resetVisitorStats() {
 
         if (count === 0) throw new Error("No valid student data found!");
 
-        const dbRef = firebase.database().ref('payment_dues'); // অথবা শুধু db.ref(...) যদি তুমি db variable ডিফাইন করে থাকো
+        // 4. ফায়ারবেসে আপলোড করা
+        const dbRef = firebase.database().ref('payment_dues'); 
         dbRef.set({
-          title: "100% Dues List Fall 2025", 
+          title: listTitle, 
           last_updated: new Date().toLocaleString(),
           students: studentsData
         }).then(() => {
