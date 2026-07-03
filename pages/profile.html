@@ -109,14 +109,6 @@
           <option value="English Language & Literature">English Language & Literature</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Current Course Title</label>
-        <input type="text" class="form-input" id="prof-course" placeholder="e.g. Mathematics"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Current Course Code</label>
-        <input type="text" class="form-input" id="prof-code" placeholder="e.g. MATH 2101" oninput="this.value=this.value.toUpperCase()"/>
-      </div>
     </div>
 
     <div class="btn-row" style="margin-top: 30px;">
@@ -192,8 +184,6 @@ function loadProfileData(uid) {
         document.getElementById('prof-id').value = data.studentId || '';
         document.getElementById('prof-email').value = data.email || '';
         document.getElementById('prof-dept').value = data.department || '';
-        document.getElementById('prof-course').value = data.course || '';
-        document.getElementById('prof-code').value = data.courseCode || '';
         
         savedStudentId = data.studentId; // পপআপের জন্য আইডি মেমোরিতে রেখে দিলাম
       }
@@ -206,14 +196,12 @@ function updateProfileData() {
 
   const name = document.getElementById('prof-name').value.trim();
   const dept = document.getElementById('prof-dept').value;
-  const course = document.getElementById('prof-course').value.trim();
-  const courseCode = document.getElementById('prof-code').value.trim();
 
   if (!name) { notify('⚠️ Name cannot be empty!'); return; }
 
   notify('⏳ Saving updates...');
   db.ref('registered_students/' + currentUserUid).update({
-    name: name, department: dept, course: course, courseCode: courseCode
+    name: name, department: dept
   }).then(() => {
     document.getElementById('welcome-title').innerText = `Welcome, ${name}`;
     notify('✅ Profile information updated!');
