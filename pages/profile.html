@@ -275,7 +275,7 @@ function updateProfileData() {
   db.ref('registered_students/' + currentUserUid).update({
     name: name, department: dept, avatar: tempAvatar, banner: tempBanner
   }).then(() => {
-    document.getElementById('welcome-title').innerText = `Welcome, ${name}`;
+    document.getElementById('display-name').innerText = name;
     notify('✅ Profile information updated!');
   }).catch(err => { console.error(err); notify('❌ Failed to update profile.'); });
 }
