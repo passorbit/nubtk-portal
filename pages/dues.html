@@ -13,9 +13,7 @@
 
   <style>
     .dues-container { max-width: 650px; margin: 0 auto; }
-    
     .search-wrap { position: relative; margin-top: 20px; }
-    
     .suggest-box {
       position: absolute; top: 100%; left: 0; right: 0;
       background: var(--card-bg); border: 1px solid var(--gold);
@@ -28,23 +26,17 @@
       border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s;
       display: flex; justify-content: space-between; align-items: center;
     }
-    .suggest-item:last-child { border-bottom: none; }
     .suggest-item:hover { background: rgba(201,168,76,0.15); color: var(--gold); }
-    
     .student-badge { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; color: #bbb; }
-
     .result-card { display: none; margin-top: 25px; animation: fadeIn 0.4s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
     .info-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
     .info-box span { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
     .info-box strong { font-size: 1.1rem; color: #fff; }
-    
     .highlight-box { background: rgba(248, 113, 113, 0.1); border: 1px solid #f87171; grid-column: span 2;}
     .highlight-box span { color: #fca5a5; }
     .highlight-box strong { color: #f87171; font-size: 1.5rem; }
-    
     .scholar-box strong { color: #4ade80; }
   </style>
 </head>
@@ -52,17 +44,17 @@
 
 <div class="page-wrap" style="padding-bottom:60px;">
   <div class="page-header">
-    <div class="breadcrumb"><a href="../index.html">Home</a> › Payment Dues</div>
-    <h1>Student Finance</h1>
-    <p>Check your payment dues, scholarships, and finance status easily.</p>
+    <div class="breadcrumb"><a href="../index.html">Home</a> › Student Finance</div>
+    <h1>Payment Dues</h1>
+    <p>Check your payment dues, scholarships, and finance status.</p>
   </div>
 
   <div class="dues-container">
     <div class="section-card">
-      <h2 id="duesTitle" style="text-align:center; color:var(--gold); font-size: 1.3rem;">Loading Due List...</h2>
+      <h2 id="duesTitle" style="text-align:center; color:var(--gold); font-size: 1.3rem;">Loading Data...</h2>
       
       <div class="search-wrap">
-        <input type="text" id="studentSearch" class="form-input" placeholder="🔍 Enter last 2, 4, or full Student ID..." autocomplete="off" />
+        <input type="text" id="studentSearch" class="form-input" placeholder="🔍 Enter last digits or full Student ID..." autocomplete="off" />
         <div id="searchDropdown" class="suggest-box"></div>
       </div>
     </div>
@@ -72,15 +64,12 @@
         <h2 id="stName" style="color: #fff; font-size: 1.4rem; margin-bottom: 5px;">Student Name</h2>
         <span id="stIdBadge" class="student-badge" style="background: var(--gold); color: #000; font-weight: bold;">ID: </span>
       </div>
-
-      <div class="info-grid" id="infoGrid">
-        </div>
+      <div class="info-grid" id="infoGrid"></div>
     </div>
   </div>
 </div>
 
 <script>
-// ─── FIREBASE SETUP ───
 const firebaseConfig = {
   apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
   authDomain: "nubtk-portal.firebaseapp.com",
@@ -91,31 +80,26 @@ const firebaseConfig = {
   appId: "1:45891604739:web:33251f784080f09816d936"
 };
 firebase.initializeApp(firebaseConfig);
-
 const appCheck = firebase.appCheck();
-appCheck.activate(
-  new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'),
-  true
-);
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
 const db = firebase.database();
 
-// ─── FETCH & SEARCH LOGIC ───
 let allStudentsData = {};
 
-// Load data on page load
+// Load Data
 window.onload = function() {
-  const dbRef = db.ref('payment_dues');
-  dbRef.on('value', (snapshot) => {
+  db.ref('payment_dues').on('value', (snapshot) => {
     const data = snapshot.val();
-    if(data) {
+    if(data && data.students) {
       document.getElementById('duesTitle').innerText = data.title || "Payment Dues List";
-      allStudentsData = data.students || {};
+      allStudentsData = data.students;
     } else {
-      document.getElementById('duesTitle').innerText = "No Due List Published Yet";
+      document.getElementById('duesTitle').innerText = "No Data Found";
     }
   });
 };
 
+// Search Logic
 const searchInput = document.getElementById('studentSearch');
 const dropdown = document.getElementById('searchDropdown');
 
@@ -123,14 +107,11 @@ searchInput.addEventListener('input', function() {
   const input = this.value.trim();
   dropdown.innerHTML = ""; 
   
-  if (input.length < 2) {
-    dropdown.style.display = "none";
-    return;
-  }
+  if (input.length < 2) { dropdown.style.display = "none"; return; }
 
   let matches = [];
   for (let id in allStudentsData) {
-    if (id.includes(input) || id.endsWith(input)) {
+    if (id.includes(input)) {
       matches.push({ id: id, data: allStudentsData[id] });
     }
   }
@@ -141,81 +122,74 @@ searchInput.addEventListener('input', function() {
       let div = document.createElement('div');
       div.className = 'suggest-item';
       div.innerHTML = `<span>${match.data['Student Full Name']}</span> <span class="student-badge">${match.id}</span>`;
-      
       div.onclick = () => showDetails(match.id);
       dropdown.appendChild(div);
     });
   } else {
     dropdown.style.display = "block";
-    dropdown.innerHTML = `<div class="suggest-item" style="color: #f87171; justify-content: center;">No matching student found</div>`;
+    dropdown.innerHTML = `<div class="suggest-item" style="color:#f87171; justify-content:center;">No student found</div>`;
   }
 });
 
-// Hide dropdown if clicked outside
-document.addEventListener('click', function(e) {
-  if (e.target !== searchInput && !dropdown.contains(e.target)) {
-    dropdown.style.display = 'none';
-  }
+document.addEventListener('click', (e) => {
+  if (e.target !== searchInput && !dropdown.contains(e.target)) dropdown.style.display = 'none';
 });
 
+// Display Details
 function showDetails(studentID) {
   const student = allStudentsData[studentID];
   dropdown.style.display = "none";
   searchInput.value = ""; 
   
-  const card = document.getElementById('studentDetails');
-  const infoGrid = document.getElementById('infoGrid');
-  
-  document.getElementById('stName').innerText = student['Student Full Name'];
+  document.getElementById('stName').innerText = student['Student Full Name'] || 'Unknown';
   document.getElementById('stIdBadge').innerText = "ID: " + studentID;
   
-  infoGrid.innerHTML = ""; // Clear previous data
+  const infoGrid = document.getElementById('infoGrid');
+  infoGrid.innerHTML = ""; 
 
-  // Fields to display (Must match CSV headers roughly)
-  const fieldsToShow = [
+  const fields = [
     { key: "Total Received", label: "Total Received" },
-    { key: "Scholar ", label: "Scholarship (%)" },
+    { key: "Scholar ", label: "Scholarship" },
+    { key: "Credit Taken", label: "Credit Taken" },
+    { key: "Reg Fee", label: "Registration Fee" },
+    { key: "Net Payable", label: "Net Payable" },
     { key: "Previous Dues", label: "Previous Dues" },
     { key: "Total   Payable", label: "Total Payable" },
-    { key: "Received Amount", label: "Recently Received" },
-    { key: "Net Payable", label: "Net Payable" }
+    { key: "Received Amount", label: "Recent Received" }
   ];
 
-  fieldsToShow.forEach(field => {
-    if(student[field.key] !== undefined) {
+  fields.forEach(f => {
+    if(student[f.key]) {
       let div = document.createElement('div');
       div.className = 'info-box';
-      if(field.key === "Scholar ") div.classList.add('scholar-box');
+      if(f.key === "Scholar ") div.classList.add('scholar-box');
 
-      let value = student[field.key];
-      // Format money (Add ৳ sign if it's a number/money value)
-      if (value !== "" && !isNaN(value.replace(/,/g, ''))) value = "৳ " + value;
-      if (field.key === "Scholar " && value !== "") value = value + "%";
+      let val = student[f.key];
+      if (!isNaN(val.replace(/,/g, '')) && val !== "0") val = "৳ " + val;
+      if (f.key === "Scholar ") val += "%";
 
-      div.innerHTML = `<span>${field.label}</span> <strong>${value || '0'}</strong>`;
+      div.innerHTML = `<span>${f.label}</span> <strong>${val}</strong>`;
       infoGrid.appendChild(div);
     }
   });
 
-  // Dynamic Dues Highlight Box
-  let duesKey = Object.keys(student).find(k => k.toLowerCase().includes('100% dues') || k.toLowerCase().includes('due amount'));
+  // Highlight Dues
+  let duesKey = Object.keys(student).find(k => k.toLowerCase().includes('100% dues') || k.toLowerCase().includes('due'));
   if (duesKey && student[duesKey]) {
     let div = document.createElement('div');
     div.className = 'info-box highlight-box';
-    
-    let dueAmount = student[duesKey];
-    if (!isNaN(dueAmount.replace(/,/g, ''))) dueAmount = "৳ " + dueAmount;
-
-    div.innerHTML = `<span>Total Due Amount</span> <strong>${dueAmount}</strong>`;
+    let due = student[duesKey];
+    if (!isNaN(due.replace(/,/g, ''))) due = "৳ " + due;
+    div.innerHTML = `<span>${duesKey}</span> <strong>${due}</strong>`;
     infoGrid.appendChild(div);
   }
 
-  card.style.display = "block";
+  document.getElementById('studentDetails').style.display = "block";
 }
 
-// ─── PAGE VISITOR TRACKING ───
-(function() {
-  const PAGE_NAME = 'dues'; // পেজ অনুযায়ী নাম চেঞ্জ করবেন (যেমন cover.html এর জন্য 'cover' দেবেন)
+
+  (function() {
+  const PAGE_NAME = 'cover'; // পেজ অনুযায়ী নাম চেঞ্জ করবেন (যেমন cover.html এর জন্য 'cover' দেবেন)
   const db = firebase.database();
   
   // Total visit count
@@ -238,7 +212,6 @@ function showDetails(studentID) {
   });
 })();
 </script>
-
 <script src="../navbar.js"></script>
 </body>
 </html>
