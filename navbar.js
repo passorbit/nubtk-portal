@@ -11,23 +11,16 @@ const navbarHTML = `
     display: inline-block;
   }
   
+  /* Resetting button styles to perfectly match .nav-link */
   .dropdown-btn {
-    background: none;
+    background: transparent;
     border: none;
-    color: var(--muted, #8A99B3);
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: 500;
+    outline: none;
     cursor: pointer;
-    padding: 0;
     display: flex;
     align-items: center;
     gap: 6px;
-    transition: color 0.3s ease;
-  }
-  
-  .dropdown-btn:hover, .dropdown-btn.active {
-    color: var(--gold, #C9A84C);
+    font-family: inherit;
   }
   
   .dropdown-content {
@@ -114,7 +107,8 @@ const navbarHTML = `
     .dropdown-btn {
       width: 100%;
       justify-content: space-between;
-      padding: 10px 0;
+      padding-top: 10px;
+      padding-bottom: 10px;
     }
     .dropdown-content a {
       padding: 12px 15px;
@@ -146,14 +140,14 @@ const navbarHTML = `
       <a href="${homeLink}" class="nav-link">Home</a>
       
       <div class="dropdown" id="toolsDropdown">
-        <button class="dropdown-btn" onclick="toggleDropdown(event)">
-          Tools <span style="font-size: 0.75rem; margin-top: 2px;">▼</span>
+        <button class="nav-link dropdown-btn" onclick="toggleDropdown(event)">
+          Tools <span style="font-size: 0.7rem; margin-top: 3px;">▼</span>
         </button>
         <div class="dropdown-content">
-          <a href="${pagesPrefix}cover.html" class="nav-link">📄 Cover Page</a>
-          <a href="${pagesPrefix}routine.html" class="nav-link">🗓️ Routine</a>
-          <a href="${pagesPrefix}free-time.html" class="nav-link">🔍 Free Class Finder</a>
-          <a href="${pagesPrefix}index-maker.html" class="nav-link">📋 Index Maker</a>
+          <a href="${pagesPrefix}cover.html">📄 Cover Page</a>
+          <a href="${pagesPrefix}routine.html">🗓️ Routine</a>
+          <a href="${pagesPrefix}free-time.html">🔍 Free Class Finder</a>
+          <a href="${pagesPrefix}index-maker.html">📋 Index Maker</a>
         </div>
       </div>
 
@@ -176,7 +170,6 @@ window.toggleNav = function() {
   }
 };
 
-// মোবাইলের ড্রপডাউন কন্ট্রোল করার ফাংশন
 window.toggleDropdown = function(e) {
   if (window.innerWidth <= 768) {
     e.preventDefault();
@@ -190,7 +183,7 @@ setTimeout(() => {
   
   links.forEach(link => {
     const href = link.getAttribute('href');
-    if (!href) return; // Button গুলোর জন্য error যেন না দেয়
+    if (!href) return; 
     
     if (href === '../index.html' || href === 'index.html') {
       if (currentUrl.endsWith('/') || currentUrl.endsWith('index.html')) {
@@ -200,7 +193,6 @@ setTimeout(() => {
     else if (currentUrl.includes(href.replace('../', '').replace('pages/', ''))) {
       link.classList.add('active');
       
-      // যদি ড্রপডাউনের কোনো লিংক অ্যাকটিভ থাকে, তাহলে মেইন "Tools" বাটনটাকেও গোল্ডেন করে দেবে
       const parentDropdownBtn = link.closest('.dropdown')?.querySelector('.dropdown-btn');
       if (parentDropdownBtn) {
         parentDropdownBtn.classList.add('active');
@@ -214,11 +206,9 @@ setTimeout(() => {
       const loginBtn = document.getElementById('nav-login-btn');
       if (loginBtn) {
         if (user) {
-          // লগইন করা থাকলে Profile পেজে নিয়ে যাবে
           loginBtn.innerHTML = "👨‍🎓 Profile";
           loginBtn.href = `${pagesPrefix}profile.html`;
         } else {
-          // লগইন না থাকলে Login পেজে নিয়ে যাবে
           loginBtn.innerHTML = "🔐 Login";
           loginBtn.href = `${pagesPrefix}login.html`;
         }
