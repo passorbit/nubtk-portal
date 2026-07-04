@@ -495,6 +495,7 @@ firebase.auth().onAuthStateChanged((user) => {
     listenToTeachers();
     listenToVisitors();
     listenToSupportMessages();
+    listenToAIPrompts();
   } else {
     // লগিন করা না থাকলে লগিন পেজ দেখাবে
     document.getElementById('admin-login').style.display = 'block';
