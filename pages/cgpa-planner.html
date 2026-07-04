@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart CGPA Planner — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+
+  <style>
+    /* CGPA PLANNER CUSTOM STYLES */
+    .status-card {
+      background: linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(14,32,64,0) 100%);
+      border: 1px solid var(--gold); border-radius: 12px; padding: 25px;
+      display: flex; justify-content: space-around; text-align: center; margin-bottom: 25px;
+    }
+    .status-item span { display: block; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .status-item strong { font-size: 1.8rem; color: #fff; font-family: var(--ff-head); }
+    
+    .course-row {
+      display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px;
+      background: rgba(255,255,255,0.02); padding: 10px 15px;
+      border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; align-items: center;
+    }
+    @media(max-width: 600px){
+      .course-row { grid-template-columns: 1fr 1fr; }
+      .course-row .full-width { grid-column: span 2; }
+    }
+    .remove-btn { background: rgba(248, 113, 113, 0.1); color: #f87171; border: 1px solid #f87171; width: 35px; height: 35px; border-radius: 6px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;}
+    .remove-btn:hover { background: #f87171; color: #fff; }
+
+    .result-box {
+      background: rgba(74, 222, 128, 0.1); border: 2px solid #4ade80;
+      border-radius: 12px; padding: 20px; text-align: center; margin-top: 25px;
+      display: none; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .result-box h3 { color: #4ade80; margin-bottom: 5px; font-size: 1.2rem; }
+    .result-box .final-cgpa { font-size: 2.5rem; font-weight: bold; color: #fff; margin: 10px 0; font-family: var(--ff-head);}
+    
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › CGPA Planner</div>
+    <h1>Smart CGPA Planner</h1>
+    <p>Set your target grades for this semester and see how it affects your overall CGPA.</p>
+  </div>
+
+  <div class="form-grid">
+    <div class="section-card" style="height: fit-content;">
+      <h2 style="margin-bottom: 15px;">🎓 Current Academic Status</h2>
+      <div class="status-card">
+        <div class="status-item">
+          <span>Current CGPA</span>
+          <strong id="display-cgpa">0.00</strong>
+        </div>
+        <div class="status-item">
+          <span>Completed Credits</span>
+          <strong id="display-credits">0</strong>
+        </div>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--muted); text-align: center;">
+        <span style="color:var(--gold);">Note:</span> These values are auto-filled from your profile.
+        <a href="profile.html" style="color: #38bdf8; text-decoration: underline;">Update Profile</a>
+      </p>
+    </div>
+
+    <div class="section-card">
+      <h2 style="color: var(--gold); margin-bottom: 20px;">🎯 Target This Semester</h2>
+      
+      <div id="courses-container">
+        </div>
+      
+      <button class="btn btn-outline" style="width: 100%; justify-content: center; margin-bottom: 15px; border-style: dashed;" onclick="addCourseRow()">
+        ➕ Add Subject
+      </button>
+
+      <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="calculateTargetCGPA()">
+        🧮 Calculate Expected CGPA
+      </button>
+
+      <div class="result-box" id="result-box">
+        <h3>Expected New CGPA</h3>
+        <div class="final-cgpa" id="result-cgpa">3.85</div>
+        <p style="color: var(--muted); font-size: 0.9rem;" id="result-msg">Keep pushing! You can achieve this.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// --- HELPERS ---
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+// --- FIREBASE INITIALIZATION & AUTH ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+
+const auth = firebase.auth();
+const db = firebase.database();
+let currentCGPA = 0;
+let currentCredits = 0;
+
+auth.onAuthStateChanged((user) => {
+  if (!user) { window.location.href = 'login.html'; } 
+  else { loadUserData(user.uid); }
+});
+
+function loadUserData(uid) {
+  db.ref('registered_students/' + uid).once('value').then(snap => {
+    const data = snap.val();
+    if(data) {
+      currentCGPA = parseFloat(data.cgpa) || 0;
+      currentCredits = parseFloat(data.credits) || 0;
+      
+      document.getElementById('display-cgpa').innerText = currentCGPA.toFixed(2);
+      document.getElementById('display-credits').innerText = currentCredits;
+      
+      // এডভান্স ইউজার এক্সপেরিয়েন্স: যদি আগে থেকে ডেটা না থাকে
+      if(currentCGPA === 0 || currentCredits === 0) {
+        notify('⚠️ Please update your CGPA & Credits in profile first!', 5000);
+      }
+    }
+    // শুরুতে ৩টি খালি সাবজেক্ট রো তৈরি করা
+    addCourseRow(); addCourseRow(); addCourseRow();
+  });
+}
+
+// --- COURSE ROWS LOGIC ---
+const gradePoints = {
+  "A+": 4.00, "A": 3.75, "A-": 3.50,
+  "B+": 3.25, "B": 3.00, "B-": 2.75,
+  "C+": 2.50, "C": 2.25, "D": 2.00, "F": 0.00
+};
+
+function addCourseRow() {
+  const container = document.getElementById('courses-container');
+  const row = document.createElement('div');
+  row.className = 'course-row';
+  
+  let gradeOptions = '<option value="">Target Grade</option>';
+  for (let g in gradePoints) gradeOptions += `<option value="${g}">${g} (${gradePoints[g]})</option>`;
+  
+  row.innerHTML = `
+    <input type="text" class="form-input full-width" placeholder="Course Name (e.g. OOP)"/>
+    <select class="form-select cr-credit">
+      <option value="">Credits</option>
+      <option value="1">1 Cr</option>
+      <option value="1.5">1.5 Cr</option>
+      <option value="2">2 Cr</option>
+      <option value="3">3 Cr</option>
+      <option value="4">4 Cr</option>
+    </select>
+    <select class="form-select cr-grade">${gradeOptions}</select>
+    <button class="remove-btn" onclick="this.parentElement.remove()" title="Remove Subject">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+// --- CGPA CALCULATION LOGIC ---
+function calculateTargetCGPA() {
+  if (currentCredits === 0) {
+    notify('⚠️ You must set your previous credits in your Profile first!');
+    return;
+  }
+
+  const rows = document.querySelectorAll('.course-row');
+  let newSemPoints = 0;
+  let newSemCredits = 0;
+  let hasEmptyFields = false;
+
+  rows.forEach(row => {
+    const crVal = row.querySelector('.cr-credit').value;
+    const gradeVal = row.querySelector('.cr-grade').value;
+    
+    // শুধু যেগুলোতে ক্রেডিট এবং গ্রেড দেওয়া আছে সেগুলো হিসাব করবে
+    if (crVal !== "" && gradeVal !== "") {
+      const cr = parseFloat(crVal);
+      const gp = gradePoints[gradeVal];
+      newSemCredits += cr;
+      newSemPoints += (cr * gp);
+    } else if (crVal !== "" || gradeVal !== "") {
+      hasEmptyFields = true;
+    }
+  });
+
+  if (hasEmptyFields) { notify('⚠️ Please fill both Credits and Grade for selected subjects!'); return; }
+  if (newSemCredits === 0) { notify('⚠️ Please add at least one target subject!'); return; }
+
+  // CGPA Formula: (Previous Total Points + New Points) / (Previous Total Credits + New Credits)
+  const prevTotalPoints = currentCGPA * currentCredits;
+  const totalPoints = prevTotalPoints + newSemPoints;
+  const totalCredits = currentCredits + newSemCredits;
+  
+  const finalCGPA = totalPoints / totalCredits;
+  
+  // Show Result
+  const resBox = document.getElementById('result-box');
+  const resText = document.getElementById('result-cgpa');
+  const resMsg = document.getElementById('result-msg');
+  
+  resText.innerText = finalCGPA.toFixed(2);
+  
+  if (finalCGPA > currentCGPA) {
+    resBox.style.borderColor = "#4ade80";
+    resBox.style.background = "rgba(74, 222, 128, 0.1)";
+    resText.style.color = "#fff";
+    resMsg.innerHTML = `🎉 Great job! Your CGPA will increase by <strong style="color:#4ade80;">+${(finalCGPA - currentCGPA).toFixed(2)}</strong>`;
+  } else if (finalCGPA < currentCGPA) {
+    resBox.style.borderColor = "#f87171";
+    resBox.style.background = "rgba(248, 113, 113, 0.1)";
+    resText.style.color = "#fff";
+    resMsg.innerHTML = `⚠️ Careful! Your CGPA might drop by <strong style="color:#f87171;">-${(currentCGPA - finalCGPA).toFixed(2)}</strong>`;
+  } else {
+    resBox.style.borderColor = "var(--gold)";
+    resBox.style.background = "rgba(201,168,76,0.1)";
+    resText.style.color = "#fff";
+    resMsg.innerText = `⚖️ Your CGPA will remain exactly the same.`;
+  }
+  
+  resBox.style.display = 'block';
+  notify('✅ Calculation Complete!');
+}
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
