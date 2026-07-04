@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Tasks & Exams Tracker — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+
+  <style>
+    /* TRACKER SPECIFIC STYLES */
+    .task-card {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: 0.3s;
+    }
+    .task-card:hover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+    .task-info { flex: 1; }
+    .task-title { font-size: 1.15rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
+    .task-meta { font-size: 0.85rem; color: var(--muted); }
+    .task-meta strong { color: #ccc; }
+    
+    .task-actions { display: flex; gap: 10px; align-items: center; }
+    
+    /* Status & Type Badges */
+    .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; display: inline-block; margin-right: 10px;}
+    .type-assignment { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .type-presentation { background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250, 204, 21, 0.3); }
+    .type-classtest { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+    .type-custom { background: rgba(167, 139, 250, 0.15); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.3); }
+    
+    /* Completed Task Styling */
+    .task-card.completed { opacity: 0.6; background: rgba(0,0,0,0.2); border-color: transparent; }
+    .task-card.completed .task-title { text-decoration: line-through; color: var(--muted); }
+    
+    /* Custom Input Animation */
+    #custom-type-container { display: none; margin-top: 10px; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › Task Tracker</div>
+    <h1>Personal Task Tracker</h1>
+    <p>Manage your assignments, class tests, and presentations in one private place.</p>
+  </div>
+
+  <div class="form-grid">
+    <div class="section-card" style="height: fit-content;">
+      <h2 style="color: var(--gold); margin-bottom: 20px;">➕ Add New Task</h2>
+      
+      <div class="form-group">
+        <label class="form-label">Task Title / Topic *</label>
+        <input type="text" class="form-input" id="task-title" placeholder="e.g. Data Structure Final Project"/>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Course Code / Name</label>
+        <input type="text" class="form-input" id="task-course" placeholder="e.g. CSE 2101"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Task Type *</label>
+        <select class="form-select" id="task-type" onchange="checkCustomType()">
+          <option value="Assignment">Assignment</option>
+          <option value="Presentation">Presentation</option>
+          <option value="Class Test">Class Test</option>
+          <option value="Custom">Other (Custom) ...</option>
+        </select>
+        
+        <div id="custom-type-container">
+          <input type="text" class="form-input" id="task-custom" placeholder="Type your custom category (e.g. Lab Final)"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Due Date *</label>
+        <input type="date" class="form-input" id="task-date"/>
+      </div>
+
+      <button class="btn btn-gold" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="saveTask()">💾 Save Task</button>
+    </div>
+
+    <div class="section-card">
+      <h2 style="margin-bottom: 20px;">📋 My Pending Tasks</h2>
+      <div id="tasks-container">
+        <p style="color: var(--muted); font-size: 0.9rem;">Loading your tasks...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// --- HELPERS ---
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+// Show/Hide Custom Input Logic
+function checkCustomType() {
+  const typeSelect = document.getElementById('task-type').value;
+  const customContainer = document.getElementById('custom-type-container');
+  if (typeSelect === 'Custom') {
+    customContainer.style.display = 'block';
+  } else {
+    customContainer.style.display = 'none';
+  }
+}
+
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+
+const auth = firebase.auth();
+const db = firebase.database();
+let currentUserUid = null;
+
+// --- SECURE AUTH CHECK ---
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    // লগইন করা না থাকলে সরাসরি লগইন পেজে পাঠিয়ে দেবে
+    window.location.href = 'login.html';
+  } else {
+    currentUserUid = user.uid;
+    loadTasks(); // ইউজার ভেরিফাই হওয়ার পর টাস্ক লোড হবে
+  }
+});
+
+// --- SAVE TASK LOGIC ---
+function saveTask() {
+  if (!currentUserUid) return;
+
+  const title = document.getElementById('task-title').value.trim();
+  const course = document.getElementById('task-course').value.trim();
+  let type = document.getElementById('task-type').value;
+  const date = document.getElementById('task-date').value;
+
+  if (type === 'Custom') {
+    type = document.getElementById('task-custom').value.trim();
+    if (!type) { notify('⚠️ Please enter your custom task type!'); return; }
+  }
+
+  if (!title || !date) { notify('⚠️ Title and Due Date are required!'); return; }
+
+  notify('⏳ Saving task...');
+  
+  // ইউজারের নিজস্ব UID এর আন্ডারে টাস্ক সেভ করা হচ্ছে
+  const newTaskRef = db.ref(`user_tasks/${currentUserUid}`).push();
+  newTaskRef.set({
+    title: title,
+    course: course || 'N/A',
+    type: type,
+    dueDate: date,
+    status: 'pending',
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  }).then(() => {
+    notify('✅ Task saved successfully!');
+    // ফর্ম রিসেট
+    document.getElementById('task-title').value = '';
+    document.getElementById('task-course').value = '';
+    document.getElementById('task-date').value = '';
+    document.getElementById('task-type').value = 'Assignment';
+    checkCustomType();
+  }).catch(err => {
+    console.error(err);
+    notify('❌ Error saving task!');
+  });
+}
+
+// --- LOAD TASKS LOGIC ---
+function loadTasks() {
+  const container = document.getElementById('tasks-container');
+  
+  db.ref(`user_tasks/${currentUserUid}`).on('value', (snapshot) => {
+    const tasks = snapshot.val();
+    
+    if (!tasks) {
+      container.innerHTML = '<div style="text-align:center; padding:20px; background:rgba(255,255,255,0.02); border-radius:8px; color:var(--muted);">No pending tasks. You are all caught up! 🎉</div>';
+      return;
+    }
+
+    let html = '';
+    // অবজেক্ট থেকে অ্যারে বানিয়ে ডেট অনুযায়ী সর্ট করা হচ্ছে
+    const taskArray = Object.keys(tasks).map(key => ({ id: key, ...tasks[key] }));
+    
+    // Status অনুযায়ী সাজানো (Pending আগে, Completed পরে)
+    taskArray.sort((a, b) => {
+      if(a.status === 'pending' && b.status === 'completed') return -1;
+      if(a.status === 'completed' && b.status === 'pending') return 1;
+      return new Date(a.dueDate) - new Date(b.dueDate);
+    });
+
+    taskArray.forEach(task => {
+      const isCompleted = task.status === 'completed';
+      
+      // ব্যাজের কালার লজিক
+      let badgeClass = 'type-custom';
+      let typeLower = task.type.toLowerCase();
+      if (typeLower.includes('assignment')) badgeClass = 'type-assignment';
+      else if (typeLower.includes('presentation')) badgeClass = 'type-presentation';
+      else if (typeLower.includes('class test') || typeLower.includes('exam')) badgeClass = 'type-classtest';
+
+      // ডেট ফরম্যাট করা
+      const dateObj = new Date(task.dueDate);
+      const formattedDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+      html += `
+        <div class="task-card ${isCompleted ? 'completed' : ''}">
+          <div class="task-info">
+            <span class="badge ${badgeClass}">${task.type}</span>
+            <div class="task-title">${task.title}</div>
+            <div class="task-meta">Course: <strong>${task.course}</strong> • Due: <strong>${formattedDate}</strong></div>
+          </div>
+          <div class="task-actions">
+            ${!isCompleted ? 
+              `<button class="btn btn-gold" style="padding: 6px 12px; font-size: 0.85rem;" onclick="toggleStatus('${task.id}', 'completed')">✔ Done</button>` 
+              : 
+              `<button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.85rem;" onclick="toggleStatus('${task.id}', 'pending')">↺ Undo</button>`
+            }
+            <button class="btn btn-outline" style="padding: 6px 10px; border-color: #f87171; color: #f87171;" onclick="deleteTask('${task.id}')">✕</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  });
+}
+
+// --- UPDATE STATUS LOGIC ---
+function toggleStatus(taskId, newStatus) {
+  db.ref(`user_tasks/${currentUserUid}/${taskId}`).update({
+    status: newStatus
+  });
+}
+
+// --- DELETE TASK LOGIC ---
+function deleteTask(taskId) {
+  if(confirm("Are you sure you want to delete this task?")) {
+    db.ref(`user_tasks/${currentUserUid}/${taskId}`).remove();
+    notify('🗑️ Task deleted!');
+  }
+}
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
