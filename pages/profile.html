@@ -45,6 +45,18 @@
     .action-btn-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(201,168,76,0.2); background: rgba(201,168,76,0.15); }
     .action-title { font-weight: bold; color: var(--gold); font-size: 1.1rem; }
 
+    /* TODAY'S CLASSES STYLES */
+    .class-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; transition: 0.2s; }
+    .class-card:hover { background: rgba(201,168,76,0.08); transform: translateX(4px); }
+    .class-time { font-size: 0.85rem; color: var(--muted); font-weight: bold; width: 85px; flex-shrink: 0; }
+    .class-details { flex: 1; }
+    .class-course { font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 4px; }
+    .class-room { font-size: 0.85rem; color: #ccc; }
+    .class-type-badge { font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;}
+    .type-theory { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);}
+    .type-lab { background: rgba(250, 204, 21, 0.15); color: #facc15; border: 1px solid rgba(250,204,21,0.3);}
+    .type-phy-lab { background: rgba(244, 114, 182, 0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3);}
+
     /* MODAL STYLES (Kept as before) */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,29,58,0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 9999; opacity: 0; transition: opacity 0.3s ease; }
     .modal-overlay.active { display: flex; opacity: 1; }
@@ -162,6 +174,16 @@
         </div>
       </div>
       <button class="btn btn-gold" style="margin-top: 20px;" onclick="updateProfileData()">💾 Save Records</button>
+      <!-- TODAY'S CLASSES CARD -->
+      <div class="section-card" style="margin-top: 30px; border-color: #38bdf8; background: rgba(56, 189, 248, 0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <h2 style="color: #38bdf8; margin: 0; font-size: 1.3rem;">📅 Today's Classes</h2>
+          <span id="today-day-badge" class="dues-badge" style="background:#38bdf8; color:#0f172a;">Loading...</span>
+        </div>
+        <div id="today-classes-list" style="display: grid; gap: 10px;">
+          <p style="color: var(--muted); font-size: 0.9rem;">Loading your schedule...</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -318,6 +340,8 @@ function loadProfileData(uid) {
         document.getElementById('prof-cgpa').value = data.cgpa || '';
         
         savedStudentId = data.studentId; 
+
+        loadTodayClasses(data.section);
       }
     });
 }
@@ -344,6 +368,7 @@ function updateProfileData() {
   }).then(() => {
     document.getElementById('display-name').innerText = name;
     notify('✅ Information updated successfully!');
+    loadTodayClasses(section);
   }).catch(err => { console.error(err); notify('❌ Failed to update profile.'); });
 }
 
@@ -363,6 +388,67 @@ function handleLogout() {
   auth.signOut().then(() => {
     notify('↩️ Logged out successfully');
     setTimeout(() => { window.location.href = 'login.html'; }, 800);
+  });
+}
+
+  // --- TODAY'S CLASSES LOGIC ---
+function loadTodayClasses(section) {
+  const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  document.getElementById('today-day-badge').innerText = dayName;
+  const listContainer = document.getElementById('today-classes-list');
+
+  if (!section) {
+    listContainer.innerHTML = '<p style="color:#f87171; font-size:0.9rem;">⚠️ Please save your Section/Batch above to view today\'s classes.</p>';
+    return;
+  }
+
+  if (dayName === 'Friday') {
+    listContainer.innerHTML = '<div style="text-align:center; padding:20px; background:rgba(74,222,128,0.1); border-radius:8px; color:#4ade80; font-weight:bold; border: 1px dashed #4ade80;">🎉 It\'s Friday! Enjoy your day off!</div>';
+    return;
+  }
+
+  db.ref('routines/' + section.toUpperCase()).once('value').then(snap => {
+    const routineData = snap.val();
+    if (!routineData) {
+      listContainer.innerHTML = `<p style="color:var(--muted); font-size:0.9rem;">No routine found for Section ${section}.</p>`;
+      return;
+    }
+
+    const timeSlots = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', '03:20 PM', '04:30 PM'];
+    let html = '';
+    let classesFound = 0;
+
+    timeSlots.forEach(time => {
+      const key = `${dayName}|${time}`;
+      if (routineData[key] && routineData[key].course) {
+        classesFound++;
+        const cls = routineData[key];
+        
+        let badgeClass = 'type-theory';
+        if(cls.type === 'lab') badgeClass = 'type-lab';
+        if(cls.type === 'phy-lab') badgeClass = 'type-phy-lab';
+        
+        html += `
+          <div class="class-card">
+            <div class="class-time">${time}</div>
+            <div class="class-details">
+              <div class="class-course">${cls.course} <span style="font-size:0.75rem; color:#94a3b8; font-weight:normal;">${cls.className ? `(${cls.className})` : ''}</span></div>
+              <div class="class-room">Room: ${cls.room}</div>
+            </div>
+            <div><span class="class-type-badge ${badgeClass}">${cls.type}</span></div>
+          </div>
+        `;
+      }
+    });
+
+    if (classesFound === 0) {
+      html = '<div style="text-align:center; padding:20px; background:rgba(255,255,255,0.05); border-radius:8px; color:var(--muted);">No classes scheduled for today. Relax! ☕</div>';
+    }
+
+    listContainer.innerHTML = html;
+  }).catch(err => {
+    console.error(err);
+    listContainer.innerHTML = '<p style="color:#f87171; font-size:0.9rem;">❌ Failed to load classes.</p>';
   });
 }
 
