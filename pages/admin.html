@@ -790,12 +790,12 @@ function handleCSVUpload() {
 }
 
   function normalizeTime(rawTime) {
-  const match = rawTime.trim().match(/^(\d{1,2})\s*:\s*(\d{2})\s*([AaPp])\.?[Mm]\.?$/);
-  if (!match) return rawTime.trim(); // ফরম্যাট না মিললে যেমন আছে তেমনই রাখবে
-  const hour = match[1].padStart(2, '0');   // 8 → 08
-  const minute = match[2];
-  const period = match[3].toUpperCase();     // am/Am/AM → AM
-  return `${hour}:${minute} ${period}`;
+  const match = rawTime.trim().match(/^(\d{1,2})\s*:\s*(\d{2})\s*([AaPp])\.?([Mm])\.?$/);
+if (!match) return rawTime.trim();
+const hour = match[1].padStart(2, '0');
+const minute = match[2];
+const period = (match[3] + match[4]).toUpperCase();
+return `${hour}:${minute} ${period}`;
 }
 
 function processCSVData(csvText) {
