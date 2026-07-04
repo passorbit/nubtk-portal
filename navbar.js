@@ -4,6 +4,136 @@ const homeLink = isInsidePagesFolder ? '../index.html' : 'index.html';
 const pagesPrefix = isInsidePagesFolder ? '' : 'pages/';
 
 const navbarHTML = `
+<style>
+  /* DROPDOWN MENU STYLES */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .dropdown-btn {
+    background: none;
+    border: none;
+    color: var(--muted, #8A99B3);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.3s ease;
+  }
+  
+  .dropdown-btn:hover, .dropdown-btn.active {
+    color: var(--gold, #C9A84C);
+  }
+  
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--card-bg, #0B1D3A);
+    min-width: 220px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    border: 1px solid var(--border, #2A3B5A);
+    border-radius: 10px;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    margin-top: 15px;
+  }
+  
+  .dropdown-content::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background-color: var(--card-bg, #0B1D3A);
+    border-left: 1px solid var(--border, #2A3B5A);
+    border-top: 1px solid var(--border, #2A3B5A);
+  }
+
+  .dropdown-content a {
+    color: #fff;
+    padding: 12px 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .dropdown-content a:last-child {
+    border-bottom: none;
+  }
+  
+  .dropdown-content a:hover, .dropdown-content a.active {
+    background-color: rgba(201, 168, 76, 0.1);
+    color: var(--gold, #C9A84C);
+    padding-left: 25px;
+  }
+
+  /* DESKTOP HOVER LOGIC */
+  @media (min-width: 769px) {
+    .dropdown:hover .dropdown-content {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+  }
+
+  /* MOBILE TOGGLE LOGIC */
+  @media (max-width: 768px) {
+    .dropdown-content {
+      position: static;
+      box-shadow: none;
+      border: none;
+      background: rgba(0, 0, 0, 0.15);
+      margin-top: 10px;
+      border-radius: 8px;
+      display: none;
+      transform: none;
+      width: 100%;
+    }
+    .dropdown-content::before {
+      display: none;
+    }
+    .dropdown.active .dropdown-content {
+      display: block;
+      animation: fadeUp 0.3s ease;
+    }
+    .dropdown-btn {
+      width: 100%;
+      justify-content: space-between;
+      padding: 10px 0;
+    }
+    .dropdown-content a {
+      padding: 12px 15px;
+    }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+  
+  @media (max-width: 768px) {
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+</style>
+
 <nav class="navbar">
   <div class="nav-inner">
     <div class="nav-brand">
@@ -14,11 +144,20 @@ const navbarHTML = `
     
     <div class="nav-links">
       <a href="${homeLink}" class="nav-link">Home</a>
-      <a href="${pagesPrefix}cover.html" class="nav-link">Cover Page</a>
-      <a href="${pagesPrefix}routine.html" class="nav-link">Routine</a>
-      <a href="${pagesPrefix}free-time.html" class="nav-link">Free Class Finder</a>
+      
+      <div class="dropdown" id="toolsDropdown">
+        <button class="dropdown-btn" onclick="toggleDropdown(event)">
+          Tools <span style="font-size: 0.75rem; margin-top: 2px;">▼</span>
+        </button>
+        <div class="dropdown-content">
+          <a href="${pagesPrefix}cover.html" class="nav-link">📄 Cover Page</a>
+          <a href="${pagesPrefix}routine.html" class="nav-link">🗓️ Routine</a>
+          <a href="${pagesPrefix}free-time.html" class="nav-link">🔍 Free Class Finder</a>
+          <a href="${pagesPrefix}index-maker.html" class="nav-link">📋 Index Maker</a>
+        </div>
+      </div>
+
       <a href="${pagesPrefix}teachers.html" class="nav-link">Teacher's Directory</a>
-      <a href="${pagesPrefix}index-maker.html" class="nav-link">Index Maker</a>
       <a href="${pagesPrefix}games.html" class="nav-link">Games</a>
       <a href="${pagesPrefix}login.html" class="nav-link nav-admin" id="nav-login-btn">🔐 Student Login</a>
     </div>
@@ -37,12 +176,22 @@ window.toggleNav = function() {
   }
 };
 
+// মোবাইলের ড্রপডাউন কন্ট্রোল করার ফাংশন
+window.toggleDropdown = function(e) {
+  if (window.innerWidth <= 768) {
+    e.preventDefault();
+    document.getElementById('toolsDropdown').classList.toggle('active');
+  }
+};
+
 setTimeout(() => {
   const currentUrl = window.location.href;
   const links = document.querySelectorAll('.nav-link');
   
   links.forEach(link => {
     const href = link.getAttribute('href');
+    if (!href) return; // Button গুলোর জন্য error যেন না দেয়
+    
     if (href === '../index.html' || href === 'index.html') {
       if (currentUrl.endsWith('/') || currentUrl.endsWith('index.html')) {
         link.classList.add('active');
@@ -50,6 +199,12 @@ setTimeout(() => {
     } 
     else if (currentUrl.includes(href.replace('../', '').replace('pages/', ''))) {
       link.classList.add('active');
+      
+      // যদি ড্রপডাউনের কোনো লিংক অ্যাকটিভ থাকে, তাহলে মেইন "Tools" বাটনটাকেও গোল্ডেন করে দেবে
+      const parentDropdownBtn = link.closest('.dropdown')?.querySelector('.dropdown-btn');
+      if (parentDropdownBtn) {
+        parentDropdownBtn.classList.add('active');
+      }
     }
   });
 
