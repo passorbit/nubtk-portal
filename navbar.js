@@ -11,6 +11,7 @@ const navbarHTML = `
     display: inline-block;
   }
   
+  /* Resetting button styles to perfectly match .nav-link */
   .dropdown-btn {
     background: transparent;
     border: none;
@@ -36,18 +37,6 @@ const navbarHTML = `
     transform: translateX(-50%);
     overflow: hidden;
     margin-top: 10px;
-  }
-
-  /* ⚡ THE MAGIC HOVER BRIDGE ⚡ 
-     এই অদৃশ্য ব্লকটি বাটন এবং মেনুর মাঝখানের গ্যাপ ফিলাপ করবে */
-  .dropdown-content::after {
-    content: "";
-    position: absolute;
-    bottom: 100%; /* মেনুর ঠিক ওপরে বসবে */
-    left: 0;
-    width: 100%;
-    height: 25px; /* ১৫ পিক্সেলের গ্যাপ ঢেকে দেবে */
-    background: transparent; 
   }
   
   .dropdown-content::before {
@@ -108,7 +97,7 @@ const navbarHTML = `
       transform: none;
       width: 100%;
     }
-    .dropdown-content::before, .dropdown-content::after {
+    .dropdown-content::before {
       display: none;
     }
     .dropdown.active .dropdown-content {
@@ -150,7 +139,6 @@ const navbarHTML = `
     <div class="nav-links">
       <a href="${homeLink}" class="nav-link">Home</a>
       
-      <!-- SMART TOOLS DROPDOWN -->
       <div class="dropdown" id="toolsDropdown">
         <button class="nav-link dropdown-btn" onclick="toggleDropdown(event)">
           Tools <span style="font-size: 0.7rem; margin-top: 3px;">▼</span>
