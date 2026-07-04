@@ -89,6 +89,34 @@
     .prof-saved-meta { font-size: 0.8rem; color: var(--muted); }
     .prof-saved-actions { display: flex; gap: 8px; }
     .prof-saved-actions button { padding: 6px 12px; font-size: 0.8rem; }
+
+
+    /* NOTIFICATION BELL */
+    .notification-bell { position: absolute; top: 15px; right: 15px; background: rgba(11,29,58,0.8); border: 1px solid var(--gold); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; transition: 0.3s; backdrop-filter: blur(4px); z-index: 10; }
+    .notification-bell:hover { background: var(--gold); transform: scale(1.05); }
+    .notification-bell .badge { position: absolute; top: -5px; right: -5px; background: #f87171; color: white; font-size: 0.75rem; font-weight: bold; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); animation: pop 0.3s ease; display: none; }
+    
+    /* SIDE PANEL (DRAWER) */
+    .announcement-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s; }
+    .announcement-panel { position: fixed; top: 0; right: -400px; width: 100%; max-width: 400px; height: 100%; background: var(--card-bg); border-left: 1px solid var(--border); box-shadow: -5px 0 30px rgba(0,0,0,0.5); z-index: 10000; transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); display: flex; flex-direction: column; }
+    .ann-panel-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+    .ann-panel-header h3 { margin: 0; color: var(--gold); font-size: 1.2rem; }
+    .ann-panel-header button { background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; transition: 0.2s; }
+    .ann-panel-header button:hover { color: #f87171; }
+    .ann-panel-content { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 15px; }
+    .ann-panel-content::-webkit-scrollbar { width: 5px; }
+    .ann-panel-content::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+    
+    .student-ann-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+    .student-ann-card.pinned { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+    .ann-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; }
+    .ann-img:hover { opacity: 0.8; }
+    
+    /* LIGHTBOX (IMAGE ZOOM) */
+    .lightbox-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100000; display: none; justify-content: center; align-items: center; cursor: zoom-out; }
+    .lightbox-overlay img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    
+    @keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1); } }
   </style>
 </head>
 <body>
@@ -97,8 +125,19 @@
   
   <div class="profile-header-card">
     <div class="cover-banner" id="cover-banner-preview">
-      <label for="banner-upload" class="upload-btn banner-btn">📷 Change Cover (1200x300)</label>
+
+      <div class="cover-banner" id="cover-banner-preview">
+      <!-- 🔔 Notification Bell -->
+      <div class="notification-bell" onclick="openAnnouncementsPanel()">
+        🔔
+        <span class="badge" id="unread-count">0</span>
+      </div>
+      
+      <!-- Change Cover Button (shifted to top-left to avoid overlap) -->
+      <label for="banner-upload" class="upload-btn banner-btn" style="top: 15px; left: 15px; right: auto;">📷 Change Cover (1200x300)</label>
       <input type="file" id="banner-upload" accept="image/*" hidden onchange="handleImageUpload(event, 'banner')">
+    </div>
+
     </div>
     <div class="avatar-section">
       <div class="avatar-wrapper">
@@ -270,6 +309,24 @@
   </div>
 </div>
 
+  <!-- Announcement Side Panel -->
+<div class="announcement-overlay" id="ann-overlay" onclick="closeAnnouncementsPanel()"></div>
+<div class="announcement-panel" id="ann-panel">
+  <div class="ann-panel-header">
+    <h3>📢 Announcements</h3>
+    <button onclick="closeAnnouncementsPanel()">✕</button>
+  </div>
+  <div class="ann-panel-content" id="student-ann-list">
+    <!-- Announcements will load here -->
+    <p style="color:var(--muted); text-align:center;">Loading...</p>
+  </div>
+</div>
+
+<!-- Image Lightbox Modal -->
+<div class="lightbox-overlay" id="lightbox" onclick="this.style.display='none'">
+  <img id="lightbox-img" src="" alt="Zoomed Announcement Image">
+</div>
+
 <div class="notif" id="notif"></div>
 
 <script>
@@ -307,6 +364,10 @@ let currentUserUid = null;
 let savedStudentId = null; 
 let tempAvatar = "";
 let tempBanner = "";
+let studentSectionCode = '';
+let lastReadTime = 0;
+let unreadCount = 0;
+let allValidAnnouncements = [];
 
   // --- AUTH STATE OBSERVER ---
 auth.onAuthStateChanged((user) => {
@@ -396,6 +457,11 @@ function loadProfileData(uid) {
         document.getElementById('prof-cgpa').value = data.cgpa || '';
         
         savedStudentId = data.studentId; 
+
+        // Setup Variables for Announcements
+        studentSectionCode = (data.section || '').toUpperCase();
+        lastReadTime = data.last_read_announcement_time || 0;
+        listenToStudentAnnouncements(); // Fetch notices
 
         loadTodayClasses(data.section);
       }
@@ -610,6 +676,115 @@ function renderDuesPopup(id, student) {
 
 function closeDuesPopup() { document.getElementById('duesModal').classList.remove('active'); }
 window.onclick = function(event) { if (event.target == document.getElementById('duesModal')) closeDuesPopup(); }
+
+
+
+  // ─── STUDENT ANNOUNCEMENTS LOGIC ───
+function listenToStudentAnnouncements() {
+  db.ref('announcements').on('value', snap => {
+    const data = snap.val();
+    allValidAnnouncements = [];
+    unreadCount = 0;
+    
+    if (data) {
+      Object.keys(data).forEach(k => {
+        const a = data[k];
+        // 🎯 ম্যাজিক: স্টুডেন্টের সেকশন অথবা 'All' হলে তবেই সে দেখতে পাবে
+        if (a.target === 'All' || a.target === studentSectionCode) {
+          allValidAnnouncements.push({ id: k, ...a });
+          // যদি নোটিশের টাইমস্ট্যাম্প স্টুডেন্টের পড়ার টাইমের চেয়ে বেশি হয়, তবে আনরিড!
+          if (a.timestamp > lastReadTime) unreadCount++;
+        }
+      });
+    }
+    updateBellBadge();
+    renderStudentAnnouncements();
+  });
+}
+
+function updateBellBadge() {
+  const badge = document.getElementById('unread-count');
+  if (unreadCount > 0) {
+    badge.innerText = unreadCount > 9 ? '9+' : unreadCount;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openAnnouncementsPanel() {
+  document.getElementById('ann-overlay').style.display = 'block';
+  // Smooth Slide In
+  setTimeout(() => {
+    document.getElementById('ann-overlay').style.opacity = '1';
+    document.getElementById('ann-panel').style.right = '0';
+  }, 10);
+  
+  // 🕒 আপডেট: স্টুডেন্ট প্যানেল খুললেই টাইম আপডেট হয়ে আনরিড কাউন্ট জিরো হয়ে যাবে
+  if (currentUserUid && unreadCount > 0) {
+    const currentTime = Date.now();
+    db.ref('registered_students/' + currentUserUid).update({
+      last_read_announcement_time: currentTime
+    }).then(() => {
+      lastReadTime = currentTime;
+      unreadCount = 0;
+      updateBellBadge();
+    });
+  }
+}
+
+function closeAnnouncementsPanel() {
+  document.getElementById('ann-panel').style.right = '-400px';
+  document.getElementById('ann-overlay').style.opacity = '0';
+  setTimeout(() => { document.getElementById('ann-overlay').style.display = 'none'; }, 300);
+}
+
+function renderStudentAnnouncements() {
+  const list = document.getElementById('student-ann-list');
+  if (allValidAnnouncements.length === 0) {
+    list.innerHTML = '<div style="text-align:center; padding:30px 10px; color:var(--muted);"><div style="font-size:3rem; margin-bottom:10px;">📭</div>No announcements right now. Check back later!</div>';
+    return;
+  }
+  
+  // સর্টিং লজিক: Pinned গুলো সবার আগে, তারপর লেটেস্ট টাইম অনুযায়ী
+  allValidAnnouncements.sort((a, b) => {
+    if (a.pinned === b.pinned) return b.timestamp - a.timestamp;
+    return a.pinned ? -1 : 1;
+  });
+  
+  let html = '';
+  allValidAnnouncements.forEach(a => {
+    let badgeColor = "#38bdf8"; let badgeText = "General";
+    if(a.priority === 'Urgent') { badgeColor = "#f87171"; badgeText = "Urgent"; }
+    if(a.priority === 'Event') { badgeColor = "#facc15"; badgeText = "Event"; }
+    
+    const pinClass = a.pinned ? 'pinned' : '';
+    const pinIcon = a.pinned ? `<span title="Pinned" style="font-size: 1.1rem; margin-right:5px;">📌</span>` : '';
+    const imgHtml = a.image ? `<img src="${a.image}" class="ann-img" onclick="openLightbox('${a.image}')">` : '';
+    
+    const dateStr = new Date(a.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
+
+    html += `
+      <div class="student-ann-card ${pinClass}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <strong style="color:var(--gold); font-size:1.05rem; display:flex; align-items:center;">${pinIcon}${a.title}</strong>
+          <span style="background:${badgeColor}20; color:${badgeColor}; padding:2px 8px; border-radius:4px; font-size:0.7rem; border:1px solid ${badgeColor}50; white-space:nowrap;">${badgeText}</span>
+        </div>
+        <div style="font-size:0.75rem; color:#64748b; margin-bottom: 5px;">🕰️ ${dateStr}</div>
+        <p style="font-size:0.85rem; color:#e2e8f0; margin:0; line-height:1.5; white-space:pre-wrap;">${a.description}</p>
+        ${imgHtml}
+      </div>
+    `;
+  });
+  
+  list.innerHTML = html;
+}
+
+// ছবি জুম করে দেখার জন্য
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').style.display = 'flex';
+}
 </script>
 
 <script src="../navbar.js"></script>
