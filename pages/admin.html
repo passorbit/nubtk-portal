@@ -92,6 +92,7 @@
       <button class="tab-btn" onclick="adminTab('routine')">🗓️ Live Routine</button>
       <button class="tab-btn" id="atab-btn-teachers" onclick="adminTab('teachers')">👨‍🏫 Teachers</button>
       <button class="tab-btn" onclick="adminTab('students')">👨‍🎓 Students</button>
+      <button class="tab-btn" onclick="adminTab('announcements')">📢 Announcements</button>
       <button class="tab-btn" onclick="adminTab('dues')">💰 Dues</button>
       <button class="tab-btn" onclick="adminTab('prompts')">🤖 AI Prompts</button>
       <button class="tab-btn" onclick="adminTab('visitors')">📊 Visitors</button>
@@ -291,6 +292,75 @@
       </div>
     </div>
 
+    <!-- Admin Announcements -->
+    <div class="panel" id="atab-announcements" style="display:none;">
+      <h2 style="color:var(--gold); margin-bottom:15px;">📢 Manage Announcements</h2>
+      
+      <div class="section-card" style="margin-bottom: 20px;">
+        <h3 style="margin-bottom:15px; font-size:1.1rem; color:#fff;">Create New Announcement</h3>
+        
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Announcement Title *</label>
+            <input type="text" id="ann-title" class="form-input" placeholder="e.g. University Closed Tomorrow">
+          </div>
+          
+          <div class="form-group full">
+            <label class="form-label">Description *</label>
+            <textarea id="ann-desc" class="form-input" rows="4" placeholder="Type the detailed announcement here..."></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Target Audience</label>
+            <select id="ann-target" class="form-select" onchange="toggleTargetSection()">
+              <option value="All">Everyone (All Students)</option>
+              <option value="Specific">Specific Section / Batch</option>
+            </select>
+          </div>
+          
+          <div class="form-group" id="ann-target-sec-box" style="display:none;">
+            <label class="form-label">Enter Section Code</label>
+            <input type="text" id="ann-target-sec" class="form-input" placeholder="e.g. 2D" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Priority Level</label>
+            <select id="ann-priority" class="form-select">
+              <option value="General">🔵 General Notice</option>
+              <option value="Urgent">🔴 Urgent Notice</option>
+              <option value="Event">🟡 Campus Event</option>
+            </select>
+          </div>
+          
+          <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 8px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.95rem; color:var(--gold); font-weight: bold;">
+              <input type="checkbox" id="ann-pin" style="width: 18px; height: 18px;"> 📌 Pin this Announcement
+            </label>
+          </div>
+          
+          <div class="form-group full">
+            <label class="form-label">Attach Image (Auto-optimized for fast loading)</label>
+            <input type="file" id="ann-image" class="form-input" accept="image/*" onchange="handleAnnImage(event)" style="padding: 6px;">
+            <div id="ann-img-preview-box" style="display:none; margin-top:10px;">
+              <img id="ann-img-preview" src="" style="max-height: 150px; border-radius: 8px; border: 1px solid var(--border);">
+              <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding: 4px 8px; font-size: 0.75rem; margin-top: 5px; display: block;" onclick="clearAnnImage()">✕ Remove Image</button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="ann-btn-wrap" style="margin-top:15px; display: flex; gap: 10px;">
+          <button class="btn btn-gold" style="flex:1;" onclick="saveAnnouncement()">🚀 Publish Announcement</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h3 style="margin-bottom:15px; font-size:1.1rem; color:#fff;">Published Announcements</h3>
+        <div id="ann-list" style="display: flex; flex-direction: column; gap: 12px;">
+          <p style="color:var(--muted); font-size:0.9rem;">Loading announcements...</p>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Dues -->
     <div id="atab-dues" class="panel" style="display:none;">
@@ -470,6 +540,7 @@ function tryLogin() {
       listenToVisitors();
       listenToSupportMessages();
       listenToAIPrompts();
+      listenToAnnouncements();
       notify('✅ Welcome, Admin!');
     } else if (pw === 'nubtk2025') {
       notify('এত সোজা না চান্দু 😜');
@@ -496,6 +567,7 @@ firebase.auth().onAuthStateChanged((user) => {
     listenToVisitors();
     listenToSupportMessages();
     listenToAIPrompts();
+    listenToAnnouncements();
   } else {
     // লগিন করা না থাকলে লগিন পেজ দেখাবে
     document.getElementById('admin-login').style.display = 'block';
@@ -554,7 +626,7 @@ function changePassword() {
 function logout() { location.reload(); }
 
 function adminTab(tab) {
-const tabs = ['logos','fields','routine','teachers','students','dues', 'prompts', 'visitors','support','settings'];
+const tabs = ['logos','fields','routine','teachers','students', 'announcements' ,'dues', 'prompts', 'visitors','support','settings'];
   document.querySelectorAll('.admin-tab-bar .tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i]===tab));
   tabs.forEach(t => {
     const el = document.getElementById('atab-'+t);
@@ -1416,6 +1488,200 @@ function deletePrompt(id) {
   if(confirm('Are you sure you want to delete this prompt?')) {
     db.ref('ai_prompts/' + id).remove().then(() => notify('🗑️ Prompt deleted!'));
   }
+}
+
+
+
+  // ─── ANNOUNCEMENTS LOGIC (NEW) ───
+let tempAnnImage = '';
+let editingAnnKey = null;
+
+// Target Audience টগল করা
+function toggleTargetSection() {
+  const target = document.getElementById('ann-target').value;
+  document.getElementById('ann-target-sec-box').style.display = target === 'Specific' ? 'block' : 'none';
+}
+
+// ইমেজ অটো-কম্প্রেস (Auto-optimize) লজিক
+function handleAnnImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { notify('⚠️ Please select an image file!'); return; }
+  
+  notify('⏳ Optimizing Image...');
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      // Max Width 800px রেখে রেশিও ঠিক রাখা
+      const MAX_WIDTH = 800;
+      let width = img.width;
+      let height = img.height;
+      if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      tempAnnImage = canvas.toDataURL('image/jpeg', 0.7); // 70% Quality for fast load
+      document.getElementById('ann-img-preview').src = tempAnnImage;
+      document.getElementById('ann-img-preview-box').style.display = 'block';
+      notify('✅ Image ready!');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAnnImage() {
+  tempAnnImage = '';
+  document.getElementById('ann-image').value = '';
+  document.getElementById('ann-img-preview-box').style.display = 'none';
+}
+
+// সেভ করা (Add বা Edit)
+function saveAnnouncement() {
+  const title = document.getElementById('ann-title').value.trim();
+  const desc = document.getElementById('ann-desc').value.trim();
+  const targetType = document.getElementById('ann-target').value;
+  let targetSection = 'All';
+  if (targetType === 'Specific') {
+    targetSection = document.getElementById('ann-target-sec').value.trim().toUpperCase();
+    if (!targetSection) { notify('⚠️ Please enter the target section code!'); return; }
+  }
+  const priority = document.getElementById('ann-priority').value;
+  const isPinned = document.getElementById('ann-pin').checked;
+
+  if (!title || !desc) { notify('⚠️ Title and Description are required!'); return; }
+  
+  notify('⏳ Publishing...');
+  
+  const payload = {
+    title, description: desc, target: targetSection, priority, pinned: isPinned,
+    image: tempAnnImage, timestamp: firebase.database.ServerValue.TIMESTAMP
+  };
+
+  if (editingAnnKey) {
+    db.ref('announcements/' + editingAnnKey).update(payload).then(() => {
+      notify('✅ Announcement Updated!');
+      cancelEditAnn();
+    }).catch(e => notify('❌ Failed to update.'));
+  } else {
+    db.ref('announcements').push(payload).then(() => {
+      notify('✅ Announcement Published!');
+      cancelEditAnn(); // ফর্ম ক্লিয়ার করার জন্য
+    }).catch(e => notify('❌ Failed to publish.'));
+  }
+}
+
+function cancelEditAnn() {
+  editingAnnKey = null;
+  document.getElementById('ann-title').value = '';
+  document.getElementById('ann-desc').value = '';
+  document.getElementById('ann-target').value = 'All';
+  document.getElementById('ann-target-sec').value = '';
+  toggleTargetSection();
+  document.getElementById('ann-priority').value = 'General';
+  document.getElementById('ann-pin').checked = false;
+  clearAnnImage();
+  
+  document.getElementById('ann-btn-wrap').innerHTML = `<button class="btn btn-gold" style="flex:1;" onclick="saveAnnouncement()">🚀 Publish Announcement</button>`;
+}
+
+// ফায়ারবেস থেকে লাইভ ডাটা লোড করা
+function listenToAnnouncements() {
+  db.ref('announcements').on('value', snap => {
+    const list = document.getElementById('ann-list');
+    if(!list) return;
+    const data = snap.val();
+    
+    if(!data) {
+       list.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">No announcements yet.</p>';
+       return;
+    }
+    
+    let html = '';
+    const annArr = Object.keys(data).map(k => ({id: k, ...data[k]}));
+    
+    // সর্টিং: আগে Pinned, তারপর লেটেস্ট টাইমস্ট্যাম্প
+    annArr.sort((a, b) => {
+      if (a.pinned === b.pinned) return b.timestamp - a.timestamp;
+      return a.pinned ? -1 : 1;
+    });
+    
+    annArr.forEach(a => {
+      let badgeColor = "#38bdf8"; let badgeText = "General";
+      if(a.priority === 'Urgent') { badgeColor = "#f87171"; badgeText = "Urgent"; }
+      if(a.priority === 'Event') { badgeColor = "#facc15"; badgeText = "Event"; }
+      
+      const pinIcon = a.pinned ? `<span title="Pinned" style="font-size: 1.2rem;">📌</span>` : '';
+      const targetTag = a.target === 'All' ? 'All Students' : `Section: ${a.target}`;
+      const hasImg = a.image ? '🖼️ (Image Attached)' : '';
+      
+      html += `
+        <div style="background:rgba(255,255,255,0.05); border:1px solid ${a.pinned ? 'var(--gold)' : 'var(--border)'}; padding:15px; border-radius:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${pinIcon} <strong style="color:var(--gold); font-size:1.1rem;">${a.title}</strong>
+              <span style="background:${badgeColor}20; color:${badgeColor}; padding:2px 8px; border-radius:4px; font-size:0.75rem; border:1px solid ${badgeColor}50;">${badgeText}</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline" style="color:#4ade80; border-color:#4ade80; padding:4px 10px; font-size:0.8rem;" onclick="editAnnouncement('${a.id}')">✏️</button>
+              <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding:4px 10px; font-size:0.8rem;" onclick="deleteAnnouncement('${a.id}')">🗑️</button>
+            </div>
+          </div>
+          <p style="font-size:0.85rem; color:#94a3b8; margin: 0 0 10px 0;">🎯 Target: ${targetTag} &nbsp;|&nbsp; ${hasImg}</p>
+          <p style="font-size:0.9rem; color:#e2e8f0; margin:0; line-height:1.5; white-space:pre-wrap;">${a.description.substring(0, 150)}${a.description.length > 150 ? '...' : ''}</p>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+  });
+}
+
+function deleteAnnouncement(id) {
+  if(confirm('Are you sure you want to delete this announcement?')) {
+    db.ref('announcements/' + id).remove().then(() => notify('🗑️ Deleted successfully!'));
+  }
+}
+
+function editAnnouncement(id) {
+  db.ref('announcements/' + id).once('value').then(snap => {
+    const a = snap.val();
+    if(!a) return;
+    
+    editingAnnKey = id;
+    document.getElementById('ann-title').value = a.title;
+    document.getElementById('ann-desc').value = a.description;
+    
+    if(a.target === 'All') {
+      document.getElementById('ann-target').value = 'All';
+      document.getElementById('ann-target-sec').value = '';
+    } else {
+      document.getElementById('ann-target').value = 'Specific';
+      document.getElementById('ann-target-sec').value = a.target;
+    }
+    toggleTargetSection();
+    
+    document.getElementById('ann-priority').value = a.priority || 'General';
+    document.getElementById('ann-pin').checked = a.pinned || false;
+    
+    if (a.image) {
+      tempAnnImage = a.image;
+      document.getElementById('ann-img-preview').src = a.image;
+      document.getElementById('ann-img-preview-box').style.display = 'block';
+    } else {
+      clearAnnImage();
+    }
+    
+    document.getElementById('atab-announcements').scrollIntoView({behavior: 'smooth'});
+    document.getElementById('ann-btn-wrap').innerHTML = `
+      <button class="btn btn-outline" style="flex:1; border-color:#4ade80; color:#4ade80;" onclick="saveAnnouncement()">💾 Update Announcement</button>
+      <button class="btn btn-outline" style="flex:1; border-color:#f87171; color:#f87171;" onclick="cancelEditAnn()">❌ Cancel</button>
+    `;
+  });
 }
 </script>
 
