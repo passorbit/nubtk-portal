@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Empty Room Finder — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+
+  <style>
+    /* CUSTOM STYLES FOR FREE TIME FINDER */
+    .room-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 1.1rem;
+      letter-spacing: 1px; transition: 0.3s;
+    }
+    .room-free { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); }
+    .room-free:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(74, 222, 128, 0.2); }
+    
+    .room-occupied { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); border-left: 4px solid #f87171; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 10px;}
+    .occ-room-name { font-size: 1.1rem; font-weight: bold; color: #f87171; }
+    .occ-details { font-size: 0.85rem; color: var(--muted); text-align: right;}
+    .occ-details strong { color: #fff; }
+
+    .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › Empty Room Finder</div>
+    <h1>Empty Room Finder</h1>
+    <p>Find available rooms for group study, আড্ডা, or passing free time.</p>
+  </div>
+
+  <div class="section-card">
+    <h2 style="color: var(--gold); margin-bottom: 20px;">🔍 Check Room Availability</h2>
+    
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Select Day</label>
+        <select class="form-select" id="search-day">
+          <option value="Saturday">Saturday</option>
+          <option value="Sunday">Sunday</option>
+          <option value="Monday">Monday</option>
+          <option value="Tuesday">Tuesday</option>
+          <option value="Wednesday">Wednesday</option>
+          <option value="Thursday">Thursday</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Select Time Slot</label>
+        <select class="form-select" id="search-time">
+          <option value="08:30 AM">08:30 AM</option>
+          <option value="09:40 AM">09:40 AM</option>
+          <option value="10:50 AM">10:50 AM</option>
+          <option value="12:00 PM">12:00 PM</option>
+          <option value="02:10 PM">02:10 PM</option>
+          <option value="03:20 PM">03:20 PM</option>
+          <option value="04:30 PM">04:30 PM</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="btn-row">
+      <button class="btn btn-gold" style="width: 100%; justify-content: center;" onclick="findEmptyRooms()">🔎 Find Empty Rooms</button>
+    </div>
+  </div>
+
+  <div id="results-container" style="display: none;">
+    <div class="section-card" style="border-color: #4ade80;">
+      <h3 style="color: #4ade80; margin-bottom: 5px; font-size: 1.2rem;">✅ Available Rooms</h3>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 15px;">These rooms currently have no scheduled classes.</p>
+      <div id="free-rooms-list" class="result-grid">
+        </div>
+    </div>
+
+    <div class="section-card" style="border-color: #f87171; background: rgba(248, 113, 113, 0.02);">
+      <h3 style="color: #f87171; margin-bottom: 5px; font-size: 1.2rem;">🚫 Occupied Rooms</h3>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 20px;">Classes currently going on in these rooms.</p>
+      <div id="occupied-rooms-list">
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// --- HELPERS ---
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+const db = firebase.database();
+
+// 🔴 MASTER ROOM LIST (এখান থেকে আপনি ডিপার্টমেন্টের মোট রুমের লিস্ট কন্ট্রোল করতে পারবেন)
+const ALL_ROOMS = [
+  "301", "302", "303", "304", "305", "306", 
+  "401", "402", "403", "404", "405", "406",
+  "LAB 1", "LAB 2", "LAB 3", "HARDWARE LAB"
+];
+
+function findEmptyRooms() {
+  const selectedDay = document.getElementById('search-day').value;
+  const selectedTime = document.getElementById('search-time').value;
+  
+  if (!selectedDay || !selectedTime) return;
+
+  const searchKey = `${selectedDay}|${selectedTime}`;
+  notify('⏳ Searching all sections...');
+  
+  document.getElementById('results-container').style.display = 'none';
+
+  db.ref('routines').once('value').then(snapshot => {
+    const allRoutines = snapshot.val();
+    
+    if (!allRoutines) {
+      notify('❌ No routine data found in database!');
+      return;
+    }
+
+    let occupiedRoomsData = [];
+    let occupiedRoomNames = [];
+
+    // পুরো ডাটাবেস লুপ করে দেখা হচ্ছে কোন সেকশনের এই সময়ে ক্লাস আছে
+    for (const section in allRoutines) {
+      const schedule = allRoutines[section][searchKey];
+      
+      if (schedule && schedule.room) {
+        // রুমের নাম পরিষ্কার করা (space বা ছোট-বড় হাতের অক্ষর ঠিক করার জন্য)
+        const cleanRoomName = schedule.room.trim().toUpperCase();
+        
+        occupiedRoomNames.push(cleanRoomName);
+        occupiedRoomsData.push({
+          room: cleanRoomName,
+          section: section,
+          course: schedule.course,
+          type: schedule.type
+        });
+      }
+    }
+
+    // মাস্টার লিস্ট থেকে বুক করা রুমগুলো বাদ দিয়ে ফাঁকা রুম বের করা
+    let freeRooms = ALL_ROOMS.filter(r => !occupiedRoomNames.includes(r.toUpperCase()));
+
+    renderResults(freeRooms, occupiedRoomsData);
+
+  }).catch(err => {
+    console.error(err);
+    notify('❌ Database Error!');
+  });
+}
+
+function renderResults(freeRooms, occupiedRoomsData) {
+  const freeContainer = document.getElementById('free-rooms-list');
+  const occContainer = document.getElementById('occupied-rooms-list');
+
+  // Render Free Rooms
+  if (freeRooms.length > 0) {
+    freeContainer.innerHTML = freeRooms.map(room => `<div class="room-badge room-free">${room}</div>`).join('');
+  } else {
+    freeContainer.innerHTML = '<div style="grid-column: 1/-1; color: var(--muted);">No empty rooms available at this time. 😔</div>';
+  }
+
+  // Render Occupied Rooms (সাজিয়ে দেখানো)
+  if (occupiedRoomsData.length > 0) {
+    // রুম নম্বর অনুযায়ী সর্ট করা
+    occupiedRoomsData.sort((a, b) => a.room.localeCompare(b.room));
+    
+    occContainer.innerHTML = occupiedRoomsData.map(data => {
+      const typeLabel = data.type === 'lab' || data.type === 'phy-lab' ? '(Lab)' : '';
+      return `
+        <div class="room-occupied">
+          <div class="occ-room-name">${data.room}</div>
+          <div class="occ-details">
+            Section: <strong>${data.section}</strong> <br>
+            ${data.course} <span style="font-size: 0.75rem; color:#fca5a5;">${typeLabel}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    occContainer.innerHTML = '<div style="color: var(--muted);">No classes are running. The whole floor is yours! 🎉</div>';
+  }
+
+  document.getElementById('results-container').style.display = 'block';
+  notify('✅ Live status loaded!');
+}
+
+// Page View Track
+(function() {
+  const PAGE_NAME = 'free-time'; 
+  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1).catch(e => console.error(e));
+  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1).catch(e => console.error(e));
+})();
+  
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
