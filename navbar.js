@@ -151,11 +151,15 @@ const navbarHTML = `
       <a href="${homeLink}" class="nav-link">Home</a>
       
       <!-- SMART TOOLS DROPDOWN -->
-      <div class="dropdown" id="toolsDropdown">
+      <div class="dropdown" id="toolsDropdown" 
+           onmouseover="showDropdown()" 
+           onmouseout="hideDropdown()">
+           
         <button class="nav-link dropdown-btn" onclick="toggleDropdown(event)">
           Tools <span style="font-size: 0.7rem; margin-top: 3px;">▼</span>
         </button>
-        <div class="dropdown-content">
+        
+        <div class="dropdown-content" id="dropdownContent">
           <a href="${pagesPrefix}cover.html">📄 Cover Page</a>
           <a href="${pagesPrefix}routine.html">🗓️ Routine</a>
           <a href="${pagesPrefix}free-time.html">🔍 Free Class Finder</a>
@@ -188,6 +192,28 @@ window.toggleDropdown = function(e) {
     document.getElementById('toolsDropdown').classList.toggle('active');
   }
 };
+
+// MOUSE DROPDOWN
+window.showDropdown = function() {
+  if (window.innerWidth > 768) {
+    document.getElementById('dropdownContent').style.display = 'block';
+  }
+};
+
+// মাউস সরিয়ে নিলে ড্রপডাউন হাইড করবে (একটি ছোট্ট Delay বা সময় দিয়ে)
+let hideTimeout;
+window.hideDropdown = function() {
+  if (window.innerWidth > 768) {
+    hideTimeout = setTimeout(() => {
+      document.getElementById('dropdownContent').style.display = 'none';
+    }, 300); // ৩০০ মিলিসেকেন্ড সময় পাবে মাউসটি মেনুতে নেওয়ার জন্য
+  }
+};
+
+// মেনুর ওপর মাউস থাকলে হাইড হওয়া বন্ধ করবে
+document.getElementById('dropdownContent')?.addEventListener('mouseover', () => {
+  clearTimeout(hideTimeout);
+});
 
 setTimeout(() => {
   const currentUrl = window.location.href;
