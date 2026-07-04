@@ -22,13 +22,6 @@ const navbarHTML = `
     font-family: inherit;
   }
   
- /* TOOLS DROPDOWN CONTAINER */
-  .dropdown {
-    position: relative;
-    display: inline-block;
-  }
-  
-  /* ড্রপডাউনটি যেন বাটন থেকে বিচ্ছিন্ন না হয়, তাই বাটন ও মেনুর গ্যাপ জিরো করে দেওয়া */
   .dropdown-content {
     display: none;
     position: absolute;
@@ -41,14 +34,20 @@ const navbarHTML = `
     top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    padding-top: 15px; /* এই প্যাডিংটি বাটন ও মেনুর গ্যাপ ফিলাপ করবে */
-    margin-top: 5px;   /* খুব সামান্য মার্জিন */
+    overflow: hidden;
+    margin-top: 10px;
   }
 
-  /* মাউস হোভার এনিমেশন */
-  .dropdown:hover .dropdown-content {
-    display: block;
-    animation: fadeUp 0.2s ease;
+  /* ⚡ THE MAGIC HOVER BRIDGE ⚡ 
+     এই অদৃশ্য ব্লকটি বাটন এবং মেনুর মাঝখানের গ্যাপ ফিলাপ করবে */
+  .dropdown-content::after {
+    content: "";
+    position: absolute;
+    bottom: 100%; /* মেনুর ঠিক ওপরে বসবে */
+    left: 0;
+    width: 100%;
+    height: 25px; /* ১৫ পিক্সেলের গ্যাপ ঢেকে দেবে */
+    background: transparent; 
   }
   
   .dropdown-content::before {
@@ -152,15 +151,11 @@ const navbarHTML = `
       <a href="${homeLink}" class="nav-link">Home</a>
       
       <!-- SMART TOOLS DROPDOWN -->
-      <div class="dropdown" id="toolsDropdown" 
-           onmouseover="showDropdown()" 
-           onmouseout="hideDropdown()">
-           
+      <div class="dropdown" id="toolsDropdown">
         <button class="nav-link dropdown-btn" onclick="toggleDropdown(event)">
           Tools <span style="font-size: 0.7rem; margin-top: 3px;">▼</span>
         </button>
-        
-        <div class="dropdown-content" id="dropdownContent">
+        <div class="dropdown-content">
           <a href="${pagesPrefix}cover.html">📄 Cover Page</a>
           <a href="${pagesPrefix}routine.html">🗓️ Routine</a>
           <a href="${pagesPrefix}free-time.html">🔍 Free Class Finder</a>
@@ -193,28 +188,6 @@ window.toggleDropdown = function(e) {
     document.getElementById('toolsDropdown').classList.toggle('active');
   }
 };
-
-// MOUSE DROPDOWN
-window.showDropdown = function() {
-  if (window.innerWidth > 768) {
-    document.getElementById('dropdownContent').style.display = 'block';
-  }
-};
-
-// মাউস সরিয়ে নিলে ড্রপডাউন হাইড করবে (একটি ছোট্ট Delay বা সময় দিয়ে)
-let hideTimeout;
-window.hideDropdown = function() {
-  if (window.innerWidth > 768) {
-    hideTimeout = setTimeout(() => {
-      document.getElementById('dropdownContent').style.display = 'none';
-    }, 300); // ৩০০ মিলিসেকেন্ড সময় পাবে মাউসটি মেনুতে নেওয়ার জন্য
-  }
-};
-
-// মেনুর ওপর মাউস থাকলে হাইড হওয়া বন্ধ করবে
-document.getElementById('dropdownContent')?.addEventListener('mouseover', () => {
-  clearTimeout(hideTimeout);
-});
 
 setTimeout(() => {
   const currentUrl = window.location.href;
