@@ -789,6 +789,15 @@ function handleCSVUpload() {
   reader.readAsText(file);
 }
 
+  function normalizeTime(rawTime) {
+  const match = rawTime.trim().match(/^(\d{1,2})\s*:\s*(\d{2})\s*([AaPp])\.?[Mm]\.?$/);
+  if (!match) return rawTime.trim(); // ফরম্যাট না মিললে যেমন আছে তেমনই রাখবে
+  const hour = match[1].padStart(2, '0');   // 8 → 08
+  const minute = match[2];
+  const period = match[3].toUpperCase();     // am/Am/AM → AM
+  return `${hour}:${minute} ${period}`;
+}
+
 function processCSVData(csvText) {
   const lines = csvText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   if (lines.length < 2) { notify('⚠️ CSV file is empty!'); return; }
@@ -815,7 +824,7 @@ function processCSVData(csvText) {
       }
 
       const day = formattedDay; // সঠিক ফরম্যাটের দিনটি সেভ করা হলো
-      const time = cols[2]; 
+      const time = normalizeTime(cols[2]); 
       const course = cols[3];
       const room = cols[4];
       const type = cols[5].toLowerCase(); 
