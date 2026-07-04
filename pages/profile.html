@@ -80,6 +80,15 @@
       .profile-short-info { margin-top: 10px; }
       .dues-grid { grid-template-columns: 1fr; } 
     }
+
+    /* SAVED COVERS IN PROFILE */
+    .prof-saved-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; transition: 0.2s; }
+    .prof-saved-item:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .prof-saved-info { flex: 1; min-width: 200px; }
+    .prof-saved-title { font-weight: bold; color: var(--gold); font-size: 1.1rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .prof-saved-meta { font-size: 0.8rem; color: var(--muted); }
+    .prof-saved-actions { display: flex; gap: 8px; }
+    .prof-saved-actions button { padding: 6px 12px; font-size: 0.8rem; }
   </style>
 </head>
 <body>
@@ -221,6 +230,13 @@
         </a>
       </div>
     </div>
+    <div class="section-card" style="margin-top: 25px;">
+      <h2>📁 Saved Cover Pages</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 20px;">Your saved cover page drafts ready to be downloaded or edited.</p>
+      
+      <div id="profile-saved-covers" style="display: grid; gap: 12px;">
+        </div>
+    </div>
   </div>
 
   <div class="panel" id="tab-settings">
@@ -266,6 +282,7 @@ function switchProfileTab(tab) {
   const tabs = ['personal', 'academic', 'finance', 'tools', 'settings'];
   document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', tabs[i] === tab));
   document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', tabs[i] === tab));
+  if (tab === 'tools') loadSavedCoverPages();
 }
 
 // --- FIREBASE INITIALIZATION ---
@@ -389,6 +406,51 @@ function handleLogout() {
     notify('↩️ Logged out successfully');
     setTimeout(() => { window.location.href = 'login.html'; }, 800);
   });
+}
+
+  // --- 📁 SAVED COVER PAGES LOGIC ---
+function loadSavedCoverPages() {
+  const listContainer = document.getElementById('profile-saved-covers');
+  if (!listContainer) return;
+
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  
+  if (list.length === 0) {
+    listContainer.innerHTML = '<div style="text-align:center; padding:20px; background:rgba(255,255,255,0.05); border-radius:8px; color:var(--muted);">No saved cover pages found. Create one from the Cover Page generator!</div>';
+    return;
+  }
+
+  listContainer.innerHTML = list.map((item, i) => `
+    <div class="prof-saved-item">
+      <div class="prof-saved-info">
+        <div class="prof-saved-title">📄 ${item.name}</div>
+        <div class="prof-saved-meta">Saved: ${new Date(item.ts).toLocaleDateString()} • Type: ${item.data.coverType || 'Assignment'} • Course: ${item.data.courseCode || 'N/A'}</div>
+      </div>
+      <div class="prof-saved-actions">
+        <button class="btn btn-outline" style="border-color:#38bdf8; color:#38bdf8;" onclick="editSavedCover(${i})">✏️ Edit</button>
+        <button class="btn btn-outline" style="border-color:#f87171; color:#f87171;" onclick="deleteSavedCover(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editSavedCover(i) {
+  const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+  if (list[i]) {
+    // কভার পেজ জেনারেটরের মেমোরিতে ডেটা পাঠিয়ে দেওয়া হচ্ছে
+    localStorage.setItem('nubtk_cover_draft', JSON.stringify(list[i].data));
+    window.location.href = 'cover.html';
+  }
+}
+
+function deleteSavedCover(i) {
+  if(confirm('Are you sure you want to delete this saved cover page?')) {
+    const list = JSON.parse(localStorage.getItem('nubtk_saved_covers') || '[]');
+    list.splice(i, 1);
+    localStorage.setItem('nubtk_saved_covers', JSON.stringify(list));
+    loadSavedCoverPages(); // লিস্ট আপডেট করা
+    notify('🗑️ Cover Page deleted!');
+  }
 }
 
   // --- TODAY'S CLASSES LOGIC ---
