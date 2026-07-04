@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Prompt Hub — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+
+  <style>
+    /* PROMPT HUB STYLES */
+    .prompt-category-bar {
+      display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px;
+    }
+    .cat-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted);
+      padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; transition: 0.3s;
+    }
+    .cat-btn:hover, .cat-btn.active {
+      background: rgba(201,168,76,0.15); color: var(--gold); border-color: var(--gold);
+    }
+    
+    .prompt-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+    }
+    
+    .prompt-card {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px;
+      padding: 20px; display: flex; flex-direction: column; transition: 0.3s; position: relative;
+    }
+    .prompt-card:hover { border-color: var(--gold); transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+    
+    .prompt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+    .prompt-title { color: #fff; font-size: 1.15rem; font-weight: bold; font-family: var(--ff-head); }
+    .prompt-badge { background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+    
+    .prompt-body {
+      background: rgba(0,0,0,0.2); border: 1px dashed var(--border); padding: 15px; border-radius: 8px;
+      color: #e2e8f0; font-size: 0.9rem; line-height: 1.6; font-family: monospace; margin-bottom: 15px;
+      flex: 1; word-wrap: break-word; overflow-y: auto; max-height: 150px;
+    }
+    
+    .copy-btn {
+      width: 100%; background: rgba(201,168,76,0.1); border: 1px solid var(--gold); color: var(--gold);
+      padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s;
+      display: flex; justify-content: center; align-items: center; gap: 8px;
+    }
+    .copy-btn:hover { background: var(--gold); color: #000; }
+    
+    /* Scrollbar for prompt body */
+    .prompt-body::-webkit-scrollbar { width: 5px; }
+    .prompt-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › AI Prompt Hub</div>
+    <h1>AI Prompt Hub 🤖</h1>
+    <p>Unlock the power of AI. Copy these expert prompts to use in ChatGPT, Gemini, or Claude.</p>
+  </div>
+
+  <div class="section-card">
+    <div class="prompt-category-bar" id="category-bar">
+      <button class="cat-btn active" onclick="filterPrompts('All')">All Prompts</button>
+      <button class="cat-btn" onclick="filterPrompts('Academic')">📚 Academic</button>
+      <button class="cat-btn" onclick="filterPrompts('Coding')">💻 Coding</button>
+      <button class="cat-btn" onclick="filterPrompts('Writing')">✍️ Writing</button>
+      <button class="cat-btn" onclick="filterPrompts('Career')">🚀 Career</button>
+    </div>
+
+    <div class="prompt-grid" id="prompt-container">
+      <p style="color: var(--muted); padding: 20px;">⏳ Loading prompts from secure server...</p>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// --- HELPERS ---
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+
+const auth = firebase.auth();
+const db = firebase.database();
+let allPrompts = []; // গ্লোবাল ভেরিয়েবল
+
+// --- AUTH CHECK (Login Exclusive) ---
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    window.location.href = 'login.html'; // লগইন না থাকলে বের করে দেবে
+  } else {
+    loadPrompts();
+  }
+});
+
+// --- LOAD PROMPTS FROM FIREBASE ---
+function loadPrompts() {
+  db.ref('ai_prompts').on('value', (snapshot) => {
+    const data = snapshot.val();
+    allPrompts = [];
+    
+    if (data) {
+      Object.keys(data).forEach(key => {
+        allPrompts.push({ id: key, ...data[key] });
+      });
+      // লেটেস্টগুলো আগে দেখানোর জন্য সর্ট
+      allPrompts.sort((a, b) => b.timestamp - a.timestamp);
+    }
+    
+    filterPrompts('All'); // ডিফল্টভাবে সব দেখাবে
+  });
+}
+
+// --- FILTER & RENDER PROMPTS ---
+function filterPrompts(category) {
+  // ক্যাটাগরি বাটনের অ্যাকটিভ স্টাইল চেঞ্জ করা
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.innerText.includes(category) || (category === 'All' && btn.innerText === 'All Prompts'));
+  });
+
+  const container = document.getElementById('prompt-container');
+  container.innerHTML = '';
+
+  const filtered = category === 'All' ? allPrompts : allPrompts.filter(p => p.category === category);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">No prompts found in this category. Check back later!</div>`;
+    return;
+  }
+
+  filtered.forEach(prompt => {
+    // ক্যাটাগরি অনুযায়ী ব্যাজ কালার
+    let badgeStyle = "background: rgba(56, 189, 248, 0.15); color: #38bdf8;";
+    if(prompt.category === 'Coding') badgeStyle = "background: rgba(74, 222, 128, 0.15); color: #4ade80;";
+    if(prompt.category === 'Writing') badgeStyle = "background: rgba(244, 114, 182, 0.15); color: #f472b6;";
+    if(prompt.category === 'Career') badgeStyle = "background: rgba(250, 204, 21, 0.15); color: #facc15;";
+
+    const card = document.createElement('div');
+    card.className = 'prompt-card';
+    card.innerHTML = `
+      <div class="prompt-header">
+        <div class="prompt-title">${prompt.title}</div>
+        <div class="prompt-badge" style="${badgeStyle}">${prompt.category}</div>
+      </div>
+      <div class="prompt-body" id="text-${prompt.id}">${prompt.content}</div>
+      <button class="copy-btn" onclick="copyPrompt('${prompt.id}')">
+        📋 Copy Prompt
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// --- COPY TO CLIPBOARD MAGIC ---
+function copyPrompt(id) {
+  const text = document.getElementById(`text-${id}`).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    notify('✅ Prompt copied to clipboard!');
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+    notify('❌ Failed to copy!');
+  });
+}
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
