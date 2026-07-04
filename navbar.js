@@ -22,6 +22,13 @@ const navbarHTML = `
     font-family: inherit;
   }
   
+ /* TOOLS DROPDOWN CONTAINER */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  /* ড্রপডাউনটি যেন বাটন থেকে বিচ্ছিন্ন না হয়, তাই বাটন ও মেনুর গ্যাপ জিরো করে দেওয়া */
   .dropdown-content {
     display: none;
     position: absolute;
@@ -34,20 +41,14 @@ const navbarHTML = `
     top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    overflow: hidden;
-    margin-top: 15px;
+    padding-top: 15px; /* এই প্যাডিংটি বাটন ও মেনুর গ্যাপ ফিলাপ করবে */
+    margin-top: 5px;   /* খুব সামান্য মার্জিন */
   }
 
-  /* ⚡ THE MAGIC HOVER BRIDGE ⚡ 
-     এই অদৃশ্য ব্লকটি বাটন এবং মেনুর মাঝখানের গ্যাপ ফিলাপ করবে */
-  .dropdown-content::after {
-    content: "";
-    position: absolute;
-    bottom: 100%; /* মেনুর ঠিক ওপরে বসবে */
-    left: 0;
-    width: 100%;
-    height: 25px; /* ১৫ পিক্সেলের গ্যাপ ঢেকে দেবে */
-    background: transparent; 
+  /* মাউস হোভার এনিমেশন */
+  .dropdown:hover .dropdown-content {
+    display: block;
+    animation: fadeUp 0.2s ease;
   }
   
   .dropdown-content::before {
