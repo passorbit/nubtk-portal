@@ -16,10 +16,11 @@ const navbarHTML = `
       <a href="${homeLink}" class="nav-link">Home</a>
       <a href="${pagesPrefix}cover.html" class="nav-link">Cover Page</a>
       <a href="${pagesPrefix}routine.html" class="nav-link">Routine</a>
+      <a href="${pagesPrefix}free-time.html" class="nav-link">Free Class Finder</a>
       <a href="${pagesPrefix}teachers.html" class="nav-link">Teacher's Directory</a>
       <a href="${pagesPrefix}index-maker.html" class="nav-link">Index Maker</a>
       <a href="${pagesPrefix}games.html" class="nav-link">Games</a>
-      <a href="${pagesPrefix}login.html" class="nav-link nav-admin" id="nav-login-btn">🔐 Login</a>
+      <a href="${pagesPrefix}login.html" class="nav-link nav-admin" id="nav-login-btn">🔐 Student Login</a>
     </div>
     
     <button class="nav-hamburger" onclick="toggleNav()">&#9776;</button>
