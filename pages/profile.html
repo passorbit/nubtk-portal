@@ -156,6 +156,7 @@
   <div class="tab-bar profile-tab-bar">
     <button class="tab-btn active" onclick="switchProfileTab('personal')">🎓 Personal Info</button>
     <button class="tab-btn" onclick="switchProfileTab('academic')">📚 Academic</button>
+    <button class="tab-btn" onclick="switchProfileTab('career')">💼 Career & Skills</button>
     <button class="tab-btn" onclick="switchProfileTab('finance')">💳 Finance</button>
     <button class="tab-btn" onclick="switchProfileTab('tools')">🛠️ Tools</button>
     <button class="tab-btn" onclick="switchProfileTab('settings')">⚙️ Settings</button>
@@ -196,6 +197,14 @@
             <option value="O+">O+</option><option value="O-">O-</option>
           </select>
         </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="text" class="form-input" id="prof-phone" placeholder="e.g. 017XXXXXXXX"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address / Location</label>
+          <input type="text" class="form-input" id="prof-address" placeholder="e.g. Khulna, Bangladesh"/>
+        </div>
       </div>
       <button class="btn btn-gold" style="margin-top: 20px;" onclick="updateProfileData()">💾 Save Changes</button>
     </div>
@@ -233,6 +242,37 @@
           <p style="color: var(--muted); font-size: 0.9rem;">Loading your schedule...</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="panel" id="tab-career">
+    <div class="section-card">
+      <h2>Career & Skills (Resume Data)</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 20px;">Fill this out to generate your ATS-Friendly Resume in 1-Click!</p>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">LinkedIn Profile URL</label>
+          <input type="url" class="form-input" id="prof-linkedin" placeholder="https://linkedin.com/in/username"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">GitHub Profile URL</label>
+          <input type="url" class="form-input" id="prof-github" placeholder="https://github.com/username"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Technical Skills (Comma separated)</label>
+          <input type="text" class="form-input" id="prof-skills" placeholder="e.g. C++, HTML, WordPress, Arduino, SEO"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Key Projects</label>
+          <textarea class="form-input" id="prof-projects" rows="3" placeholder="1. Student Management System (C++)&#10;2. Custom WP Plugin (PHP)"></textarea>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Experience (Optional)</label>
+          <textarea class="form-input" id="prof-experience" rows="3" placeholder="Any freelance work, agency experience, or internships?"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-gold" style="margin-top: 20px;" onclick="updateProfileData()">💾 Save Career Info</button>
     </div>
   </div>
 
@@ -338,7 +378,7 @@ function notify(msg, dur=2800) {
 }
 
 function switchProfileTab(tab) {
-  const tabs = ['personal', 'academic', 'finance', 'tools', 'settings'];
+  const tabs = ['personal', 'academic', 'career', 'finance', 'tools', 'settings'];
   document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', tabs[i] === tab));
   document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', tabs[i] === tab));
   if (tab === 'tools') loadSavedCoverPages();
@@ -455,6 +495,13 @@ function loadProfileData(uid) {
         document.getElementById('prof-section').value = data.section || '';
         document.getElementById('prof-credits').value = data.credits || '';
         document.getElementById('prof-cgpa').value = data.cgpa || '';
+        document.getElementById('prof-phone').value = data.phone || '';
+        document.getElementById('prof-address').value = data.address || '';
+        document.getElementById('prof-linkedin').value = data.linkedin || '';
+        document.getElementById('prof-github').value = data.github || '';
+        document.getElementById('prof-skills').value = data.skills || '';
+        document.getElementById('prof-projects').value = data.projects || '';
+        document.getElementById('prof-experience').value = data.experience || '';
         
         savedStudentId = data.studentId; 
 
@@ -479,6 +526,13 @@ function updateProfileData() {
   const section = document.getElementById('prof-section').value.trim();
   const credits = document.getElementById('prof-credits').value.trim();
   const cgpa = document.getElementById('prof-cgpa').value.trim();
+  const phone = document.getElementById('prof-phone').value.trim();
+  const address = document.getElementById('prof-address').value.trim();
+  const linkedin = document.getElementById('prof-linkedin').value.trim();
+  const github = document.getElementById('prof-github').value.trim();
+  const skills = document.getElementById('prof-skills').value.trim();
+  const projects = document.getElementById('prof-projects').value.trim();
+  const experience = document.getElementById('prof-experience').value.trim();
 
   if (!name) { notify('⚠️ Name cannot be empty!'); return; }
 
@@ -486,6 +540,8 @@ function updateProfileData() {
   db.ref('registered_students/' + currentUserUid).update({
     name: name, department: dept, bloodGroup: blood,
     semester: semester, section: section, credits: credits, cgpa: cgpa,
+    phone: phone, address: address, linkedin: linkedin, github: github, 
+    skills: skills, projects: projects, experience: experience,
     avatar: tempAvatar, banner: tempBanner
   }).then(() => {
     document.getElementById('display-name').innerText = name;
