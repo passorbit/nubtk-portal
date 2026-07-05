@@ -36,7 +36,7 @@ const navbarHTML = `
     left: 50%;
     transform: translateX(-50%);
     overflow: hidden;
-    margin-top: 5px;
+    margin-top: 0px;
   }
   
   .dropdown-content::before {
