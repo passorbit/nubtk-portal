@@ -1223,12 +1223,15 @@ function saveStudentsToFirebase() {
 
   // ─── VISITOR STATS ───
 function listenToVisitors() {
-  db.ref('visitors/online_count').on('value', snap => {
-    document.getElementById('stat-online').textContent = snap.val() || 0;
+  // ⚡ Majic: Now, the admin panel will directly count live users.
+  db.ref('visitors/online_users').on('value', snap => {
+    document.getElementById('stat-online').textContent = snap.numChildren() || 0;
   });
+  
   db.ref('visitors/total_visits').on('value', snap => {
     document.getElementById('stat-total').textContent = snap.val() || 0;
   });
+  
   db.ref('visitors/pages').on('value', snap => {
     const data = snap.val() || {};
     document.getElementById('stat-page-index').textContent = data.index || 0;
