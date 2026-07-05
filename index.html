@@ -41,6 +41,12 @@
     <div class="hero-badge">Northern University of Business & Technology, Khulna</div>
     <h1 class="hero-title">Student<br/><em>Portal</em></h1>
     <p class="hero-sub">CSE Department · Spring 2025</p>
+
+    <div id="login-promo" class="login-promo-banner">
+      <span class="promo-text">✨ Unlock many more features! Task Tracker, CGPA Planner & AI Prompts <strong>Login Student</strong>।</span>
+      <a href="pages/login.html" class="promo-btn">Student Login →</a>
+    </div>
+    
     <div class="hero-cards">
       <a href="pages/dues.html" class="hcard">
         <div class="hcard-icon">💳</div>
@@ -164,6 +170,16 @@ appCheck.activate(
     const count = snap.numChildren();
     onlineRef.set(count).catch(e => console.error(e));
   });
+
+  // ⚡ Hide Login Promo if User is Already Logged In
+  firebase.auth().onAuthStateChanged((user) => {
+    const promoBanner = document.getElementById('login-promo');
+    if (user && promoBanner) {
+      promoBanner.style.display = 'none';
+    }
+  });
+
+  
 })();
 </script>
   
