@@ -259,3 +259,53 @@ body { background: var(--navy); color: var(--white); font-family: var(--ff-body)
   .hero-title { font-size: 3rem; }
   .preview-box { padding: 20px; }
 }
+
+/* LOGIN PROMO BANNER */
+  .login-promo-banner {
+    background: rgba(201, 168, 76, 0.1);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 50px;
+    padding: 10px 25px;
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+    margin-bottom: 35px;
+    backdrop-filter: blur(5px);
+    transition: 0.3s ease;
+  }
+  .login-promo-banner:hover {
+    border-color: rgba(201, 168, 76, 0.8);
+    box-shadow: 0 5px 20px rgba(201, 168, 76, 0.15);
+  }
+  .promo-text {
+    color: #e2e8f0;
+    font-size: 0.95rem;
+  }
+  .promo-text strong {
+    color: #C9A84C;
+  }
+  .promo-btn {
+    background: #C9A84C;
+    color: #0B1D3A;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: 0.3s;
+    white-space: nowrap;
+  }
+  .promo-btn:hover {
+    background: #fff;
+    transform: scale(1.05);
+  }
+
+  @media(max-width: 600px) {
+    .login-promo-banner {
+      flex-direction: column;
+      border-radius: 12px;
+      text-align: center;
+      padding: 15px;
+    }
+  }
