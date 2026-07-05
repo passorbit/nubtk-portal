@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>1-Click Resume — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+
+  <!-- HTML2PDF Library (PDF ডাউনলোডের জন্য) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    /* PAGE LAYOUT STYLES */
+    .resume-wrapper { display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 20px; }
+    
+    .resume-controls { background: var(--card-bg); border: 1px solid var(--gold); border-radius: 12px; padding: 20px; text-align: center; width: 100%; max-width: 800px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+    .resume-controls h2 { color: var(--gold); margin-bottom: 10px; }
+    
+    /* A4 SIZE RESUME TEMPLATE (ATS FRIENDLY - WHITE BG, BLACK TEXT) */
+    .a4-container { background: #fff; color: #000; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-family: 'Arial', sans-serif; box-sizing: border-box; overflow: hidden; margin-bottom: 40px; position: relative; }
+    
+    /* RESUME TYPOGRAPHY & DESIGN */
+    .res-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+    .res-name { font-size: 24pt; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px; }
+    .res-contact { font-size: 10pt; color: #333; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; line-height: 1.5; }
+    .res-contact span { display: inline-flex; align-items: center; }
+    
+    .res-section { margin-bottom: 20px; }
+    .res-sec-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #000; }
+    
+    .res-item { margin-bottom: 12px; }
+    .res-item-title { font-weight: bold; font-size: 11pt; }
+    .res-item-sub { font-size: 10pt; font-style: italic; color: #444; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .res-item-desc { font-size: 10pt; line-height: 1.5; color: #222; }
+    
+    .res-skills-list { display: flex; flex-wrap: wrap; gap: 8px; font-size: 10pt; line-height: 1.5; }
+    .res-skills-list span { background: #f0f0f0; padding: 3px 8px; border-radius: 4px; border: 1px solid #ddd; }
+
+    /* Print Specific Fixes */
+    @media print {
+      body { background: #fff; }
+      .navbar, .page-header, .resume-controls, .breadcrumb { display: none !important; }
+      .a4-container { box-shadow: none; padding: 0; width: 100%; }
+    }
+
+    /* Mobile View Scaling */
+    @media (max-width: 850px) {
+      .a4-container { transform: scale(0.45); transform-origin: top center; margin-bottom: -150mm; }
+    }
+    @media (max-width: 500px) {
+      .a4-container { transform: scale(0.32); transform-origin: top center; margin-bottom: -190mm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="page-header" style="margin-bottom: 20px;">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="profile.html">Profile</a> › 1-Click Resume</div>
+    <h1>ATS Resume Builder 📄</h1>
+  </div>
+
+  <div class="resume-wrapper">
+    <!-- Controls Section -->
+    <div class="resume-controls">
+      <h2>Your Resume is Ready!</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 20px;">We've pulled your data from your profile. Preview your ATS-friendly resume below and download it instantly.</p>
+      
+      <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn btn-outline" style="border-color: #38bdf8; color: #38bdf8;" onclick="window.location.href='profile.html'">✏️ Edit Info in Profile</button>
+        <button class="btn btn-gold" onclick="downloadPDF()">⬇️ Download PDF</button>
+      </div>
+    </div>
+
+    <!-- Resume Preview (A4 Size) -->
+    <div class="a4-container" id="resume-document">
+      
+      <!-- Header -->
+      <div class="res-header">
+        <h1 class="res-name" id="res-name">Loading Name...</h1>
+        <div class="res-contact">
+          <span id="res-email">📧 email@example.com</span>
+          <span id="res-phone">📱 +880 1XXXXXXXXX</span>
+          <span id="res-address">📍 Address, Location</span>
+        </div>
+        <div class="res-contact" style="margin-top: 5px;">
+          <span id="res-linkedin">🔗 linkedin.com/in/username</span>
+          <span id="res-github">💻 github.com/username</span>
+        </div>
+      </div>
+
+      <!-- Education Section -->
+      <div class="res-section">
+        <h2 class="res-sec-title">Education</h2>
+        <div class="res-item">
+          <div class="res-item-title" id="res-uni">Northern University of Business & Technology, Khulna</div>
+          <div class="res-item-sub">
+            <span id="res-dept">B.Sc. in Computer Science and Engineering</span>
+            <span id="res-cgpa">CGPA: 0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills Section -->
+      <div class="res-section" id="sec-skills">
+        <h2 class="res-sec-title">Technical Skills</h2>
+        <div class="res-skills-list" id="res-skills">
+          <!-- Skills will load here -->
+        </div>
+      </div>
+
+      <!-- Projects Section -->
+      <div class="res-section" id="sec-projects">
+        <h2 class="res-sec-title">Key Projects</h2>
+        <div class="res-item-desc" id="res-projects" style="white-space: pre-wrap;">
+          <!-- Projects will load here -->
+        </div>
+      </div>
+
+      <!-- Experience Section -->
+      <div class="res-section" id="sec-experience" style="display: none;">
+        <h2 class="res-sec-title">Experience</h2>
+        <div class="res-item-desc" id="res-experience" style="white-space: pre-wrap;">
+          <!-- Experience will load here -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// --- HELPER ---
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+// --- FIREBASE INIT ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+
+const auth = firebase.auth();
+const db = firebase.database();
+let studentNameForFile = "Resume";
+
+// --- AUTH CHECK & DATA FETCH ---
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+  } else {
+    notify('⏳ Generating Resume...');
+    loadResumeData(user.uid);
+  }
+});
+
+function loadResumeData(uid) {
+  db.ref('registered_students/' + uid).once('value').then(snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    studentNameForFile = data.name || "Student_Resume";
+
+    // 1. Basic Info
+    document.getElementById('res-name').innerText = data.name || 'Your Name';
+    document.getElementById('res-email').innerHTML = `📧 ${data.email || ''}`;
+    
+    // Phone & Address (Hide if empty)
+    document.getElementById('res-phone').innerHTML = data.phone ? `📱 ${data.phone}` : '';
+    document.getElementById('res-address').innerHTML = data.address ? `📍 ${data.address}` : '';
+    
+    // Links (Hide if empty)
+    document.getElementById('res-linkedin').innerHTML = data.linkedin ? `🔗 ${data.linkedin.replace(/^https?:\/\//, '')}` : '';
+    document.getElementById('res-github').innerHTML = data.github ? `💻 ${data.github.replace(/^https?:\/\//, '')}` : '';
+
+    // 2. Education
+    document.getElementById('res-dept').innerText = `B.Sc. in ${data.department || 'Computer Science and Engineering'}`;
+    document.getElementById('res-cgpa').innerText = `CGPA: ${data.cgpa || 'N/A'}`;
+
+    // 3. Skills (Comma separated to badges)
+    if (data.skills) {
+      const skillArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
+      document.getElementById('res-skills').innerHTML = skillArray.map(s => `<span>${s}</span>`).join('');
+    } else {
+      document.getElementById('sec-skills').style.display = 'none';
+    }
+
+    // 4. Projects
+    if (data.projects) {
+      document.getElementById('res-projects').innerText = data.projects;
+    } else {
+      document.getElementById('sec-projects').style.display = 'none';
+    }
+
+    // 5. Experience
+    if (data.experience) {
+      document.getElementById('res-experience').innerText = data.experience;
+      document.getElementById('sec-experience').style.display = 'block';
+    }
+    
+    notify('✅ Resume Generated Successfully!');
+  }).catch(err => {
+    console.error(err);
+    notify('❌ Failed to load data.');
+  });
+}
+
+// --- PDF DOWNLOAD MAGIC ---
+function downloadPDF() {
+  notify('⏳ Preparing PDF...');
+  
+  const element = document.getElementById('resume-document');
+  const opt = {
+    margin:       0,
+    filename:     `${studentNameForFile.replace(/\s+/g, '_')}_NUBTK_Resume.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    notify('✅ PDF Downloaded!');
+  });
+}
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
