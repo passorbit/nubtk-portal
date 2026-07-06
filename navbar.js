@@ -146,7 +146,7 @@ const navbarHTML = `
         <div class="dropdown-content">
           <a href="${pagesPrefix}cover.html">📄 Cover Page</a>
           <a href="${pagesPrefix}routine.html">🗓️ Routine</a>
-          <a href="${pagesPrefix}free-time.html">🔍 Free Class Finder</a>
+          <!-- <a href="${pagesPrefix}free-time.html">🔍 Free Class Finder</a> -->
           <a href="${pagesPrefix}index-maker.html">📋 Index Maker</a>
         </div>
       </div>
