@@ -147,7 +147,21 @@ appCheck.activate(
     const femaleAvatar = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23C9A84C'%3E%3Cpath d='M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z'/%3E%3C/svg%3E";
 
     // ফায়ারবেস থেকে লাইভ ডেটা আনা হচ্ছে
+    // ফায়ারবেস থেকে লাইভ ডেটা আনা হচ্ছে
+    let dataLoaded = false;
+    const loadTimeout = setTimeout(() => {
+      if (!dataLoaded) {
+        document.getElementById('teachers-grid').innerHTML = `
+          <div style="text-align:center; color:#f87171; grid-column: 1 / -1; padding: 40px; font-size:1rem; line-height:1.7;">
+            ⚠️ ডেটা লোড হচ্ছে না।<br>
+            <span style="font-size:0.85rem; color:var(--muted);">আপনি যদি Incognito/Private Mode অথবা কোনো Ad-blocker/Privacy Extension ব্যবহার করেন, তাহলে security protection-এর কারণে data load নাও হতে পারে। দয়া করে normal browser window-এ আবার চেষ্টা করুন।</span>
+          </div>`;
+      }
+    }, 7000);
+
     db.ref('teachers').on('value', (snapshot) => {
+      dataLoaded = true;
+      clearTimeout(loadTimeout);
       const data = snapshot.val() || {};
       allTeachers = Object.values(data);
       renderTeachers(allTeachers);
