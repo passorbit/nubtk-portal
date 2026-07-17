@@ -139,7 +139,7 @@ function handleRegister() {
   notify('⏳ Checking Student ID...');
   
   // ডুপ্লিকেট আইডি চেক করার লজিক
-  db.ref('registered_students').orderByChild('studentId').equalTo(studentId).once('value')
+  db.ref('taken_student_ids/' + studentId).once('value')
     .then((snapshot) => {
       if (snapshot.exists()) {
         // যদি আইডি আগে থেকেই থাকে, তবে মেসেজ এবং সাপোর্ট লিংক দেখাবে
@@ -154,17 +154,20 @@ function handleRegister() {
           .then((userCredential) => {
             const user = userCredential.user;
             
-            db.ref('registered_students/' + user.uid).set({
-              name: name,
-              studentId: studentId,
-              email: email,
-              department: '',
-              course: '',
-              courseCode: ''
-            }).then(() => {
-              notify('🎉 Registration Successful!');
-              setTimeout(() => { window.location.href = 'profile.html'; }, 1200);
-            });
+            const updates = {};
+        updates['registered_students/' + user.uid] = {
+          name: name, studentId: studentId, email: email,
+          department: '', course: '', courseCode: ''
+        };
+        updates['taken_student_ids/' + studentId] = true;
+
+        db.ref().update(updates).then(() => {
+          notify('🎉 Registration Successful!');
+          setTimeout(() => { window.location.href = 'profile.html'; }, 1200);
+        }).catch(err => {
+  notify('❌ Account created but profile save failed! Contact support.');
+  console.error(err);
+        });
           })
           .catch(err => {
             notify('❌ Registration failed! Email might be already in use.');
