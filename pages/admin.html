@@ -82,7 +82,6 @@
       <input type="password" class="form-input" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter') tryLogin()"/>
     </div>
     <button class="btn btn-gold" onclick="tryLogin()">Login →</button>
-    <p class="form-hint" style="margin-top:12px;">Default password: <code style="color:var(--gold)">nubtk2025</code></p>
   </div>
 
   <div id="admin-main" style="display:none;">
@@ -520,38 +519,7 @@ appCheck.activate(
 const db = firebase.database();
 let liveRoutineData = {}; 
 
-// ─── AUTH & FIREBASE FETCH ──────────────────
-function tryLogin() {
-  const pw = document.getElementById('admin-pw').value;
-  if (!pw) { notify('⚠️ Please enter the password'); return; }
-
-  notify('⏳ Checking password...');
-  db.ref('settings/adminPassword').once('value').then((snapshot) => {
-    const storedPw = snapshot.val() || 'nubtk2025'; 
-    
-    if (pw === storedPw) {
-      document.getElementById('admin-login').style.display = 'none';
-      document.getElementById('admin-main').style.display = 'block';
-      
-      // লগিন সাকসেস হলে ডাটাবেস থেকে সব লোড করবে
-      loadAdminSettings(); 
-      listenToFirebase();
-      listenToTeachers(); // 🆕 টিচার ডিরেক্টরি লোড করবে
-      listenToVisitors();
-      listenToSupportMessages();
-      listenToAIPrompts();
-      listenToAnnouncements();
-      notify('✅ Welcome, Admin!');
-    } else if (pw === 'nubtk2025') {
-      notify('এত সোজা না চান্দু 😜');
-    } else {
-      notify('❌ Wrong password!');
-    }
-  }).catch(e => {
-    notify('❌ Database error! Check connection.');
-  });
-}
-
+// ─── AUTH & FIREBASE FETCH ────────────────
  // ─── AUTHENTICATION LOGIC (SECURE) ───
 
 // পেজ লোড হলে ফায়ারবেস নিজে থেকেই চেক করবে কেউ লগিন করা আছে কি না
@@ -603,13 +571,6 @@ function logout() {
 }
 
 // ⚠️ Change Password অপশনটি এখন ফায়ারবেস কনসোল থেকে করতে হবে, তাই সেটিংস প্যানেলের পাসওয়ার্ড চেঞ্জের কোড আপাতত ইগনোর করতে পারেন।
-
-// লগআউট ফাংশন আপডেট করা হলো (সেশন ক্লিয়ার করার জন্য)
-function logout() { 
-  localStorage.removeItem('nubtk_admin_session'); // লগআউট করলে সেশন ডিলিট হয়ে যাবে
-  location.reload(); 
-}
-
 function changePassword() {
   const np = document.getElementById('new-pw').value;
   const cp = document.getElementById('confirm-pw').value;
@@ -622,8 +583,6 @@ function changePassword() {
     document.getElementById('confirm-pw').value = '';
   });
 }
-
-function logout() { location.reload(); }
 
 function adminTab(tab) {
 const tabs = ['logos','fields','routine','teachers','students', 'announcements' ,'dues', 'prompts', 'visitors','support','settings'];
