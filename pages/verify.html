@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Student ID — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+</head>
+<body>
+
+<div class="page-wrap" style="display:flex; align-items:center; justify-content:center; min-height:80vh;">
+  <div id="result-box" style="text-align:center; color:var(--muted);">⏳ Verifying...</div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+const db = firebase.database();
+
+const params = new URLSearchParams(window.location.search);
+const token = params.get('id');
+const box = document.getElementById('result-box');
+
+if (!token) {
+  box.innerHTML = '<div style="color:#f87171;">❌ Invalid link.</div>';
+} else {
+  db.ref('id_cards/' + token).once('value').then(snap => {
+    const data = snap.val();
+    if (!data || data.active === false) {
+      box.innerHTML = '<div style="color:#f87171; font-size:1.2rem;">❌ Invalid or Revoked ID</div>';
+      return;
+    }
+    box.innerHTML = `
+      <div style="width:320px; max-width:90vw; background:#0B1D3A; border-radius:16px; overflow:hidden; border:2px solid #C9A84C; font-family:'DM Sans', sans-serif;">
+        <div style="background:linear-gradient(135deg, #C9A84C 0%, #E8C96A 100%); padding:12px 20px; text-align:center;">
+          <div style="color:#0B1D3A; font-weight:900; font-size:0.95rem; letter-spacing:1px;">✅ VERIFIED NUBTK STUDENT</div>
+        </div>
+        <div style="display:flex; gap:14px; padding:20px; align-items:center;">
+          <img src="${data.avatar}" style="width:80px; height:80px; border-radius:50%; border:3px solid #C9A84C; object-fit:cover;">
+          <div style="text-align:left;">
+            <div style="color:#fff; font-size:1.1rem; font-weight:700;">${data.name}</div>
+            <div style="color:#C9A84C; font-size:0.85rem; font-weight:600;">ID: ${data.studentId}</div>
+            <div style="color:#94a3b8; font-size:0.78rem;">${data.department}</div>
+            <div style="color:#f87171; font-size:0.78rem; font-weight:600;">Blood Group: ${data.bloodGroup || '--'}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).catch(err => {
+    console.error(err);
+    box.innerHTML = '<div style="color:#f87171;">❌ Verification failed. Try again.</div>';
+  });
+}
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
