@@ -418,7 +418,7 @@
           <div id="idcard-blood" style="color:#f87171; font-size:0.8rem; font-weight:600; margin-top:2px;">Blood Group: --</div>
         </div>
       </div>
-      <div style="background:rgba(0,0,0,0.15); padding:10px; text-align:center; font-size:0.65rem; color:#94a3b8; letter-spacing:0.5px;">CSE DEPARTMENT · SPRING 2025</div>
+      <div id="idcard-footer" style="background:rgba(0,0,0,0.15); padding:10px; text-align:center; font-size:0.65rem; color:#94a3b8; letter-spacing:0.5px;">DEPARTMENT · SEMESTER</div>
       <div style="background:#fff; padding:18px; text-align:center;">
         <div id="idcard-qr" style="display:inline-block; line-height:0;"></div>
         <div style="color:#0B1D3A; font-size:0.8rem; font-weight:700; margin-top:8px; letter-spacing:0.5px;">🔍 SCAN TO VERIFY</div>
@@ -943,6 +943,9 @@ function openLightbox(src) {
   document.getElementById('idcard-name').innerText = document.getElementById('prof-name').value || 'Student Name';
   document.getElementById('idcard-id').innerText = 'ID: ' + (savedStudentId || '---------');
   document.getElementById('idcard-dept').innerText = document.getElementById('prof-dept').value || 'Department';
+  const deptVal = document.getElementById('prof-dept').value || 'Department';
+  const semVal = document.getElementById('prof-semester').value.trim() || 'Semester N/A';
+  document.getElementById('idcard-footer').innerText = `${deptVal.toUpperCase()} · ${semVal.toUpperCase()}`;
   document.getElementById('idcard-blood').innerText = 'Blood Group: ' + (document.getElementById('prof-blood').value || '--');
 
   const sourceImg = new Image();
@@ -996,14 +999,32 @@ function renderCardQr(token) {
   const qrBox = document.getElementById('idcard-qr');
   qrBox.innerHTML = '';
   const verifyUrl = window.location.origin + '/pages/verify.html?id=' + token;
+
   new QRCode(qrBox, {
     text: verifyUrl,
     width: 220,
     height: 220,
     colorDark: '#0B1D3A',
     colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M
+    correctLevel: QRCode.CorrectLevel.H   // High correction — লোগোর জন্যে দরকার
   });
+
+  // QR render হওয়ার একটু পরে মাঝখানে logo বসানো
+  setTimeout(() => {
+    const canvas = qrBox.querySelector('canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const logo = new Image();
+    logo.crossOrigin = 'anonymous';
+    logo.onload = function() {
+      const logoSize = canvas.width * 0.22; // QR-এর প্রায় ২২% জায়গা
+      const pos = (canvas.width - logoSize) / 2;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(pos - 6, pos - 6, logoSize + 12, logoSize + 12); // logo-র পেছনে সাদা প্যাড
+      ctx.drawImage(logo, pos, pos, logoSize, logoSize);
+    };
+    logo.src = 'https://cdn.jsdelivr.net/gh/passorbit/nubtk-portal@main/Logos/nubtk_logo_nubtk_1.png'; // Admin panel-এর Logos section-এ যেই link গুলো আছে, তার একটা এইখানে বসাবে
+  }, 100);
 }
 
 function closeIdCardPopup() {
