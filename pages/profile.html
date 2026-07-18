@@ -407,8 +407,8 @@
         <div style="color:#0B1D3A; font-size:0.7rem; font-weight:600;">Northern University of Business & Technology, Khulna</div>
       </div>
       <div style="display:flex; gap:16px; padding:20px; align-items:center;">
-        <div style="width:90px; height:90px; border-radius:50%; overflow:hidden; border:3px solid #C9A84C; background:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-          <img id="idcard-avatar" src="" style="min-width:100%; min-height:100%; width:auto; height:auto; max-width:none;">
+        <div style="width:90px; height:90px; border-radius:50%; overflow:hidden; border:3px solid #C9A84C; background:#fff; flex-shrink:0;">
+          <img id="idcard-avatar" src="" style="width:100%; height:100%; display:block;">
         </div>
         <div style="flex:1;">
           <div id="idcard-name" style="color:#fff; font-size:1.15rem; font-weight:700; margin-bottom:4px;">Name</div>
@@ -934,7 +934,23 @@ function openLightbox(src) {
   document.getElementById('idcard-id').innerText = 'ID: ' + (savedStudentId || '---------');
   document.getElementById('idcard-dept').innerText = document.getElementById('prof-dept').value || 'Department';
   document.getElementById('idcard-blood').innerText = 'Blood Group: ' + (document.getElementById('prof-blood').value || '--');
-  document.getElementById('idcard-avatar').src = document.getElementById('avatar-preview').src;
+
+  // ছবিটা নিজে center-crop করে perfect square বানানো হচ্ছে (html2canvas-কে বিভ্রান্ত না করার জন্যে)
+  const sourceImg = new Image();
+  sourceImg.crossOrigin = 'anonymous';
+  sourceImg.onload = function() {
+    const size = Math.min(sourceImg.naturalWidth, sourceImg.naturalHeight);
+    const sx = (sourceImg.naturalWidth - size) / 2;
+    const sy = (sourceImg.naturalHeight - size) / 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(sourceImg, sx, sy, size, size, 0, 0, 300, 300);
+    document.getElementById('idcard-avatar').src = canvas.toDataURL('image/jpeg', 0.95);
+  };
+  sourceImg.src = document.getElementById('avatar-preview').src;
+
   document.getElementById('idCardModal').classList.add('active');
 }
 
