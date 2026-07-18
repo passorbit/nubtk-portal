@@ -12,6 +12,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
     /* PROFILE HEADER & BANNER STYLES (ID Card View) */
@@ -417,7 +418,10 @@
           <div id="idcard-blood" style="color:#f87171; font-size:0.8rem; font-weight:600; margin-top:2px;">Blood Group: --</div>
         </div>
       </div>
-      <div style="background:rgba(0,0,0,0.2); padding:8px; text-align:center; font-size:0.65rem; color:#94a3b8; letter-spacing:0.5px;">CSE DEPARTMENT · SPRING 2025</div>
+      <div style="background:rgba(0,0,0,0.2); padding:8px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:0.6rem; color:#94a3b8; letter-spacing:0.5px;">CSE DEPARTMENT · SPRING 2025<br><span style="font-size:0.55rem;">Scan to verify →</span></span>
+        <div id="idcard-qr" style="background:#fff; padding:4px; border-radius:4px; line-height:0;"></div>
+      </div>
     </div>
 
     <button class="btn btn-gold" style="width:100%; justify-content:center; margin-top:20px;" onclick="downloadIdCard()">⬇️ Download as Image</button>
@@ -484,6 +488,7 @@ let studentSectionCode = '';
 let lastReadTime = 0;
 let unreadCount = 0;
 let allValidAnnouncements = [];
+let savedCardToken = null;
 
   // --- AUTH STATE OBSERVER ---
 auth.onAuthStateChanged((user) => {
@@ -580,6 +585,7 @@ function loadProfileData(uid) {
         document.getElementById('prof-experience').value = data.experience || '';
         
         savedStudentId = data.studentId; 
+        savedCardToken = data.cardToken || null;
 
         // Setup Variables for Announcements
         studentSectionCode = (data.section || '').toUpperCase();
@@ -935,7 +941,6 @@ function openLightbox(src) {
   document.getElementById('idcard-dept').innerText = document.getElementById('prof-dept').value || 'Department';
   document.getElementById('idcard-blood').innerText = 'Blood Group: ' + (document.getElementById('prof-blood').value || '--');
 
-  // ছবিটা নিজে center-crop করে perfect square বানানো হচ্ছে (html2canvas-কে বিভ্রান্ত না করার জন্যে)
   const sourceImg = new Image();
   sourceImg.crossOrigin = 'anonymous';
   sourceImg.onload = function() {
@@ -947,11 +952,53 @@ function openLightbox(src) {
     canvas.height = 300;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(sourceImg, sx, sy, size, size, 0, 0, 300, 300);
-    document.getElementById('idcard-avatar').src = canvas.toDataURL('image/jpeg', 0.95);
+    const croppedAvatar = canvas.toDataURL('image/jpeg', 0.95);
+    document.getElementById('idcard-avatar').src = croppedAvatar;
+    prepareCardToken(croppedAvatar);
   };
   sourceImg.src = document.getElementById('avatar-preview').src;
 
   document.getElementById('idCardModal').classList.add('active');
+}
+
+function prepareCardToken(croppedAvatar) {
+  if (savedCardToken) {
+    renderCardQr(savedCardToken);
+    return;
+  }
+  const newToken = 'card_' + Date.now() + '_' + Math.random().toString(36).substring(2, 12);
+  const publicCardData = {
+    name: document.getElementById('prof-name').value || 'Student',
+    studentId: savedStudentId || '',
+    department: document.getElementById('prof-dept').value || '',
+    bloodGroup: document.getElementById('prof-blood').value || '',
+    avatar: croppedAvatar,
+    active: true
+  };
+  const updates = {};
+  updates['id_cards/' + newToken] = publicCardData;
+  updates['registered_students/' + currentUserUid + '/cardToken'] = newToken;
+
+  db.ref().update(updates).then(() => {
+    savedCardToken = newToken;
+    renderCardQr(newToken);
+  }).catch(err => {
+    console.error(err);
+    document.getElementById('idcard-qr').innerHTML = '<p style="color:#f87171; font-size:0.6rem;">QR error</p>';
+  });
+}
+
+function renderCardQr(token) {
+  const qrBox = document.getElementById('idcard-qr');
+  qrBox.innerHTML = '';
+  const verifyUrl = window.location.origin + '/pages/verify.html?id=' + token;
+  new QRCode(qrBox, {
+    text: verifyUrl,
+    width: 60,
+    height: 60,
+    colorDark: '#0B1D3A',
+    colorLight: '#ffffff'
+  });
 }
 
 function closeIdCardPopup() {
