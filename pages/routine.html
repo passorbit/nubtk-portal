@@ -247,6 +247,16 @@ function generateRoutine() {
       </div>`;
     notify(`✅ Routine loaded for Section ${section}`);
   }).catch((error) => {
+    result.innerHTML = `
+      <div class="section-card" style="text-align: center; padding: 50px 20px; background: #fafafa; border: 2px dashed #cbd5e1; border-radius: 12px; margin-top: 20px;">
+          <div style="font-size: 3.5rem; margin-bottom: 15px;">⚠️</div>
+          <h3 style="color: #ef4444; font-size: 1.6rem; font-weight: 800; margin-bottom: 10px;">Data cannot be loaded.</h3>
+          <p style="color: #64748b; margin-bottom: 10px; font-size: 1rem; line-height: 1.5;">
+              If you use <strong>Incognito/Private Mode</strong> or any <strong>Ad-blocker/Privacy Extension</strong>, the routine might not load due to security protection.
+          </p>
+          <p style="color: #64748b; font-size: 0.9rem;">দয়া করে normal browser window-এ আবার চেষ্টা করুন।</p>
+      </div>
+    `;
     notify('❌ Error connecting to database!');
     console.error(error);
   });
