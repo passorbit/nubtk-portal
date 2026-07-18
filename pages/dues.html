@@ -88,7 +88,16 @@ let allStudentsData = {};
 
 // Load Data
 window.onload = function() {
+  let duesLoaded = false;
+  const duesTimeout = setTimeout(() => {
+    if (!duesLoaded) {
+      document.getElementById('duesTitle').innerHTML = `⚠️ Data could not be loaded. If you are using <br><span style="font-size:0.8rem; color:var(--muted); font-weight:400;">Incognito/Private Mode or an Ad-blocker/Privacy Extension data might fail to load due to security protections. Please try using a normal browser window.</span>`;
+    }
+  }, 8000);
+
   db.ref('payment_dues').on('value', (snapshot) => {
+    duesLoaded = true;
+    clearTimeout(duesTimeout);
     const data = snapshot.val();
     if(data && data.students) {
       document.getElementById('duesTitle').innerText = data.title || "Payment Dues List";
@@ -97,6 +106,8 @@ window.onload = function() {
       document.getElementById('duesTitle').innerText = "No Data Found";
     }
   }, (error) => {
+    duesLoaded = true;
+    clearTimeout(duesTimeout);
     document.getElementById('duesTitle').innerHTML = `⚠️ Data could not be loaded. If you are using <br><span style="font-size:0.8rem; color:var(--muted); font-weight:400;">Incognito/Private Mode or an Ad-blocker/Privacy Extension data might fail to load due to security protections. Please try using a normal browser window.</span>`;
     console.error(error);
   });
