@@ -1003,25 +1003,27 @@ function renderCardQr(token) {
     height: 220,
     colorDark: '#0B1D3A',
     colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H   // High correction — লোগোর জন্যে দরকার
+    correctLevel: QRCode.CorrectLevel.H
   });
 
-  // QR render হওয়ার একটু পরে মাঝখানে logo বসানো
-  setTimeout(() => {
-    const canvas = qrBox.querySelector('canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const logo = new Image();
-    logo.crossOrigin = 'anonymous';
-    logo.onload = function() {
-      const logoSize = canvas.width * 0.22; // QR-এর প্রায় ২২% জায়গা
-      const pos = (canvas.width - logoSize) / 2;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(pos - 6, pos - 6, logoSize + 12, logoSize + 12); // logo-র পেছনে সাদা প্যাড
-      ctx.drawImage(logo, pos, pos, logoSize, logoSize);
-    };
-    logo.src = 'https://cdn.jsdelivr.net/gh/passorbit/nubtk-portal@main/Logos/nubtk_logo_nubtk_1.png'; // Admin panel-এর Logos section-এ যেই link গুলো আছে, তার একটা এইখানে বসাবে
-  }, 100);
+  // QRCode library সরাসরি (synchronous) canvas বানায়, তাই আন্দাজি setTimeout লাগবে না
+  const canvas = qrBox.querySelector('canvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  const logo = new Image();
+  logo.crossOrigin = 'anonymous';
+  logo.onload = function() {
+    const logoSize = canvas.width * 0.22;
+    const pos = (canvas.width - logoSize) / 2;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(pos - 6, pos - 6, logoSize + 12, logoSize + 12);
+    ctx.drawImage(logo, pos, pos, logoSize, logoSize);
+  };
+  logo.onerror = function() {
+    console.warn('ID Card logo load failed — QR না-লোগো অবস্থায় দেখানো হবে।');
+  };
+  logo.src = 'https://cdn.jsdelivr.net/gh/passorbit/nubtk-portal@main/Logos/nubtk_logo_nubtk_1.png';
 }
 
 function closeIdCardPopup() {
