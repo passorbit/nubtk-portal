@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     /* PROFILE HEADER & BANNER STYLES (ID Card View) */
@@ -191,6 +192,12 @@
         <h2>🔔 Announcements</h2>
         <div id="dash-announcements" style="margin-top:10px;"><p style="color:var(--muted); font-size:0.9rem;">লোড হচ্ছে...</p></div>
         <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:14px; font-size:0.85rem;" onclick="openAnnouncementsPanel()">সব Notice দেখুন</button>
+      </div>
+
+      <div class="section-card" style="margin-bottom:0; text-align:center;">
+        <h2>🎫 Digital ID Card</h2>
+        <p style="color:var(--muted); font-size:0.85rem; margin:10px 0;">প্রয়োজনে দেখান বা ডাউনলোড করে রাখুন।</p>
+        <button class="btn btn-gold" style="width:100%; justify-content:center;" onclick="openIdCardPopup()">🪪 View ID Card</button>
       </div>
 
     </div>
@@ -386,6 +393,32 @@
     </div>
     <div class="dues-grid" id="modalDuesGrid"></div>
     <div id="modalHighlight" class="dues-highlight" style="display: none;"></div>
+  </div>
+</div>
+
+  <div class="modal-overlay" id="idCardModal">
+  <div class="modal-content" style="max-width:450px;">
+    <button class="modal-close" onclick="closeIdCardPopup()">✕</button>
+    <h2 style="text-align:center; color:var(--gold); margin-bottom:18px;">🎫 Digital ID Card</h2>
+
+    <div id="id-card-visual" style="width:100%; max-width:380px; margin:0 auto; background:#0B1D3A; border-radius:16px; overflow:hidden; border:2px solid #C9A84C; font-family:'DM Sans', sans-serif;">
+      <div style="background:linear-gradient(135deg, #C9A84C 0%, #E8C96A 100%); padding:14px 20px; text-align:center;">
+        <div style="color:#0B1D3A; font-weight:900; font-size:1.1rem; letter-spacing:1px;">NUBTK STUDENT ID</div>
+        <div style="color:#0B1D3A; font-size:0.7rem; font-weight:600;">Northern University of Business & Technology, Khulna</div>
+      </div>
+      <div style="display:flex; gap:16px; padding:20px; align-items:center;">
+        <img id="idcard-avatar" src="" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid #C9A84C; background:#fff;">
+        <div style="flex:1;">
+          <div id="idcard-name" style="color:#fff; font-size:1.15rem; font-weight:700; margin-bottom:4px;">Name</div>
+          <div id="idcard-id" style="color:#C9A84C; font-size:0.9rem; font-weight:600; margin-bottom:6px;">ID: ---</div>
+          <div id="idcard-dept" style="color:#94a3b8; font-size:0.8rem;">Department</div>
+          <div id="idcard-blood" style="color:#f87171; font-size:0.8rem; font-weight:600; margin-top:2px;">Blood Group: --</div>
+        </div>
+      </div>
+      <div style="background:rgba(0,0,0,0.2); padding:8px; text-align:center; font-size:0.65rem; color:#94a3b8; letter-spacing:0.5px;">CSE DEPARTMENT · SPRING 2025</div>
+    </div>
+
+    <button class="btn btn-gold" style="width:100%; justify-content:center; margin-top:20px;" onclick="downloadIdCard()">⬇️ Download as Image</button>
   </div>
 </div>
 
@@ -778,7 +811,10 @@ function renderDuesPopup(id, student) {
 }
 
 function closeDuesPopup() { document.getElementById('duesModal').classList.remove('active'); }
-window.onclick = function(event) { if (event.target == document.getElementById('duesModal')) closeDuesPopup(); }
+window.onclick = function(event) {
+  if (event.target == document.getElementById('duesModal')) closeDuesPopup();
+  if (event.target == document.getElementById('idCardModal')) closeIdCardPopup();
+}
 
 
 
@@ -891,6 +927,30 @@ function openLightbox(src) {
 }
 
 
+  function openIdCardPopup() {
+  document.getElementById('idcard-name').innerText = document.getElementById('prof-name').value || 'Student Name';
+  document.getElementById('idcard-id').innerText = 'ID: ' + (savedStudentId || '---------');
+  document.getElementById('idcard-dept').innerText = document.getElementById('prof-dept').value || 'Department';
+  document.getElementById('idcard-blood').innerText = 'Blood Group: ' + (document.getElementById('prof-blood').value || '--');
+  document.getElementById('idcard-avatar').src = document.getElementById('avatar-preview').src;
+  document.getElementById('idCardModal').classList.add('active');
+}
+
+function closeIdCardPopup() {
+  document.getElementById('idCardModal').classList.remove('active');
+}
+
+function downloadIdCard() {
+  notify('🖼️ Preparing ID Card...');
+  const el = document.getElementById('id-card-visual');
+  html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#0B1D3A' }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `NUBTK_ID_${savedStudentId || 'Card'}.jpg`;
+    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+    notify('✅ Downloaded!');
+  });
+}
 
 
   function renderDashboard() {
