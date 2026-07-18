@@ -518,6 +518,10 @@ function loadProfileData(uid) {
 
         loadTodayClasses(data.section);
       }
+      })
+    .catch((error) => {
+      console.error('Profile load failed:', error);
+      notify('⚠️ Profile data load করতে সমস্যা হয়েছে। Page reload / Logout করে দেখুন।');
     });
 }
 
