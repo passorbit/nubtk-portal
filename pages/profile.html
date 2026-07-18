@@ -154,6 +154,7 @@
   </div>
 
   <div class="tab-bar profile-tab-bar">
+    <button class="tab-btn active" onclick="switchProfileTab('dashboard')">🏠 Dashboard</button>
     <button class="tab-btn active" onclick="switchProfileTab('personal')">🎓 Personal Info</button>
     <button class="tab-btn" onclick="switchProfileTab('academic')">📚 Academic</button>
     <button class="tab-btn" onclick="switchProfileTab('career')">💼 Career & Skills</button>
@@ -162,7 +163,40 @@
     <button class="tab-btn" onclick="switchProfileTab('settings')">⚙️ Settings</button>
   </div>
 
-  <div class="panel active" id="tab-personal">
+  <div class="panel active" id="tab-dashboard">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:18px;">
+
+      <div class="section-card" style="margin-bottom:0;">
+        <h2 style="display:flex; justify-content:space-between; align-items:center;">
+          <span>📅 Today's Classes</span>
+          <span id="dash-day-badge" style="font-size:0.8rem; color:var(--muted); font-weight:400;"></span>
+        </h2>
+        <div id="dash-today-classes" style="margin-top:10px;"><p style="color:var(--muted); font-size:0.9rem;">লোড হচ্ছে...</p></div>
+        <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:14px; font-size:0.85rem;" onclick="switchProfileTab('academic')">Full Routine দেখুন</button>
+      </div>
+
+      <div class="section-card" style="margin-bottom:0;">
+        <h2>✅ Pending Tasks</h2>
+        <div id="dash-tasks" style="margin-top:10px;"><p style="color:var(--muted); font-size:0.9rem;">লোড হচ্ছে...</p></div>
+        <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:14px; font-size:0.85rem;" onclick="switchProfileTab('tools')">সব Task দেখুন</button>
+      </div>
+
+      <div class="section-card" style="margin-bottom:0;">
+        <h2>💳 Dues Status</h2>
+        <div id="dash-dues" style="margin-top:10px;"><p style="color:var(--muted); font-size:0.9rem;">লোড হচ্ছে...</p></div>
+        <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:14px; font-size:0.85rem;" onclick="openDuesPopup()">বিস্তারিত দেখুন</button>
+      </div>
+
+      <div class="section-card" style="margin-bottom:0;">
+        <h2>🔔 Announcements</h2>
+        <div id="dash-announcements" style="margin-top:10px;"><p style="color:var(--muted); font-size:0.9rem;">লোড হচ্ছে...</p></div>
+        <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:14px; font-size:0.85rem;" onclick="openAnnouncementsPanel()">সব Notice দেখুন</button>
+      </div>
+
+    </div>
+  </div>
+  
+  <div class="panel" id="tab-personal">
     <div class="section-card">
       <h2>Personal Information</h2>
       <div class="form-grid">
@@ -384,10 +418,11 @@ function notify(msg, dur=2800) {
 }
 
 function switchProfileTab(tab) {
-  const tabs = ['personal', 'academic', 'career', 'finance', 'tools', 'settings'];
+  const tabs = ['dashboard','personal', 'academic', 'career', 'finance', 'tools', 'settings'];
   document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', tabs[i] === tab));
   document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', tabs[i] === tab));
   if (tab === 'tools') loadSavedCoverPages();
+  if (tab === 'dashboard') renderDashboard();
 }
 
 // --- FIREBASE INITIALIZATION ---
@@ -517,6 +552,8 @@ function loadProfileData(uid) {
         listenToStudentAnnouncements(); // Fetch notices
 
         loadTodayClasses(data.section);
+        renderDashboard();
+        listenToStudentAnnouncements(); // Fetch notices
       }
       })
     .catch((error) => {
@@ -776,6 +813,7 @@ function updateBellBadge() {
   } else {
     badge.style.display = 'none';
   }
+  updateDashboardAnnouncementBadge();
 }
 
 function openAnnouncementsPanel() {
@@ -850,6 +888,93 @@ function renderStudentAnnouncements() {
 function openLightbox(src) {
   document.getElementById('lightbox-img').src = src;
   document.getElementById('lightbox').style.display = 'flex';
+}
+
+
+
+
+  function renderDashboard() {
+  // 1. Today's Classes
+  const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const dayBadge = document.getElementById('dash-day-badge');
+  const classList = document.getElementById('dash-today-classes');
+  if (dayBadge) dayBadge.innerText = dayName;
+
+  if (!studentSectionCode) {
+    classList.innerHTML = '<p style="color:#f87171; font-size:0.9rem;">⚠️ প্রথমে Academic tab থেকে Section সেভ করুন।</p>';
+  } else if (dayName === 'Friday') {
+    classList.innerHTML = '<div style="text-align:center; padding:14px; background:rgba(74,222,128,0.1); border-radius:8px; color:#4ade80; font-weight:bold;">🎉 আজ ছুটির দিন!</div>';
+  } else {
+    db.ref('routines/' + studentSectionCode).once('value').then(snap => {
+      const routineData = snap.val();
+      const timeSlots = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', '03:20 PM', '04:30 PM'];
+      let html = '';
+      let found = 0;
+      if (routineData) {
+        timeSlots.forEach(time => {
+          const key = `${dayName}|${time}`;
+          if (routineData[key] && routineData[key].course) {
+            found++;
+            const cls = routineData[key];
+            html += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:0.88rem;">
+              <span><strong>${time}</strong> — ${cls.course}</span>
+              <span style="color:var(--muted);">${cls.room}</span>
+            </div>`;
+          }
+        });
+      }
+      classList.innerHTML = found > 0 ? html : '<p style="color:var(--muted); font-size:0.9rem;">আজ কোনো ক্লাস নেই। ☕</p>';
+    }).catch(() => { classList.innerHTML = '<p style="color:#f87171; font-size:0.9rem;">লোড করা যায়নি।</p>'; });
+  }
+
+  // 2. Pending Tasks
+  const taskBox = document.getElementById('dash-tasks');
+  if (currentUserUid) {
+    db.ref('user_tasks/' + currentUserUid).once('value').then(snap => {
+      const tasks = snap.val();
+      if (!tasks) { taskBox.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">কোনো Task নেই। 🎉</p>'; return; }
+      const pending = Object.values(tasks).filter(t => t.status === 'pending')
+        .sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+      if (pending.length === 0) { taskBox.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">সব Task শেষ! 🎉</p>'; return; }
+      let html = `<p style="font-size:0.85rem; color:var(--gold); margin-bottom:8px;">${pending.length} টি Task বাকি</p>`;
+      pending.slice(0, 3).forEach(t => {
+        const d = new Date(t.dueDate).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+        html += `<div style="font-size:0.85rem; padding:6px 0; border-bottom:1px solid var(--border);">${t.title} <span style="color:var(--muted);">— ${d}</span></div>`;
+      });
+      taskBox.innerHTML = html;
+    }).catch(() => { taskBox.innerHTML = '<p style="color:#f87171; font-size:0.9rem;">লোড করা যায়নি।</p>'; });
+  }
+
+  // 3. Dues Status
+  const duesBox = document.getElementById('dash-dues');
+  if (savedStudentId) {
+    db.ref('payment_dues/students/' + savedStudentId).once('value').then(snap => {
+      const student = snap.val();
+      if (!student) { duesBox.innerHTML = '<p style="color:#4ade80; font-size:0.9rem;">✅ কোনো Dues রেকর্ড নেই।</p>'; return; }
+      const dueKey = Object.keys(student).find(k => k.toLowerCase().includes('100% dues') || k.toLowerCase().includes('due'));
+      const dueVal = dueKey ? student[dueKey] : null;
+      if (dueVal && dueVal !== '0') {
+        duesBox.innerHTML = `<p style="color:#f87171; font-size:1rem; font-weight:bold;">৳ ${dueVal} বকেয়া</p>`;
+      } else {
+        duesBox.innerHTML = '<p style="color:#4ade80; font-size:0.9rem;">✅ কোনো বকেয়া নেই।</p>';
+      }
+    }).catch(() => { duesBox.innerHTML = '<p style="color:#f87171; font-size:0.9rem;">লোড করা যায়নি।</p>'; });
+  } else {
+    duesBox.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">Student ID পাওয়া যায়নি।</p>';
+  }
+
+  // 4. Announcements
+  updateDashboardAnnouncementBadge();
+}
+
+function updateDashboardAnnouncementBadge() {
+  const box = document.getElementById('dash-announcements');
+  if (!box) return;
+  if (unreadCount > 0) {
+    box.innerHTML = `<p style="color:var(--gold); font-size:0.95rem; font-weight:bold;">🔔 ${unreadCount} টি নতুন Notice</p>`;
+  } else {
+    box.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">নতুন কোনো Notice নেই।</p>';
+  }
 }
 </script>
 
