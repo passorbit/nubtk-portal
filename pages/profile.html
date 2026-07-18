@@ -418,9 +418,11 @@
           <div id="idcard-blood" style="color:#f87171; font-size:0.8rem; font-weight:600; margin-top:2px;">Blood Group: --</div>
         </div>
       </div>
-      <div style="background:rgba(0,0,0,0.2); padding:8px 16px; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:0.6rem; color:#94a3b8; letter-spacing:0.5px;">CSE DEPARTMENT · SPRING 2025<br><span style="font-size:0.55rem;">Scan to verify →</span></span>
-        <div id="idcard-qr" style="background:#fff; padding:4px; border-radius:4px; line-height:0;"></div>
+      <div style="background:rgba(0,0,0,0.15); padding:10px; text-align:center; font-size:0.65rem; color:#94a3b8; letter-spacing:0.5px;">CSE DEPARTMENT · SPRING 2025</div>
+      <div style="background:#fff; padding:18px; text-align:center;">
+        <div id="idcard-qr" style="display:inline-block; line-height:0;"></div>
+        <div style="color:#0B1D3A; font-size:0.8rem; font-weight:700; margin-top:8px; letter-spacing:0.5px;">🔍 SCAN TO VERIFY</div>
+      </div>
       </div>
     </div>
 
@@ -994,10 +996,11 @@ function renderCardQr(token) {
   const verifyUrl = window.location.origin + '/pages/verify.html?id=' + token;
   new QRCode(qrBox, {
     text: verifyUrl,
-    width: 60,
-    height: 60,
+    width: 220,
+    height: 220,
     colorDark: '#0B1D3A',
-    colorLight: '#ffffff'
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
   });
 }
 
