@@ -407,9 +407,7 @@
         <div style="color:#0B1D3A; font-size:0.7rem; font-weight:600;">Northern University of Business & Technology, Khulna</div>
       </div>
       <div style="display:flex; gap:16px; padding:20px; align-items:center;">
-        <div style="width:90px; height:90px; border-radius:50%; overflow:hidden; border:3px solid #C9A84C; background:#fff; flex-shrink:0;">
-          <img id="idcard-avatar" src="" style="width:100%; height:100%; object-fit:cover; display:block;">
-        </div>
+        <div id="idcard-avatar" style="width:90px; height:90px; border-radius:50%; border:3px solid #C9A84C; background:#fff center/cover no-repeat; flex-shrink:0;"></div>
         <div style="flex:1;">
           <div id="idcard-name" style="color:#fff; font-size:1.15rem; font-weight:700; margin-bottom:4px;">Name</div>
           <div id="idcard-id" style="color:#C9A84C; font-size:0.9rem; font-weight:600; margin-bottom:6px;">ID: ---</div>
@@ -934,7 +932,7 @@ function openLightbox(src) {
   document.getElementById('idcard-id').innerText = 'ID: ' + (savedStudentId || '---------');
   document.getElementById('idcard-dept').innerText = document.getElementById('prof-dept').value || 'Department';
   document.getElementById('idcard-blood').innerText = 'Blood Group: ' + (document.getElementById('prof-blood').value || '--');
-  document.getElementById('idcard-avatar').src = document.getElementById('avatar-preview').src;
+  document.getElementById('idcard-avatar').style.backgroundImage = `url('${document.getElementById('avatar-preview').src}')`;
   document.getElementById('idCardModal').classList.add('active');
 }
 
