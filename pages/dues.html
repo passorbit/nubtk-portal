@@ -96,6 +96,9 @@ window.onload = function() {
     } else {
       document.getElementById('duesTitle').innerText = "No Data Found";
     }
+  }, (error) => {
+    document.getElementById('duesTitle').innerHTML = `⚠️ Data could not be loaded. If you are using <br><span style="font-size:0.8rem; color:var(--muted); font-weight:400;">Incognito/Private Mode or an Ad-blocker/Privacy Extension data might fail to load due to security protections. Please try using a normal browser window.</span>`;
+    console.error(error);
   });
 };
 
