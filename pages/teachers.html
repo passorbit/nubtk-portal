@@ -160,12 +160,17 @@ appCheck.activate(
     }, 7000);
 
     db.ref('teachers').on('value', (snapshot) => {
-      dataLoaded = true;
-      clearTimeout(loadTimeout);
-      const data = snapshot.val() || {};
-      allTeachers = Object.values(data);
-      renderTeachers(allTeachers);
-    });
+  const data = snapshot.val() || {};
+  allTeachers = Object.values(data);
+  renderTeachers(allTeachers);
+}, (error) => {
+  document.getElementById('teachers-grid').innerHTML = `
+    <div style="text-align:center; color:#f87171; grid-column: 1 / -1; padding: 40px; font-size:1rem; line-height:1.7;">
+      ⚠️ ডেটা লোড হচ্ছে না।<br>
+      <span style="font-size:0.85rem; color:var(--muted);">আপনি যদি Incognito/Private Mode অথবা কোনো Ad-blocker/Privacy Extension ব্যবহার করেন, তাহলে security protection-এর কারণে data load নাও হতে পারে। দয়া করে normal browser window-এ আবার চেষ্টা করুন।</span>
+    </div>`;
+  console.error(error);
+});
 
     // টিচারদের কার্ড রেন্ডার করার ফাংশন (Acronym ব্যাজ সহ)
     function renderTeachers(list) {
