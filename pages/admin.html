@@ -94,6 +94,7 @@
       <button class="tab-btn" onclick="adminTab('announcements')">📢 Announcements</button>
       <button class="tab-btn" onclick="adminTab('dues')">💰 Dues</button>
       <button class="tab-btn" onclick="adminTab('prompts')">🤖 AI Prompts</button>
+      <button class="tab-btn" onclick="adminTab('pdflibrary')">📚 PDF Library</button>
       <button class="tab-btn" onclick="adminTab('visitors')">📊 Visitors</button>
       <button class="tab-btn" onclick="adminTab('support')">📨 Support</button>
       <button class="tab-btn" onclick="adminTab('settings')">⚙️ Settings</button>
@@ -466,6 +467,65 @@
       </div>
     </div>
 
+    <!-- PDF LIBRARY -->
+    <div class="panel" id="atab-pdflibrary" style="display:none;">
+      <h2 style="color:var(--gold); margin-bottom:15px;">📚 Manage PDF Library</h2>
+
+      <div class="section-card" style="margin-bottom: 20px;">
+        <h3 style="margin-bottom:15px; font-size:1.1rem; color:#fff;">Add New Book</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input type="text" id="admin-pdf-title" class="form-input" placeholder="e.g. Marketing 101">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <input type="text" id="admin-pdf-category" class="form-input" placeholder="e.g. Marketing, AI, Business">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cover Image Link (imgBB/jsDelivr)</label>
+            <input type="text" id="admin-pdf-cover" class="form-input" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">PDF Download Link (R2/Drive)</label>
+            <input type="text" id="admin-pdf-link" class="form-input" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Author</label>
+            <input type="text" id="admin-pdf-author" class="form-input" placeholder="e.g. Philip Kotler">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Edition / Version</label>
+            <input type="text" id="admin-pdf-edition" class="form-input" placeholder="e.g. 3rd Edition">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Language</label>
+            <input type="text" id="admin-pdf-lang" class="form-input" placeholder="e.g. English">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pages</label>
+            <input type="text" id="admin-pdf-pages" class="form-input" placeholder="e.g. 240">
+          </div>
+          <div class="form-group">
+            <label class="form-label">File Size</label>
+            <input type="text" id="admin-pdf-size" class="form-input" placeholder="e.g. 4.2 MB">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Description</label>
+            <textarea id="admin-pdf-desc" class="form-input" rows="3" placeholder="Short description of the book..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-gold" style="margin-top:15px;" onclick="addPdfBook()">➕ Add Book</button>
+      </div>
+
+      <div class="section-card">
+        <h3 style="margin-bottom:15px; font-size:1.1rem; color:#fff;">All Books</h3>
+        <div id="admin-pdf-list" style="display: grid; gap: 10px;">
+          <p style="color:var(--muted); font-size:0.9rem;">Loading library...</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Admin Settings -->
     <div class="panel" id="atab-settings">
       <div class="section-card">
@@ -488,6 +548,8 @@
     </div>
   </div>
 </div>
+
+  
 
 <div class="notif" id="notif"></div>
 
@@ -536,6 +598,7 @@ firebase.auth().onAuthStateChanged((user) => {
     listenToSupportMessages();
     listenToAIPrompts();
     listenToAnnouncements();
+    istenToPdfLibrary();
   } else {
     // লগিন করা না থাকলে লগিন পেজ দেখাবে
     document.getElementById('admin-login').style.display = 'block';
@@ -585,7 +648,7 @@ function changePassword() {
 }
 
 function adminTab(tab) {
-const tabs = ['logos','fields','routine','teachers','students', 'announcements' ,'dues', 'prompts', 'visitors','support','settings'];
+const tabs = ['logos','fields','routine','teachers','students', 'announcements' ,'dues', 'prompts', 'pdflibrary','visitors','support','settings'];
   document.querySelectorAll('.admin-tab-bar .tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i]===tab));
   tabs.forEach(t => {
     const el = document.getElementById('atab-'+t);
@@ -1452,6 +1515,65 @@ function deletePrompt(id) {
   }
 }
 
+  // ─── PDF LIBRARY LOGIC ───
+function addPdfBook() {
+  const title = document.getElementById('admin-pdf-title').value.trim();
+  const category = document.getElementById('admin-pdf-category').value.trim();
+  const coverImage = document.getElementById('admin-pdf-cover').value.trim();
+  const downloadLink = document.getElementById('admin-pdf-link').value.trim();
+  const author = document.getElementById('admin-pdf-author').value.trim();
+  const edition = document.getElementById('admin-pdf-edition').value.trim();
+  const language = document.getElementById('admin-pdf-lang').value.trim();
+  const pages = document.getElementById('admin-pdf-pages').value.trim();
+  const fileSize = document.getElementById('admin-pdf-size').value.trim();
+  const description = document.getElementById('admin-pdf-desc').value.trim();
+
+  if (!title || !downloadLink) { notify('⚠️ Title এবং Download Link অবশ্যই লাগবে!'); return; }
+
+  notify('⏳ Adding Book...');
+  db.ref('pdf_library').push({
+    title, category, coverImage, downloadLink, author, edition, language, pages, fileSize, description,
+    uploadDate: firebase.database.ServerValue.TIMESTAMP
+  }).then(() => {
+    notify('✅ Book Added Successfully!');
+    ['title','category','cover','link','author','edition','lang','pages','size','desc'].forEach(f => {
+      document.getElementById('admin-pdf-' + f).value = '';
+    });
+  }).catch(e => { console.error(e); notify('❌ Failed to add book'); });
+}
+
+function listenToPdfLibrary() {
+  db.ref('pdf_library').on('value', snap => {
+    const list = document.getElementById('admin-pdf-list');
+    if (!list) return;
+
+    const data = snap.val();
+    if (!data) {
+      list.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">No books added yet.</p>';
+      return;
+    }
+
+    const booksArr = Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a,b) => (b.uploadDate||0) - (a.uploadDate||0));
+
+    list.innerHTML = booksArr.map(b => `
+      <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:12px; border-radius:10px; display:flex; align-items:center; gap:14px;">
+        <img src="${b.coverImage || ''}" style="width:45px; height:65px; object-fit:cover; border-radius:4px; background:rgba(255,255,255,0.05); flex-shrink:0;" onerror="this.style.opacity='0.2'">
+        <div style="flex:1;">
+          <strong style="color:var(--gold);">${b.title}</strong>
+          ${b.category ? `<span style="background:rgba(201,168,76,0.15); color:var(--gold); padding:2px 8px; border-radius:4px; font-size:0.75rem; margin-left:8px; border:1px solid var(--gold);">${b.category}</span>` : ''}
+        </div>
+        <button class="btn btn-outline" style="color:#f87171; border-color:#f87171; padding:6px 12px; font-size:0.85rem; flex-shrink:0;" onclick="deletePdfBook('${b.id}')">🗑️ Delete</button>
+      </div>
+    `).join('');
+  });
+}
+
+function deletePdfBook(id) {
+  if (confirm('Are you sure you want to delete this book?')) {
+    db.ref('pdf_library/' + id).remove().then(() => notify('🗑️ Book deleted!'));
+  }
+}
+
 
 
   // ─── ANNOUNCEMENTS LOGIC (NEW) ───
@@ -1463,6 +1585,8 @@ function toggleTargetSection() {
   const target = document.getElementById('ann-target').value;
   document.getElementById('ann-target-sec-box').style.display = target === 'Specific' ? 'block' : 'none';
 }
+
+  
 
 // ইমেজ অটো-কম্প্রেস (Auto-optimize) লজিক
 function handleAnnImage(event) {
