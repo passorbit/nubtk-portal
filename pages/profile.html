@@ -964,14 +964,17 @@ function openLightbox(src) {
 
   document.getElementById('idCardModal').classList.add('active');
 }
-
+function generateSecureToken() {
+  const arr = new Uint8Array(20);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+  
 function prepareCardToken(croppedAvatar) {
-  if (savedCardToken) {
-    renderCardQr(savedCardToken);
-    return;
-  }
-  const newToken = 'card_' + Date.now() + '_' + Math.random().toString(36).substring(2, 12);
+  const token = savedCardToken || generateSecureToken();
+
   const publicCardData = {
+    ownerUid: currentUserUid,
     name: document.getElementById('prof-name').value || 'Student',
     studentId: savedStudentId || '',
     department: document.getElementById('prof-dept').value || '',
@@ -979,13 +982,16 @@ function prepareCardToken(croppedAvatar) {
     avatar: croppedAvatar,
     active: true
   };
+
   const updates = {};
-  updates['id_cards/' + newToken] = publicCardData;
-  updates['registered_students/' + currentUserUid + '/cardToken'] = newToken;
+  updates['id_cards/' + token] = publicCardData;
+  if (!savedCardToken) {
+    updates['registered_students/' + currentUserUid + '/cardToken'] = token;
+  }
 
   db.ref().update(updates).then(() => {
-    savedCardToken = newToken;
-    renderCardQr(newToken);
+    savedCardToken = token;
+    renderCardQr(token);
   }).catch(err => {
     console.error(err);
     document.getElementById('idcard-qr').innerHTML = '<p style="color:#f87171; font-size:0.6rem;">QR error</p>';
