@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF Library — NUBTK Portal</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-check-compat.js"></script>
+
+  <style>
+    /* CATEGORY FILTER BAR */
+    .cat-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 25px; }
+    .cat-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--muted);
+      padding: 7px 18px; border-radius: 20px; font-size: 0.88rem; cursor: pointer; white-space: nowrap; transition: 0.3s;
+    }
+    .cat-btn:hover, .cat-btn.active { background: rgba(201,168,76,0.15); color: var(--gold); border-color: var(--gold); }
+
+    /* BOOK GRID */
+    .book-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px;
+    }
+    @media (max-width: 1024px) { .book-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 700px)  { .book-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
+
+    .book-card {
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; display: flex; flex-direction: column; transition: 0.25s;
+    }
+    .book-card:hover { border-color: var(--gold); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.35); }
+
+    .book-cover-wrap { width: 100%; aspect-ratio: 2 / 3; background: rgba(255,255,255,0.03); overflow: hidden; }
+    .book-cover-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .book-info { padding: 12px 14px 14px; display: flex; flex-direction: column; flex: 1; }
+    .book-cat-badge {
+      align-self: flex-start; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px;
+      text-transform: uppercase; color: var(--gold); background: rgba(201,168,76,0.12);
+      border: 1px solid rgba(201,168,76,0.3); border-radius: 4px; padding: 2px 8px; margin-bottom: 8px;
+    }
+    .book-title { font-size: 0.95rem; font-weight: 700; color: #fff; line-height: 1.35; margin-bottom: 12px; flex: 1; }
+
+    .book-actions { display: flex; gap: 8px; margin-top: auto; }
+    .book-actions .btn { flex: 1; padding: 8px 10px; font-size: 0.78rem; justify-content: center; }
+
+    /* DETAILS MODAL */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,29,58,0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 9999; opacity: 0; transition: opacity 0.3s ease; }
+    .modal-overlay.active { display: flex; opacity: 1; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 480px; padding: 28px; position: relative; max-height: 85vh; overflow-y: auto; }
+    .modal-close { position: absolute; top: 14px; right: 18px; background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; }
+    .detail-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+    .detail-row span:first-child { color: var(--muted); }
+    .detail-row span:last-child { color: #fff; font-weight: 600; text-align: right; }
+    .detail-desc { font-size: 0.9rem; color: #e2e8f0; line-height: 1.6; margin: 14px 0 18px; }
+
+    .empty-state { grid-column: 1/-1; text-align: center; padding: 50px 20px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="page-wrap" style="padding-bottom:60px;">
+  <div class="page-header">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › PDF Library</div>
+    <h1>📚 PDF Library</h1>
+    <p>Free PDF books for NUBTK students — Marketing, AI, Business & more.</p>
+  </div>
+
+  <div class="cat-bar" id="cat-bar">
+    <button class="cat-btn active" onclick="filterBooks('All')">All</button>
+  </div>
+
+  <div class="book-grid" id="book-grid">
+    <div class="empty-state">⏳ Loading library...</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailsModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeDetails()">✕</button>
+    <h2 id="d-title" style="color:var(--gold); font-size:1.3rem; margin-bottom:14px; padding-right:20px;">Title</h2>
+    <p class="detail-desc" id="d-desc"></p>
+    <div class="detail-row"><span>Author</span><span id="d-author">—</span></div>
+    <div class="detail-row"><span>Edition</span><span id="d-edition">—</span></div>
+    <div class="detail-row"><span>Language</span><span id="d-lang">—</span></div>
+    <div class="detail-row"><span>Pages</span><span id="d-pages">—</span></div>
+    <div class="detail-row"><span>File Size</span><span id="d-size">—</span></div>
+    <div class="detail-row"><span>Uploaded</span><span id="d-date">—</span></div>
+    <a id="d-download" href="#" target="_blank" class="btn btn-gold" style="width:100%; justify-content:center; margin-top:20px;">⬇️ Download PDF</a>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+function notify(msg, dur=2800) {
+  const n = document.getElementById('notif');
+  n.textContent = msg; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), dur);
+}
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBU5UyzEIxCuYN5xGLuGL_p4aGltqStylA",
+  authDomain: "nubtk-portal.firebaseapp.com",
+  databaseURL: "https://nubtk-portal-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nubtk-portal",
+  storageBucket: "nubtk-portal.firebasestorage.app",
+  messagingSenderId: "45891604739",
+  appId: "1:45891604739:web:33251f784080f09816d936"
+};
+firebase.initializeApp(firebaseConfig);
+const appCheck = firebase.appCheck();
+appCheck.activate(new firebase.appCheck.ReCaptchaV3Provider('6LcPtEItAAAAAI8ba4bJ1v6qihfg8dFkVmMKKfGI'), true);
+
+const auth = firebase.auth();
+const db = firebase.database();
+let allBooks = [];
+
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    window.location.href = 'login.html';
+  } else {
+    loadBooks();
+  }
+});
+
+function loadBooks() {
+  db.ref('pdf_library').on('value', (snapshot) => {
+    const data = snapshot.val();
+    allBooks = [];
+    if (data) {
+      Object.keys(data).forEach(key => allBooks.push({ id: key, ...data[key] }));
+      allBooks.sort((a, b) => (b.uploadDate || 0) - (a.uploadDate || 0));
+    }
+    buildCategoryBar();
+    filterBooks('All');
+  }, (error) => {
+    console.error(error);
+    document.getElementById('book-grid').innerHTML = '<div class="empty-state">⚠️ লাইব্রেরি লোড করা যায়নি। Incognito/Ad-blocker ব্যবহার করলে normal browser-এ চেষ্টা করুন।</div>';
+  });
+}
+
+function buildCategoryBar() {
+  const bar = document.getElementById('cat-bar');
+  const categories = [...new Set(allBooks.map(b => (b.category || '').trim()).filter(Boolean))].sort();
+  bar.innerHTML = `<button class="cat-btn active" onclick="filterBooks('All')">All</button>` +
+    categories.map(c => `<button class="cat-btn" onclick="filterBooks('${c.replace(/'/g, "\\'")}')">${c}</button>`).join('');
+}
+
+function filterBooks(category) {
+  document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.innerText === category || (category === 'All' && btn.innerText === 'All'));
+  });
+
+  const grid = document.getElementById('book-grid');
+  const filtered = category === 'All' ? allBooks : allBooks.filter(b => (b.category || '').trim() === category);
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state">📭 এই category-তে এখনো কোনো বই যোগ করা হয়নি।</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(b => `
+    <div class="book-card">
+      <div class="book-cover-wrap">
+        <img src="${b.coverImage || ''}" alt="${b.title || 'Book cover'}" onerror="this.style.opacity='0.2'">
+      </div>
+      <div class="book-info">
+        ${b.category ? `<span class="book-cat-badge">${b.category}</span>` : ''}
+        <div class="book-title">${b.title || 'Untitled'}</div>
+        <div class="book-actions">
+          <button class="btn btn-outline" onclick="showDetails('${b.id}')">ℹ️ Details</button>
+          <a href="${b.downloadLink || '#'}" target="_blank" class="btn btn-gold">⬇️ Download</a>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showDetails(id) {
+  const b = allBooks.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('d-title').innerText = b.title || 'Untitled';
+  document.getElementById('d-desc').innerText = b.description || 'No description available.';
+  document.getElementById('d-author').innerText = b.author || '—';
+  document.getElementById('d-edition').innerText = b.edition || '—';
+  document.getElementById('d-lang').innerText = b.language || '—';
+  document.getElementById('d-pages').innerText = b.pages || '—';
+  document.getElementById('d-size').innerText = b.fileSize || '—';
+  document.getElementById('d-date').innerText = b.uploadDate ? new Date(b.uploadDate).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '—';
+  document.getElementById('d-download').href = b.downloadLink || '#';
+  document.getElementById('detailsModal').classList.add('active');
+}
+
+function closeDetails() {
+  document.getElementById('detailsModal').classList.remove('active');
+}
+window.onclick = function(event) {
+  if (event.target == document.getElementById('detailsModal')) closeDetails();
+}
+
+// Page View Track
+(function() {
+  const PAGE_NAME = 'pdf-library';
+  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1).catch(e => console.error(e));
+  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1).catch(e => console.error(e));
+})();
+</script>
+
+<script src="../navbar.js"></script>
+</body>
+</html>
