@@ -1369,7 +1369,7 @@ function resetVisitorStats() {
     : ('Column_' + j);
             
             let val = row[j];
-            // null বা undefined থাকলে তাকে নিরাপদ স্ট্রিংয়ে কনভার্ট করবে
+            // if null or undefined then convert it into String
             let value = (val !== null && val !== undefined) ? String(val).trim() : "";
             
             studentInfo[key] = value;
@@ -1380,13 +1380,13 @@ function resetVisitorStats() {
 
         if (count === 0) throw new Error("No valid student data found!");
 
-        // 4. ফায়ারবেসে আপলোড করা
+        // 4. Upload on firebase
         const dbRef = firebase.database().ref('payment_dues'); 
-        dbRef.set({
-          title: listTitle, 
-          last_updated: new Date().toLocaleString(),
-          students: studentsData
-        }).then(() => {
+        let duesUpdates = { title: listTitle, last_updated: new Date().toLocaleString() };
+        for (const sid in studentsData) {
+          duesUpdates['students/' + sid] = studentsData[sid];
+        }
+        dbRef.update(duesUpdates).then(() => {
           statusBox.innerText = `✅ Success! ${count} students' dues synced to Firebase.`;
           statusBox.style.background = "rgba(74, 222, 128, 0.1)";
           statusBox.style.color = "#4ade80";
