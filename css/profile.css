@@ -1,5 +1,5 @@
 /* PROFILE HEADER & BANNER STYLES (ID Card View) */
-    page-top{
+    .page-top{
         min-height: 0vh;
     padding-top: 60px;
     max-width: 1200px;
