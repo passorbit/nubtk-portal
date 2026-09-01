@@ -159,7 +159,10 @@ function handleRegister() {
           name: name, studentId: studentId, email: email,
           department: '', course: '', courseCode: ''
         };
-        updates['taken_student_ids/' + studentId] = true;
+        updates['taken_student_ids/' + studentId] = {
+        ownerUid: user.uid,
+        claimedAt: firebase.database.ServerValue.TIMESTAMP
+        };
 
         db.ref().update(updates).then(() => {
           notify('🎉 Registration Successful!');
