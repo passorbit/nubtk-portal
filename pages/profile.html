@@ -485,6 +485,7 @@ function loadProfileData(uid) {
         
         savedStudentId = data.studentId; 
         savedCardToken = data.cardToken || null;
+        selfHealTakenId(data.studentId);
 
         // Setup Variables for Announcements
         studentSectionCode = (data.section || '').toUpperCase();
@@ -603,6 +604,21 @@ function deleteSavedCover(i) {
   // --- TODAY'S CLASSES LOGIC ---
 let todayMergedData = {}; // key: "Day|Time" -> {course, room, type, isOverride}
 
+// --- SELF-HEAL: পুরনো (ownerUid ছাড়া) taken_student_ids entry নিজে নিজে ঠিক করা ---
+function selfHealTakenId(studentId) {
+  if (!studentId || !currentUserUid) return;
+  db.ref('taken_student_ids/' + studentId).once('value').then(snap => {
+    const val = snap.val();
+    const hasOwner = val && typeof val === 'object' && val.ownerUid;
+    if (!hasOwner) {
+      db.ref('taken_student_ids/' + studentId).set({
+        ownerUid: currentUserUid,
+        migratedAt: firebase.database.ServerValue.TIMESTAMP
+      }).catch(err => console.error('Self-heal failed:', err));
+    }
+  }).catch(err => console.error('Self-heal check failed:', err));
+}
+  
 function loadTodayClasses(section) {
   const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
   document.getElementById('today-day-badge').innerText = dayName;
