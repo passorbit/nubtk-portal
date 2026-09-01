@@ -601,6 +601,8 @@ function deleteSavedCover(i) {
 }
 
   // --- TODAY'S CLASSES LOGIC ---
+let todayMergedData = {}; // key: "Day|Time" -> {course, room, type, isOverride}
+
 function loadTodayClasses(section) {
   const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
   document.getElementById('today-day-badge').innerText = dayName;
@@ -616,43 +618,54 @@ function loadTodayClasses(section) {
     return;
   }
 
-  db.ref('routines/' + section.toUpperCase()).once('value').then(snap => {
-    const routineData = snap.val();
-    if (!routineData) {
-      listContainer.innerHTML = `<p style="color:var(--muted); font-size:0.9rem;">No routine found for Section ${section}.</p>`;
-      return;
-    }
+  const timeSlots = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', '03:20 PM', '04:30 PM'];
 
-    const timeSlots = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', '03:20 PM', '04:30 PM'];
+  Promise.all([
+    db.ref('routines/' + section.toUpperCase()).once('value'),
+    currentUserUid ? db.ref('registered_students/' + currentUserUid + '/routine_overrides').once('value') : Promise.resolve(null)
+  ]).then(([routineSnap, overrideSnap]) => {
+    const routineData = routineSnap.val() || {};
+    const overrideData = overrideSnap ? (overrideSnap.val() || {}) : {};
+    todayMergedData = {};
+
     let html = '';
-    let classesFound = 0;
-
     timeSlots.forEach(time => {
       const key = `${dayName}|${time}`;
-      if (routineData[key] && routineData[key].course) {
-        classesFound++;
-        const cls = routineData[key];
-        
+      const override = overrideData[key];
+      const admin = routineData[key];
+      const cls = override || admin;
+      todayMergedData[key] = cls ? { ...cls, isOverride: !!override } : null;
+
+      if (cls && cls.course) {
         let badgeClass = 'type-theory';
-        if(cls.type === 'lab') badgeClass = 'type-lab';
-        if(cls.type === 'phy-lab') badgeClass = 'type-phy-lab';
-        
+        if (cls.type === 'lab') badgeClass = 'type-lab';
+        if (cls.type === 'phy-lab') badgeClass = 'type-phy-lab';
+        const editedTag = override ? `<span style="font-size:0.7rem; color:#facc15; margin-left:6px;">✏️ Edited by you</span>` : '';
+
         html += `
           <div class="class-card">
             <div class="class-time">${time}</div>
             <div class="class-details">
-              <div class="class-course">${cls.course} <span style="font-size:0.75rem; color:#94a3b8; font-weight:normal;">${cls.className ? `(${cls.className})` : ''}</span></div>
-              <div class="class-room">Room: ${cls.room}</div>
+              <div class="class-course">${cls.course}${editedTag}</div>
+              <div class="class-room">Room: ${cls.room || '-'}</div>
             </div>
-            <div><span class="class-type-badge ${badgeClass}">${cls.type}</span></div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="class-type-badge ${badgeClass}">${cls.type || 'theory'}</span>
+              <button class="btn btn-outline" style="padding:4px 8px; font-size:0.7rem;" onclick="openClassEditRow('${dayName}','${time}')">✏️</button>
+              ${override ? `<button class="btn btn-outline" style="padding:4px 8px; font-size:0.7rem; border-color:#f87171; color:#f87171;" onclick="resetClassOverride('${dayName}','${time}')">↺</button>` : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="class-card" style="opacity:0.6;">
+            <div class="class-time">${time}</div>
+            <div class="class-details"><div class="class-course" style="color:var(--muted); font-weight:normal;">ফাঁকা — কোনো ক্লাস নেই</div></div>
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:0.7rem;" onclick="openClassEditRow('${dayName}','${time}')">+ Add</button>
           </div>
         `;
       }
     });
-
-    if (classesFound === 0) {
-      html = '<div style="text-align:center; padding:20px; background:rgba(255,255,255,0.05); border-radius:8px; color:var(--muted);">No classes scheduled for today. Relax! ☕</div>';
-    }
 
     listContainer.innerHTML = html;
   }).catch(err => {
@@ -661,6 +674,35 @@ function loadTodayClasses(section) {
   });
 }
 
+// --- STUDENT PERSONAL ROUTINE OVERRIDE ---
+function openClassEditRow(day, time) {
+  if (!currentUserUid) { notify('⚠️ প্রথমে লগইন করুন।'); return; }
+  const key = `${day}|${time}`;
+  const existing = todayMergedData[key];
+
+  const course = prompt('Course Name:', existing ? existing.course : '');
+  if (course === null || !course.trim()) return; // cancelled
+  const room = prompt('Room:', existing ? existing.room : '');
+  const type = prompt('Type (theory / lab / phy-lab):', existing ? existing.type : 'theory');
+
+  db.ref(`registered_students/${currentUserUid}/routine_overrides/${key}`).set({
+    course: course.trim(),
+    room: (room || '').trim(),
+    type: (type || 'theory').trim()
+  }).then(() => {
+    notify('✅ আপনার personal class edit সেভ হয়েছে (শুধু আপনার প্রোফাইলে দেখাবে)!');
+    loadTodayClasses(document.getElementById('prof-section').value.trim());
+  }).catch(err => { console.error(err); notify('❌ Save করা যায়নি।'); });
+}
+
+function resetClassOverride(day, time) {
+  if (!confirm('আপনার personal edit মুছে আবার admin এর routine এ ফিরে যেতে চান?')) return;
+  const key = `${day}|${time}`;
+  db.ref(`registered_students/${currentUserUid}/routine_overrides/${key}`).remove().then(() => {
+    notify('↺ Reset হয়ে গেছে, এখন admin routine দেখাচ্ছে।');
+    loadTodayClasses(document.getElementById('prof-section').value.trim());
+  }).catch(err => { console.error(err); notify('❌ Reset করা যায়নি।'); });
+}
 // --- SMART DUES POPUP LOGIC ---
 function openDuesPopup() {
   if (!savedStudentId) { notify('⚠️ Student ID not found in profile!'); return; }
