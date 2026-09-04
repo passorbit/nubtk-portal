@@ -160,10 +160,14 @@ appCheck.activate(
     }, 7000);
 
     db.ref('teachers').on('value', (snapshot) => {
+  dataLoaded = true;
+  clearTimeout(loadTimeout);
   const data = snapshot.val() || {};
   allTeachers = Object.values(data);
   renderTeachers(allTeachers);
 }, (error) => {
+  dataLoaded = true;
+  clearTimeout(loadTimeout);
   document.getElementById('teachers-grid').innerHTML = `
     <div style="text-align:center; color:#f87171; grid-column: 1 / -1; padding: 40px; font-size:1rem; line-height:1.7;">
       ⚠️ ডেটা লোড হচ্ছে না।<br>
