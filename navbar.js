@@ -131,7 +131,7 @@ const navbarHTML = `
 <nav class="navbar">
   <div class="nav-inner">
     <div class="nav-brand">
-      <span class="brand-short">NUBTK</span>
+      <span class="brand-short"><a href="${homeLink}" class="nav-link">NUBTK</a></span>
       <span class="brand-sep">·</span>
       <span class="brand-full">Student Portal</span>
     </div>
