@@ -68,15 +68,14 @@ body { background: var(--navy); color: var(--white); font-family: var(--ff-body)
   width: 100%;
 }
 .hero-badge {
-  display: inline-block; font-size: 0.75rem; font-weight: 500; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--gold); background: rgba(201,168,76,0.08);
-  border: 1px solid var(--border); border-radius: 99px; padding: 6px 16px; margin-bottom: 28px;
+  display: block; font-size: 0.95rem; font-weight: 400;
+  color: var(--muted); margin-bottom: 14px;
 }
 .hero-title {
   font-family: var(--ff-head); font-size: clamp(3rem, 8vw, 6rem);
   line-height: 1.05; color: var(--white); margin-bottom: 16px; font-weight: 900;
 }
-.hero-title em { color: var(--gold); font-style: italic; }
+.hero-title em { font-style: normal; }
 .hero-sub { color: var(--muted); font-size: 1rem; margin-bottom: 52px; font-weight: 400; letter-spacing: 1px; }
 
 /* HERO CARDS */
