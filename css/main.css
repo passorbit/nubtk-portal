@@ -98,7 +98,8 @@ body { background: var(--navy); color: var(--white); font-family: var(--ff-body)
 .hcard-icon { font-size: 1.8rem; flex-shrink: 0; margin-top: 2px; }
 .hcard-body h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
 .hcard-body p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
-.hcard-arrow { margin-left: auto; color: var(--gold); font-size: 1.2rem; align-self: center; flex-shrink: 0; }
+.hcard-arrow { margin-left: auto; color: var(--gold); font-size: 1.2rem; align-self: center; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity 0.25s ease, transform 0.25s ease; }
+.hcard:hover .hcard-arrow { opacity: 1; transform: translateX(0); }
 .hcard-badge {
   margin-left: auto; align-self: flex-start; flex-shrink: 0;
   font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
