@@ -557,6 +557,12 @@ function handleLogout() {
 }
 
   // --- 📁 SAVED COVER PAGES LOGIC ---
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
 function loadSavedCoverPages() {
   const listContainer = document.getElementById('profile-saved-covers');
   if (!listContainer) return;
@@ -571,8 +577,8 @@ function loadSavedCoverPages() {
   listContainer.innerHTML = list.map((item, i) => `
     <div class="prof-saved-item">
       <div class="prof-saved-info">
-        <div class="prof-saved-title">📄 ${item.name}</div>
-        <div class="prof-saved-meta">Saved: ${new Date(item.ts).toLocaleDateString()} • Type: ${item.data.coverType || 'Assignment'} • Course: ${item.data.courseCode || 'N/A'}</div>
+        <div class="prof-saved-title">📄 ${esc(item.name)}</div>
+        <div class="prof-saved-meta">Saved: ${new Date(item.ts).toLocaleDateString()} • Type: ${esc(item.data.coverType || 'Assignment')} • Course: ${esc(item.data.courseCode || 'N/A')}</div>
       </div>
       <div class="prof-saved-actions">
         <button class="btn btn-outline" style="border-color:#38bdf8; color:#38bdf8;" onclick="editSavedCover(${i})">✏️ Edit</button>
@@ -864,18 +870,18 @@ function renderStudentAnnouncements() {
     
     const pinClass = a.pinned ? 'pinned' : '';
     const pinIcon = a.pinned ? `<span title="Pinned" style="font-size: 1.1rem; margin-right:5px;">📌</span>` : '';
-    const imgHtml = a.image ? `<img src="${a.image}" class="ann-img" onclick="openLightbox('${a.image}')">` : '';
+    const imgHtml = a.image ? `<img src="${esc(a.image)}" class="ann-img" onclick="openLightbox(this.src)">` : '';
     
     const dateStr = new Date(a.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' });
 
     html += `
       <div class="student-ann-card ${pinClass}">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <strong style="color:var(--gold); font-size:1.05rem; display:flex; align-items:center;">${pinIcon}${a.title}</strong>
+          <strong style="color:var(--gold); font-size:1.05rem; display:flex; align-items:center;">${pinIcon}${esc(a.title)}</strong>
           <span style="background:${badgeColor}20; color:${badgeColor}; padding:2px 8px; border-radius:4px; font-size:0.7rem; border:1px solid ${badgeColor}50; white-space:nowrap;">${badgeText}</span>
         </div>
         <div style="font-size:0.75rem; color:#64748b; margin-bottom: 5px;">🕰️ ${dateStr}</div>
-        <p style="font-size:0.85rem; color:#e2e8f0; margin:0; line-height:1.5; white-space:pre-wrap;">${a.description}</p>
+        <p style="font-size:0.85rem; color:#e2e8f0; margin:0; line-height:1.5; white-space:pre-wrap;">${esc(a.description)}</p>
         ${imgHtml}
       </div>
     `;
