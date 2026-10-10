@@ -204,12 +204,7 @@ window.onclick = function(event) {
   if (event.target == document.getElementById('detailsModal')) closeDetails();
 }
 
-// Page View Track
-(function() {
-  const PAGE_NAME = 'pdf-library';
-  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1).catch(e => console.error(e));
-  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1).catch(e => console.error(e));
-})();
+NUBTKVisitors.track('pdf-library');
 </script>
 
 <script src="../navbar.js"></script>
