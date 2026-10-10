@@ -208,12 +208,7 @@ function renderResults(freeRooms, occupiedRoomsData) {
   notify('✅ Live status loaded!');
 }
 
-// Page View Track
-(function() {
-  const PAGE_NAME = 'free-time'; 
-  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1).catch(e => console.error(e));
-  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1).catch(e => console.error(e));
-})();
+NUBTKVisitors.track('free-time');
   
 </script>
 
