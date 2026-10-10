@@ -35,6 +35,17 @@ const params = new URLSearchParams(window.location.search);
 const token = params.get('id');
 const box = document.getElementById('result-box');
 
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+// শুধু জানা ছবির ধরন (data: jpeg/png/webp বা https) গ্রহণ করা হবে
+function safeImg(u) {
+  u = String(u || '');
+  return (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(u) || /^https:\/\/[^\s"'<>]+$/.test(u)) ? u : '';
+}
+
 if (!token) {
   box.innerHTML = '<div style="color:#f87171;">❌ Invalid link.</div>';
 } else {
@@ -50,12 +61,12 @@ if (!token) {
           <div style="color:#0B1D3A; font-weight:900; font-size:0.95rem; letter-spacing:1px;">✅ VERIFIED NUBTK STUDENT</div>
         </div>
         <div style="display:flex; gap:14px; padding:20px; align-items:center;">
-          <img src="${data.avatar}" style="width:80px; height:80px; border-radius:50%; border:3px solid #C9A84C; object-fit:cover;">
+          <img src="${esc(safeImg(data.avatar))}" style="width:80px; height:80px; border-radius:50%; border:3px solid #C9A84C; object-fit:cover;">
           <div style="text-align:left;">
-            <div style="color:#fff; font-size:1.1rem; font-weight:700;">${data.name}</div>
-            <div style="color:#C9A84C; font-size:0.85rem; font-weight:600;">ID: ${data.studentId}</div>
-            <div style="color:#94a3b8; font-size:0.78rem;">${data.department}</div>
-            <div style="color:#f87171; font-size:0.78rem; font-weight:600;">Blood Group: ${data.bloodGroup || '--'}</div>
+            <div style="color:#fff; font-size:1.1rem; font-weight:700;">${esc(data.name)}</div>
+            <div style="color:#C9A84C; font-size:0.85rem; font-weight:600;">ID: ${esc(data.studentId)}</div>
+            <div style="color:#94a3b8; font-size:0.78rem;">${esc(data.department)}</div>
+            <div style="color:#f87171; font-size:0.78rem; font-weight:600;">Blood Group: ${esc(data.bloodGroup || '--')}</div>
           </div>
         </div>
       </div>
