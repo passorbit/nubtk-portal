@@ -231,21 +231,7 @@ appCheck.activate(
     }
 
 
-    (function() {
-  const PAGE_NAME = 'teachers'; 
-  const db = firebase.database();
-  
-  // Total visit count
-  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1).catch(e => console.error(e));
-  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1).catch(e => console.error(e));
-  
-  // সেফ আইডি তৈরি করে লাইভ লিস্টে যুক্ত হওয়া
-  const safeRandomId = Date.now() + '_' + Math.floor(Math.random() * 1000);
-  const userRef = db.ref('visitors/online_users/' + safeRandomId);
-  
-  userRef.set(true).catch(e => console.error(e));
-  userRef.onDisconnect().remove(); 
-})();
+    NUBTKVisitors.track('teachers');
     
   </script>
 
