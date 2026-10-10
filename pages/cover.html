@@ -1148,21 +1148,7 @@ Promise.all([
   renderFields();
 });
 
-  (function() {
-  const PAGE_NAME = 'cover'; 
-  const db = firebase.database();
-  
-  // Total visit count
-  db.ref('visitors/total_visits').transaction(v => (v || 0) + 1).catch(e => console.error(e));
-  db.ref('visitors/pages/' + PAGE_NAME).transaction(v => (v || 0) + 1).catch(e => console.error(e));
-  
-  // Creating a Safe ID and joining the live list.
-  const safeRandomId = Date.now() + '_' + Math.floor(Math.random() * 1000);
-  const userRef = db.ref('visitors/online_users/' + safeRandomId);
-  
-  userRef.set(true).catch(e => console.error(e));
-  userRef.onDisconnect().remove(); 
-})();
+  NUBTKVisitors.track('cover');
   
 </script>
   <script src="../navbar.js"></script>
