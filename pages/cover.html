@@ -808,12 +808,8 @@ function setupAutoDesignation() {
 }
 
   // ─── STUDENTS LIVE DATA FETCH & AUTO-FILL ───
-let liveStudentList = {};
-
-// ফায়ারবেস থেকে লাইভ স্টুডেন্টদের ডাটা আনা
-db.ref('students').on('value', (snapshot) => {
-  liveStudentList = snapshot.val() || {};
-});
+// শুধু টাইপ করা ID টার নাম আনা হয় (পুরো students তালিকা আর নামানো হয় না)
+let studentLookupTimer = null;
 
 function setupAutoStudentInfo() {
   const allLabels = document.querySelectorAll('.form-label');
@@ -837,23 +833,27 @@ function setupAutoStudentInfo() {
   // স্টুডেন্ট যখন ID টাইপ করবে, তখন এই কোডটি কাজ করবে
   idInput.addEventListener('input', function() {
     const typedId = this.value.trim();
-    
-    // যদি টাইপ করা ID ডাটাবেসে থাকে, তবে ম্যাজিকের মতো নাম বসে যাবে!
-    if (liveStudentList[typedId]) {
-      nameInput.value = liveStudentList[typedId];
-      
-      // অটো-ফিল হয়েছে সেটা বোঝানোর জন্য বক্সে হালকা গোল্ডেন কালারের ইফেক্ট
-      nameInput.style.borderColor = "var(--gold)";
-      nameInput.style.boxShadow = "0 0 8px rgba(201,168,76,0.3)";
-      
-      setTimeout(() => {
-        nameInput.style.borderColor = "";
-        nameInput.style.boxShadow = "";
-      }, 1500);
-    }
+    clearTimeout(studentLookupTimer);
+    if (!/^\d{6,12}$/.test(typedId)) return;
+
+    studentLookupTimer = setTimeout(() => {
+      db.ref('students/' + typedId).once('value').then(snap => {
+        const fullName = snap.val();
+        // টাইপ করা ID বদলে গেলে পুরনো উত্তর বসানো হবে না
+        if (typeof fullName !== 'string' || idInput.value.trim() !== typedId) return;
+        nameInput.value = fullName;
+
+        // অটো-ফিল হয়েছে সেটা বোঝানোর জন্য বক্সে হালকা গোল্ডেন কালারের ইফেক্ট
+        nameInput.style.borderColor = "var(--gold)";
+        nameInput.style.boxShadow = "0 0 8px rgba(201,168,76,0.3)";
+        setTimeout(() => {
+          nameInput.style.borderColor = "";
+          nameInput.style.boxShadow = "";
+        }, 1500);
+      }).catch(err => console.error('Student lookup failed:', err));
+    }, 250);
   });
 }
-  
 
 function getDefaultLogos() {
   const makeLogoSVG = (text, color) =>
