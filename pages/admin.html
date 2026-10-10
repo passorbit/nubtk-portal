@@ -531,6 +531,10 @@
       <div class="section-card">
         <h2>Settings</h2>
         <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Current Password</label>
+            <input type="password" class="form-input" id="cur-pw" placeholder="Enter current password" autocomplete="current-password"/>
+          </div>
           <div class="form-group">
             <label class="form-label">New Admin Password</label>
             <input type="password" class="form-input" id="new-pw" placeholder="Enter new password"/>
@@ -579,19 +583,35 @@ appCheck.activate(
   true // token auto-refresh
 );
 const db = firebase.database();
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
 let liveRoutineData = {}; 
 
 // ─── AUTH & FIREBASE FETCH ────────────────
  // ─── AUTHENTICATION LOGIC (SECURE) ───
 
 // পেজ লোড হলে ফায়ারবেস নিজে থেকেই চেক করবে কেউ লগিন করা আছে কি না
+// 🔐 শুধু admins/{uid} এ থাকা account প্যানেল খুলতে পারবে (Rules আলাদাভাবে লেখাও আটকায়)
+let adminPanelOpened = false;
+function showAdminLogin(msg) {
+  document.getElementById('admin-login').style.display = 'block';
+  document.getElementById('admin-main').style.display = 'none';
+  if (msg) notify(msg, 5000);
+}
 firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    // লগিন করা থাকলে প্যানেল ওপেন হবে
+  if (!user) { adminPanelOpened = false; showAdminLogin(); return; }
+  db.ref('admins/' + user.uid).once('value').then((snap) => {
+    if (!snap.exists()) throw new Error('not-admin');
+    if (adminPanelOpened) return;
+    adminPanelOpened = true;
     document.getElementById('admin-login').style.display = 'none';
     document.getElementById('admin-main').style.display = 'block';
-    
-    loadAdminSettings(); 
+
+    loadAdminSettings();
     listenToFirebase();
     listenToTeachers();
     listenToVisitors();
@@ -599,11 +619,12 @@ firebase.auth().onAuthStateChanged((user) => {
     listenToAIPrompts();
     listenToAnnouncements();
     listenToPdfLibrary();
-  } else {
-    // লগিন করা না থাকলে লগিন পেজ দেখাবে
-    document.getElementById('admin-login').style.display = 'block';
-    document.getElementById('admin-main').style.display = 'none';
-  }
+
+    // পুরনো plain-text password node (আর ব্যবহার হয় না) একবারেই মুছে ফেলা
+    db.ref('settings/adminPassword').remove().catch(() => {});
+  }).catch(() => {
+    showAdminLogin('⛔ এই account এ admin অনুমতি নেই। Admin account দিয়ে login করুন।');
+  });
 });
 
 function tryLogin() {
@@ -633,18 +654,24 @@ function logout() {
   });
 }
 
-// ⚠️ Change Password অপশনটি এখন ফায়ারবেস কনসোল থেকে করতে হবে, তাই সেটিংস প্যানেলের পাসওয়ার্ড চেঞ্জের কোড আপাতত ইগনোর করতে পারেন।
+// 🔐 আসল Firebase Auth password বদলায় (reauthenticate করে)
 function changePassword() {
+  const user = firebase.auth().currentUser;
+  const cur = document.getElementById('cur-pw').value;
   const np = document.getElementById('new-pw').value;
   const cp = document.getElementById('confirm-pw').value;
-  if (!np) { notify('⚠️ Enter a new password'); return; }
+  if (!user || !user.email) { notify('⚠️ Login করা নেই'); return; }
+  if (!cur) { notify('⚠️ বর্তমান password দিন'); return; }
+  if (np.length < 8) { notify('⚠️ নতুন password কমপক্ষে ৮ অক্ষরের হতে হবে'); return; }
   if (np !== cp) { notify('❌ Passwords do not match'); return; }
-  
-  db.ref('settings/adminPassword').set(np).then(() => {
-    notify('✅ Password changed in Live Database!');
-    document.getElementById('new-pw').value = '';
-    document.getElementById('confirm-pw').value = '';
-  });
+  const cred = firebase.auth.EmailAuthProvider.credential(user.email, cur);
+  user.reauthenticateWithCredential(cred)
+    .then(() => user.updatePassword(np))
+    .then(() => {
+      notify('✅ Password বদলানো হয়েছে');
+      ['cur-pw', 'new-pw', 'confirm-pw'].forEach(id => { document.getElementById(id).value = ''; });
+    })
+    .catch(err => { console.error(err); notify('❌ বদলানো যায়নি। বর্তমান password ঠিক আছে কিনা দেখুন।', 4000); });
 }
 
 function adminTab(tab) {
@@ -1432,15 +1459,15 @@ function listenToSupportMessages() {
       <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 10px; margin-bottom: 12px; border-left: 4px solid #38bdf8; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap:wrap; gap:10px;">
           <div>
-            <strong style="color: #38bdf8; font-size: 1.1rem;">${data.name}</strong>
-            <span style="color: #94a3b8; font-size: 0.85rem; margin-left:8px; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">ID: ${data.studentId || 'N/A'}</span>
+            <strong style="color: #38bdf8; font-size: 1.1rem;">${esc(data.name)}</strong>
+            <span style="color: #94a3b8; font-size: 0.85rem; margin-left:8px; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">ID: ${esc(data.studentId || 'N/A')}</span>
           </div>
           <div style="display:flex; align-items:center; gap:15px;">
-             <span style="color: #64748b; font-size: 0.8rem;">${data.time || 'Unknown Time'}</span>
-             <button onclick="deleteMessage('${data.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.95rem; padding:0;" title="Delete Message">🗑️</button>
+             <span style="color: #64748b; font-size: 0.8rem;">${esc(data.time || 'Unknown Time')}</span>
+             <button data-id="${esc(data.id)}" onclick="deleteMessage(this.dataset.id)" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.95rem; padding:0;" title="Delete Message">🗑️</button>
           </div>
         </div>
-        <p style="color: #f8fafc; margin: 0; line-height: 1.5; font-size:0.95rem; white-space: pre-wrap;">${data.message}</p>
+        <p style="color: #f8fafc; margin: 0; line-height: 1.5; font-size:0.95rem; white-space: pre-wrap;">${esc(data.message)}</p>
       </div>
     `).join('');
   });
