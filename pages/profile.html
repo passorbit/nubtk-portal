@@ -640,7 +640,7 @@ function loadTodayClasses(section) {
     return;
   }
 
-  const timeSlots = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', '03:20 PM', '04:30 PM'];
+  const timeSlots = ['08:30 AM', '09:30 AM', '10:30 AM', '11:30 AM', '12:30 PM', '01:30 PM', '02:30 PM', '03:30 PM', '04:30 PM'];
 
   Promise.all([
     db.ref('routines/' + section.toUpperCase()).once('value'),
@@ -1025,7 +1025,7 @@ function downloadIdCard() {
   } else {
     db.ref('routines/' + studentSectionCode).once('value').then(snap => {
       const routineData = snap.val();
-      const timeSlots = ['08:30 AM', '09:40 AM', '10:50 AM', '12:00 PM', '02:10 PM', '03:20 PM', '04:30 PM'];
+      const timeSlots = ['08:30 AM', '09:30 AM', '10:30 AM', '11:30 AM', '12:30 PM', '01:30 PM', '02:30 PM', '03:30 PM', '04:30 PM'];
       let html = '';
       let found = 0;
       if (routineData) {
